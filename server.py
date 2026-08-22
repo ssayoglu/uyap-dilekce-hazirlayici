@@ -103,6 +103,210 @@ def build_udf(paragraphs, output_file):
     with zipfile.ZipFile(output_file, "w", zipfile.ZIP_DEFLATED) as z:
         z.writestr("content.xml", template_xml.encode("utf-8"))
 
+MAZERET_HTML = """<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚡ Hızlı Mazeret Gönder</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; user-select: none; }
+        input, textarea, select { user-select: text; }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 p-4 min-h-screen flex flex-col justify-between">
+
+    <div class="space-y-3">
+        <!-- Başlık -->
+        <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+            <div class="flex items-center gap-2">
+                <span class="text-lg p-1 bg-amber-500/20 rounded-lg border border-amber-500/30">⚡️</span>
+                <div>
+                    <h2 class="text-xs font-bold text-white tracking-tight">Hızlı Mazeret Modülü</h2>
+                    <p class="text-[10px] text-slate-400">3 Saniyede UYAP Mazeret UDF'i</p>
+                </div>
+            </div>
+            <span class="text-[10px] bg-blue-500/20 text-blue-300 font-bold px-2 py-0.5 rounded-md" id="lawyerBadge">Avukat</span>
+        </div>
+
+        <!-- Form Alanları -->
+        <div class="space-y-2 text-xs">
+            <!-- Mahkeme ve İl -->
+            <div class="grid grid-cols-2 gap-2">
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-400 mb-0.5">İl & Mahkeme Türü:</label>
+                    <select id="maz_court_type" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-1.5 text-xs text-white font-semibold focus:ring-1 focus:ring-amber-500">
+                        <option value="ASLİYE HUKUK">Asliye Hukuk</option>
+                        <option value="SULH HUKUK">Sulh Hukuk</option>
+                        <option value="İŞ">İş Mahkemesi</option>
+                        <option value="AİLE">Aile Mahkemesi</option>
+                        <option value="ASLİYE TİCARET">Asliye Ticaret</option>
+                        <option value="TÜKETİCİ">Tüketici Mahkemesi</option>
+                        <option value="İCRA HUKUK">İcra Hukuk</option>
+                        <option value="ASLİYE CEZA">Asliye Ceza</option>
+                        <option value="AĞIR CEZA">Ağır Ceza</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-400 mb-0.5">Mahkeme No (Örn: 2.):</label>
+                    <input type="text" id="maz_court_no" placeholder="Örn: 2." value="[..]." class="w-full bg-slate-800 border border-slate-700 rounded-lg p-1.5 text-xs text-white font-semibold focus:ring-1 focus:ring-amber-500">
+                </div>
+            </div>
+
+            <!-- Dosya No & Duruşma Saati -->
+            <div class="grid grid-cols-2 gap-2">
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-400 mb-0.5">Dosya No:</label>
+                    <input type="text" id="maz_dosya" placeholder="2026/.. E." class="w-full bg-slate-800 border border-slate-700 rounded-lg p-1.5 text-xs text-white font-mono focus:ring-1 focus:ring-amber-500">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-400 mb-0.5">Duruşma Günü / Saati:</label>
+                    <input type="text" id="maz_saat" placeholder="Bugün saat 10:30" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-1.5 text-xs text-white focus:ring-1 focus:ring-amber-500">
+                </div>
+            </div>
+
+            <!-- Müvekkil Sıfatı & Adı -->
+            <div class="grid grid-cols-2 gap-2">
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-400 mb-0.5">Müvekkil Sıfatı:</label>
+                    <select id="maz_sifat" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-1.5 text-xs text-white focus:ring-1 focus:ring-amber-500">
+                        <option value="DAVACI">Davacı Vekili</option>
+                        <option value="DAVALI">Davalı Vekili</option>
+                        <option value="SANIK">Sanık Müdafii</option>
+                        <option value="KATILAN">Katılan Vekili</option>
+                        <option value="MÜŞTEKİ">Müşteki Vekili</option>
+                        <option value="ŞİKAYET EDEN">Şikayet Eden Vekili</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-400 mb-0.5">Müvekkil Adı:</label>
+                    <input type="text" id="maz_m_ad" placeholder="Müvekkil Adı" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-1.5 text-xs text-white focus:ring-1 focus:ring-amber-500">
+                </div>
+            </div>
+
+            <!-- Hazır Mazeret Sebebi Çipleri -->
+            <div>
+                <label class="block text-[10px] font-bold text-slate-400 mb-1">Mazeret Nedeni Seçin:</label>
+                <div class="grid grid-cols-1 gap-1 text-[11px]">
+                    <button type="button" onclick="selectReason(1)" id="btnR1" class="reason-btn text-left p-1.5 rounded-lg bg-slate-800 border border-slate-700 hover:border-amber-500 text-slate-200 transition">
+                        ⚖️ Başka Mahkemedeki Duruşma Çakışması
+                    </button>
+                    <button type="button" onclick="selectReason(2)" id="btnR2" class="reason-btn text-left p-1.5 rounded-lg bg-slate-800 border border-slate-700 hover:border-amber-500 text-slate-200 transition">
+                        🏥 Mesleki Mazeret / Sağlık Raporu
+                    </button>
+                    <button type="button" onclick="selectReason(3)" id="btnR3" class="reason-btn text-left p-1.5 rounded-lg bg-slate-800 border border-slate-700 hover:border-amber-500 text-slate-200 transition">
+                        🚗 Şehir Dışı Görev / Keşif İcrası
+                    </button>
+                </div>
+            </div>
+
+            <!-- Mazeret Metni -->
+            <div>
+                <textarea id="maz_aciklama" rows="2" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-[11px] text-slate-300 leading-relaxed focus:ring-1 focus:ring-amber-500"></textarea>
+            </div>
+        </div>
+
+        <!-- Butonlar -->
+        <div class="pt-1 flex gap-2">
+            <button type="button" onclick="generateMazeret()" class="flex-1 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-bold rounded-xl text-xs shadow-lg transition flex items-center justify-center gap-1.5">
+                <span>⚡️ UYAP'ta Mazereti Aç</span>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const REASONS = {
+            1: "Aynı gün ve saatte [..] Mahkemesi'nde önceden belirlenmiş duruşmamız bulunması nedeniyle Sayın Mahkemenizin belirtilen celsesine iştirak edememekteyiz. Mazeretimizin kabulü ile duruşma gününün UYAP üzerinden öğrenilmesine karar verilmesini vekâleten arz ve talep ederiz.",
+            2: "Geçirmiş olduğumuz ani sağlık rahatsızlığı / mesleki mazeretimiz nedeniyle Sayın Mahkemenizin belirtilen celsesine katılamıyoruz. Mazeretimizin kabulü ile yeni duruşma gününün UYAP'tan öğrenilmesine karar verilmesini talep ederiz.",
+            3: "Şehir dışında icra edilecek keşif ve haciz işlemleri nedeniyle Sayın Mahkemenizin duruşmasına bizzat iştirak etmemiz mümkün olamamıştır. Mazeretimizin kabulünü vekâleten arz ve talep ederiz."
+        };
+
+        function selectReason(id) {
+            document.querySelectorAll('.reason-btn').forEach(b => {
+                b.classList.remove('bg-amber-500/20', 'border-amber-500', 'text-amber-300');
+                b.classList.add('bg-slate-800', 'border-slate-700', 'text-slate-200');
+            });
+            const btn = document.getElementById(`btnR${id}`);
+            if (btn) {
+                btn.classList.remove('bg-slate-800', 'border-slate-700', 'text-slate-200');
+                btn.classList.add('bg-amber-500/20', 'border-amber-500', 'text-amber-300');
+            }
+            document.getElementById("maz_aciklama").value = REASONS[id];
+        }
+
+        function initProfile() {
+            try {
+                const lp = JSON.parse(localStorage.getItem("dilekce_lawyer_profile") || "{}");
+                const name = lp.name || "Av. Lütfi Serkan SAYOĞLU";
+                document.getElementById("lawyerBadge").textContent = name.split(" ")[0] + " " + (name.split(" ")[1] || "");
+            } catch(e) {}
+            selectReason(1);
+        }
+
+        async function generateMazeret() {
+            const courtType = document.getElementById("maz_court_type").value;
+            let courtNo = document.getElementById("maz_court_no").value.trim();
+            if (courtNo && !courtNo.endsWith(".")) courtNo += ".";
+            
+            let lp = {};
+            try { lp = JSON.parse(localStorage.getItem("dilekce_lawyer_profile") || "{}"); } catch(e) {}
+            const city = (lp.city || "MERSİN").toUpperCase();
+            
+            const mahkeme = `${city} ${courtNo ? courtNo + ' ' : ''}${courtType} MAHKEMESİNE`;
+            const dosya = document.getElementById("maz_dosya").value.trim();
+            const saat = document.getElementById("maz_saat").value.trim();
+            const sifat = document.getElementById("maz_sifat").value;
+            const m_ad = document.getElementById("maz_m_ad").value.trim();
+            const aciklama = document.getElementById("maz_aciklama").value.trim();
+            
+            const konu = `Mazeret Beyanımız ve Yeni Duruşma Gününün Bildirilmesi Talebimiz Hakkında.${saat ? ' (' + saat + ')' : ''}`;
+            const sonuc = "Yukarıda arz olunan nedenlerle; mesleki mazeretimizin KABULÜNE, duruşmanın başka bir güne talikine ve yeni duruşma gününün UYAP sistemi üzerinden tarafımıza bildirilmesine karar verilmesini vekâleten saygıyla arz ve talep ederiz.";
+
+            const payload = {
+                mahkeme,
+                talep: "",
+                dosya,
+                m_sifat: sifat,
+                m_ad,
+                m_adres: "",
+                vekil: lp.name ? `${lp.name} ${lp.extra ? '- ' + lp.extra : ''}` : "Av. Lütfi Serkan SAYOĞLU - UETS [16153-51280-36854]",
+                avukat_imza: lp.name || "Av. Lütfi Serkan SAYOĞLU",
+                k_sifat: "KARŞI TARAF",
+                k_ad: "",
+                hed: "",
+                konu,
+                aciklama: `1- ${aciklama}`,
+                hukuki_sebepler: "",
+                hukuki_deliller: "",
+                sonuc,
+                open_after: true
+            };
+
+            try {
+                const res = await fetch('/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const r = await res.json();
+                if (r.success) {
+                    alert("✅ Mazeret dilekçesi UYAP'ta açıldı!");
+                } else {
+                    alert("Hata: " + r.message);
+                }
+            } catch(e) {
+                alert("Bağlantı hatası: " + e);
+            }
+        }
+
+        window.onload = initProfile;
+    </script>
+</body>
+</html>
+"""
+
 HTML_PAGE = """<!DOCTYPE html>
 <html lang="tr">
 <head>
@@ -2985,7 +3189,12 @@ HTML_PAGE = """<!DOCTYPE html>
 
 class RequestHandler(http.server.SimpleHTTPRequestHandler):
     def do_GET(self):
-        if self.path == "/" or self.path.startswith("/?"):
+        if self.path == "/mazeret":
+            self.send_response(200)
+            self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.end_headers()
+            self.wfile.write(MAZERET_HTML.encode("utf-8"))
+        elif self.path == "/" or self.path.startswith("/?"):
             self.send_response(200)
             self.send_header("Content-Type", "text/html; charset=utf-8")
             self.end_headers()

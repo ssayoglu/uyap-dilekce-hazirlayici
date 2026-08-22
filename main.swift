@@ -6,16 +6,16 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKNavigati
     var webView: WKWebView!
     var pythonProcess: Process?
     var statusItem: NSStatusItem?
+    var popover: NSPopover?
+    var popoverWebView: WKWebView?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        // macOS Standart Kısayolları ve Menü Çubuğu (⌘C, ⌘V, ⌘X, ⌘A, ⌘Z, ⌘Q, ⌘W vb.)
         setupMainMenu()
 
         let fileManager = FileManager.default
         let homeDir = NSHomeDirectory()
         let targetDir = "\(homeDir)/.dilekce-hazirlayici"
 
-        // 1. Arka Planda Otomatik GitHub Güncellemesi (Her açılışta sessizce son sürümü çeker)
         checkForUpdatesInBackground(targetDir: targetDir)
 
         let pythonPaths = [
@@ -36,24 +36,22 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKNavigati
 
         let serverScript = possibleServerPaths.first(where: { fileManager.fileExists(atPath: $0) }) ?? "\(targetDir)/server.py"
 
-        // Kill any previous hanging instance on port 5678
         let killTask = Process()
         killTask.launchPath = "/usr/bin/pkill"
         killTask.arguments = ["-f", "server.py"]
         try? killTask.run()
         killTask.waitUntilExit()
 
-        // Start python backend
         let task = Process()
         task.launchPath = pythonBinary
         task.arguments = [serverScript, "--no-browser"]
         try? task.run()
         self.pythonProcess = task
 
-        // 2. Status bar (Menü çubuğu simgesi)
+        // 2. Status Bar & Popover Setup
         setupStatusItem()
 
-        // 3. Window
+        // 3. Main App Window
         let rect = NSRect(x: 0, y: 0, width: 960, height: 880)
         window = NSWindow(
             contentRect: rect,
@@ -67,7 +65,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKNavigati
         window.delegate = self
         window.minSize = NSSize(width: 800, height: 700)
 
-        // Webview
         let config = WKWebViewConfiguration()
         config.preferences.setValue(true, forKey: "developerExtrasEnabled")
         
@@ -77,7 +74,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKNavigati
         webView.autoresizingMask = [.width, .height]
         window.contentView = webView
 
-        // Load URL
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
             self.loadWebPage()
         }
@@ -93,7 +89,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKNavigati
         }
     }
 
-    // GitHub Otomatik Güncelleme Motoru (Arka planda sessizce çeker)
     func checkForUpdatesInBackground(targetDir: String) {
         DispatchQueue.global(qos: .background).async {
             let fm = FileManager.default
@@ -106,7 +101,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKNavigati
                 gitTask.waitUntilExit()
 
                 if gitTask.terminationStatus == 0 {
-                    // Güncelleme çekildiyse Resources/server.py'yi de senkronize et
                     let appResourcesServer = "\(Bundle.main.bundlePath)/Contents/Resources/server.py"
                     if fm.fileExists(atPath: appResourcesServer) && fm.fileExists(atPath: "\(targetDir)/server.py") {
                         try? fm.removeItem(atPath: appResourcesServer)
@@ -120,7 +114,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKNavigati
     func setupMainMenu() {
         let mainMenu = NSMenu()
 
-        // 1. Uygulama Menüsü (App Menu)
         let appMenuItem = NSMenuItem()
         mainMenu.addItem(appMenuItem)
         let appMenu = NSMenu()
@@ -136,7 +129,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKNavigati
         appMenu.addItem(NSMenuItem.separator())
         appMenu.addItem(withTitle: "Çıkış", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
 
-        // 2. Düzenle Menüsü (Edit Menu - ⌘C, ⌘V, ⌘X, ⌘A, ⌘Z için zorunludur)
         let editMenuItem = NSMenuItem()
         mainMenu.addItem(editMenuItem)
         let editMenu = NSMenu(title: "Düzenle")
@@ -151,7 +143,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKNavigati
         editMenu.addItem(withTitle: "Yapıştır", action: #selector(NSText.paste(_:)), keyEquivalent: "v")
         editMenu.addItem(withTitle: "Tümünü Seç", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a")
 
-        // 3. Pencere Menüsü (Window Menu - ⌘W, ⌘M, ⌘R)
         let windowMenuItem = NSMenuItem()
         mainMenu.addItem(windowMenuItem)
         let windowMenu = NSMenu(title: "Pencere")
@@ -193,12 +184,46 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKNavigati
         if let button = statusItem?.button {
             button.title = "⚖️"
             button.target = self
-            button.action = #selector(statusItemClicked)
+            button.action = #selector(togglePopover(_:))
+            button.sendAction(on: [.leftMouseUp, .rightMouseUp])
         }
+
+        // Setup NSPopover for fast Mazeret workflow
+        let popover = NSPopover()
+        popover.contentSize = NSSize(width: 360, height: 480)
+        popover.behavior = .transient
+        popover.animates = true
+
+        let popoverVC = NSViewController()
+        let pWebView = WKWebView(frame: NSRect(x: 0, y: 0, width: 360, height: 480))
+        popoverVC.view = pWebView
+        popover.contentViewController = popoverVC
+
+        self.popover = popover
+        self.popoverWebView = pWebView
     }
 
-    @objc func statusItemClicked() {
-        showAppWindow()
+    @objc func togglePopover(_ sender: AnyObject?) {
+        guard let button = statusItem?.button else { return }
+
+        let currentEvent = NSApp.currentEvent
+        if currentEvent?.type == .rightMouseUp {
+            // Right click opens main app window
+            showAppWindow()
+            return
+        }
+
+        if let popover = self.popover {
+            if popover.isShown {
+                popover.performClose(sender)
+            } else {
+                if let url = URL(string: "http://127.0.0.1:5678/mazeret") {
+                    let req = URLRequest(url: url)
+                    self.popoverWebView?.load(req)
+                }
+                popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+            }
+        }
     }
 
     func showAppWindow() {
