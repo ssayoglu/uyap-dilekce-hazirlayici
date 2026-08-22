@@ -14,7 +14,7 @@ from datetime import datetime
 
 PORT = 5678
 
-CURRENT_VERSION = "1.0.0"
+CURRENT_VERSION = "1.2.0"
 VERSION_URL = "https://raw.githubusercontent.com/ssayoglu/uyap-dilekce-hazirlayici/main/version.json"
 REPO_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -121,9 +121,13 @@ HTML_PAGE = """<!DOCTYPE html>
                 </div>
             </div>
             <div class="flex items-center space-x-3">
-                <button onclick="openLawyerModal()" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-blue-900/60 hover:bg-blue-800 text-blue-300 border border-blue-700 transition shadow-sm" title="Avukat bilgilerini değiştirmek için tıklayın">
+                <button onclick="openChangelogModal()" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-950/80 hover:bg-emerald-900 text-emerald-300 border border-emerald-700 transition shadow-sm" title="Son Sürüm Güncelleme Notları">
+                    <span>✨</span>
+                    <span>v1.2.0 Notları</span>
+                </button>
+                <button onclick="openLawyerModal()" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-blue-900/60 hover:bg-blue-800 text-blue-300 border border-blue-700 transition shadow-sm" title="Avukat ve Şehir bilgilerini değiştirmek için tıklayın">
                     <span id="activeLawyerHeader">Av. Lütfi Serkan SAYOĞLU</span>
-                    <span class="text-[10px] bg-blue-700/50 px-1.5 py-0.5 rounded text-blue-200">⚙️ Değiştir</span>
+                    <span class="text-[10px] bg-blue-700/50 px-1.5 py-0.5 rounded text-blue-200">⚙️ Ayarlar</span>
                 </button>
             </div>
         </div>
@@ -164,6 +168,44 @@ HTML_PAGE = """<!DOCTYPE html>
             <div class="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
                 <button onclick="closeLawyerModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition">Vazgeç</button>
                 <button onclick="saveLawyerProfile()" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-sm transition">💾 Kaydet ve Uygula</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Güncelleme Notları (Changelog) Modal -->
+    <div id="changelogModal" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-lg w-full p-6 space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div class="flex items-center gap-2.5">
+                    <span class="text-2xl">🎉</span>
+                    <div>
+                        <h3 class="font-bold text-slate-900 text-base leading-tight">Yenilikler & Güncelleme Notları</h3>
+                        <p class="text-[11px] text-emerald-600 font-semibold">Sürüm 1.2.0 • 2026</p>
+                    </div>
+                </div>
+                <button onclick="closeChangelogModal()" class="text-slate-400 hover:text-slate-600 font-bold text-lg">✕</button>
+            </div>
+            <div class="space-y-2.5 max-h-80 overflow-y-auto pr-1 text-xs text-slate-700 leading-relaxed">
+                <div class="p-3 bg-emerald-50/70 border border-emerald-200 rounded-xl space-y-2">
+                    <p class="font-bold text-emerald-950 flex items-center gap-1.5">
+                        <span>🚀</span> Bu Sürümde Eklenenler & İyileştirmeler:
+                    </p>
+                    <ul class="space-y-1.5 list-disc list-inside text-slate-800 font-medium">
+                        <li><strong>Dinamik Şehir & BAM:</strong> İstinaf ve yerel mahkemeler için şehir ayarı (Örn: Mersin & Adana BAM).</li>
+                        <li><strong>Avukatlık Yetki Belgesi:</strong> 4 ana bölümlü resmi formata tam uyumlu Yetki Belgesi UDF şablonu.</li>
+                        <li><strong>Ceza & Dijital Materyaller:</strong> CMK m. 134 uyarınca dijital materyallerin ivedi iadesi şablonu.</li>
+                        <li><strong>Bilirkişi Şablonları:</strong> Beyan, İtiraz ve Bilirkişinin Reddi talepleri.</li>
+                        <li><strong>Usul & İstinaf Şablonları:</strong> Dahili Davalı, Tefrik, Tashih, Tavzih, İstinafa Cevap, İstinaf Reddi İtirazı.</li>
+                        <li><strong>Feragat Dilekçeleri:</strong> Davadan Feragat ve İstinaftan Feragat şablonları.</li>
+                        <li><strong>Tipografi:</strong> Tüm şablonlarda KONU ve başlık satır aralıkları standart 1.0 yapıldı.</li>
+                        <li><strong>Arama:</strong> Arama motoru doğrudan dilekçe başlıklarına odaklandı.</li>
+                        <li><strong>macOS Entegrasyonu:</strong> Menü çubuğu simgesi ve çökmesiz pencere yönetimi.</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
+                <span class="text-[11px] text-slate-400">Geliştirici: Av. Lütfi Serkan SAYOĞLU</span>
+                <button onclick="closeChangelogModal()" class="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold shadow-sm transition">Anladım, Kapat</button>
             </div>
         </div>
     </div>
@@ -353,6 +395,29 @@ HTML_PAGE = """<!DOCTYPE html>
         const DELILLER_DEFAULT = "Sözleşmeler, faturalar, banka kayıtları, ticari defterler, tanık, bilirkişi, yemin ve sair hukuki deliller.";
         const SEBEPLER_DEFAULT = "HMK, TBK, TTK, TMK, İİK ve ilgili mevzuat.";
 
+        // Güncelleme Notları Yönetimi
+        const APP_VERSION = "1.2.0";
+
+        function openChangelogModal() {
+            document.getElementById("changelogModal").classList.remove("hidden");
+        }
+
+        function closeChangelogModal() {
+            document.getElementById("changelogModal").classList.add("hidden");
+            try {
+                localStorage.setItem("dilekce_last_seen_version", APP_VERSION);
+            } catch(e) {}
+        }
+
+        function checkNewVersionNotes() {
+            try {
+                const lastSeen = localStorage.getItem("dilekce_last_seen_version");
+                if (!lastSeen || lastSeen !== APP_VERSION) {
+                    openChangelogModal();
+                }
+            } catch(e) {}
+        }
+
         // Avukat ve Şehir Profili Yönetimi
         const DEFAULT_LAWYER = {
             name: "Av. Lütfi Serkan SAYOĞLU",
@@ -447,6 +512,7 @@ HTML_PAGE = """<!DOCTYPE html>
             updateLawyerDisplay();
             renderFavorites();
             renderTemplates();
+            checkNewVersionNotes();
             closeLawyerModal();
             showToast(`✅ Bilgiler güncellendi: ${name} (${city} / BAM: ${bamCity})`, "success");
         }
@@ -1601,6 +1667,7 @@ HTML_PAGE = """<!DOCTYPE html>
             saveFavorites(favs);
             renderFavorites();
             renderTemplates();
+            checkNewVersionNotes();
         }
 
         function renderFavorites() {
@@ -1712,10 +1779,12 @@ HTML_PAGE = """<!DOCTYPE html>
                 activeBtn.classList.add("bg-blue-600", "text-white", "shadow-sm");
             }
             renderTemplates();
+            checkNewVersionNotes();
         }
 
         function filterTemplates() {
             renderTemplates();
+            checkNewVersionNotes();
         }
 
         async function openDirect(tplId) {
@@ -1847,6 +1916,7 @@ HTML_PAGE = """<!DOCTYPE html>
             updateLawyerDisplay();
             renderFavorites();
             renderTemplates();
+            checkNewVersionNotes();
         };
     </script>
 </body>

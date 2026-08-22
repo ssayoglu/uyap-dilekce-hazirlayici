@@ -1,5 +1,17 @@
 {
-  "version": "1.0.0",
+  "version": "1.2.0",
   "updated_at": "2026-08-22",
-  "author": "Av. Lütfi Serkan SAYOĞLU"
+  "author": "Av. Lütfi Serkan SAYOĞLU",
+  "changelog": [
+    "✨ Dinamik İl / Şehir ve Bağlı Bölge Adliye Mahkemesi (BAM/İstinaf) yapılandırması eklendi.",
+    "📑 Resmî formata uygun Avukatlık Yetki Belgesi şablonu ve UDF oluşturucusu eklendi.",
+    "💻 CMK m. 134 uyarınca Dijital Materyallerin İadesi Dilekçesi eklendi.",
+    "📋 Bilirkişi Raporuna Karşı Beyan, İtiraz ve Bilirkişinin Reddi şablonları eklendi.",
+    "⚖️ Adli Yardım Talebinin Reddini İtiraz ve HMK İstinaf usul şablonları eklendi.",
+    "👥 Dahili Davalı Ekleme, Tefrik, Tashih, Tavzih, Vekillikten Çekilme ve Adres Bildirim şablonları eklendi.",
+    "🛑 Davadan Feragat ve İstinaftan Feragat şablonları eklendi.",
+    "📏 Tüm dilekçelerde KONU ve başlık satır aralıkları standart 1.0 olarak eşitlendi.",
+    "🔍 Arama motoru doğrudan dilekçe başlıklarına odaklanacak şekilde hızlandırıldı.",
+    "🍏 macOS menü çubuğu (Status Bar) ve çökmesiz pencere yönetimi entegre edildi."
+  ]
 }
