@@ -16,6 +16,10 @@ mkdir -p "$DEST_APP/Contents/Resources"
 cp "$DIR/DilekceApp" "$DEST_APP/Contents/MacOS/DilekceApp"
 cp "$DIR/server.py" "$DEST_APP/Contents/Resources/server.py"
 cp "$DIR/version.json" "$DEST_APP/Contents/Resources/version.json" 2>/dev/null || true
+if [ -f "$DIR/AppIcon.icns" ]; then
+    cp "$DIR/AppIcon.icns" "$DEST_APP/Contents/Resources/AppIcon.icns"
+fi
+
 chmod +x "$DEST_APP/Contents/MacOS/DilekceApp"
 chmod +x "$DEST_APP/Contents/Resources/server.py"
 
@@ -26,6 +30,8 @@ cat << 'PLIST' > "$DEST_APP/Contents/Info.plist"
 <dict>
     <key>CFBundleExecutable</key>
     <string>DilekceApp</string>
+    <key>CFBundleIconFile</key>
+    <string>AppIcon</string>
     <key>CFBundleIdentifier</key>
     <string>com.avukat.dilekcehazirlayici</string>
     <key>CFBundleName</key>
@@ -35,7 +41,7 @@ cat << 'PLIST' > "$DEST_APP/Contents/Info.plist"
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
-    <string>1.0.0</string>
+    <string>1.3.0</string>
     <key>LSMinimumSystemVersion</key>
     <string>11.0</string>
     <key>NSHighResolutionCapable</key>

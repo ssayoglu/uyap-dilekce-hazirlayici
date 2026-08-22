@@ -59,6 +59,7 @@ mkdir -p "$TARGET_DIR/$APP_NAME/Contents/Resources"
 cp -f "$TARGET_DIR/DilekceApp" "$TARGET_DIR/$APP_NAME/Contents/MacOS/DilekceApp"
 cp -f "$TARGET_DIR/server.py" "$TARGET_DIR/$APP_NAME/Contents/Resources/server.py"
 cp -f "$TARGET_DIR/version.json" "$TARGET_DIR/$APP_NAME/Contents/Resources/version.json" 2>/dev/null || true
+cp -f "$TARGET_DIR/AppIcon.icns" "$TARGET_DIR/$APP_NAME/Contents/Resources/AppIcon.icns" 2>/dev/null || true
 chmod +x "$TARGET_DIR/$APP_NAME/Contents/MacOS/DilekceApp"
 chmod +x "$TARGET_DIR/$APP_NAME/Contents/Resources/server.py"
 
@@ -69,6 +70,8 @@ cat << 'PLIST' > "$TARGET_DIR/$APP_NAME/Contents/Info.plist"
 <dict>
     <key>CFBundleExecutable</key>
     <string>DilekceApp</string>
+    <key>CFBundleIconFile</key>
+    <string>AppIcon</string>
     <key>CFBundleIdentifier</key>
     <string>com.avukat.dilekcehazirlayici</string>
     <key>CFBundleName</key>
