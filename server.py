@@ -1844,76 +1844,76 @@ class RequestHandler(http.server.SimpleHTTPRequestHandler):
                 paragraphs.append((1, 0, "20.0", None, None, [("YETKİ BELGESİ\n", True, False, False)]))
                 
                 # 1. YETKİ BELGESİ VEREN AVUKAT/AVUKATLIK ORTAKLIĞI
-                paragraphs.append((0, "0.5", "5.0", None, tab_setting, [
+                paragraphs.append((0, "0.0", "5.0", None, tab_setting, [
                     ("YETKİ BELGESİ VEREN AVUKAT/\nAVUKATLIK ORTAKLIĞI", True, False, True),
                     ("\t", False, False, True),
                     (":\t", False, False, False),
                     (f"{m_ad}\n" if m_ad else "\n", False, False, False)
                 ]))
-                paragraphs.append((0, "0.5", "5.0", None, tab_setting, [
+                paragraphs.append((0, "0.0", "5.0", None, tab_setting, [
                     ("Baro ve Sicil No", False, False, False),
                     ("\t:\t", False, False, False),
                     (f"{data.get('m_baro', 'Mersin Barosu - [Sicil No]')}\n", False, False, False)
                 ]))
-                paragraphs.append((0, "0.5", "5.0", None, tab_setting, [
+                paragraphs.append((0, "0.0", "5.0", None, tab_setting, [
                     ("Vergi Dairesi ve Sicil No", False, False, False),
                     ("\t:\t", False, False, False),
                     (f"{data.get('m_vergi', '[Vergi Dairesi ve Sicil No]')}\n", False, False, False)
                 ]))
-                paragraphs.append((0, "0.5", "14.17", None, tab_setting, [
+                paragraphs.append((0, "0.0", "14.17", None, tab_setting, [
                     ("Adres", False, False, False),
                     ("\t:\t", False, False, False),
                     (f"{m_adres if m_adres else '[Adres]'}\n", False, False, False)
                 ]))
                 
                 # 2. YETKİLİ KILINAN AVUKAT
-                paragraphs.append((0, "0.5", "5.0", None, tab_setting, [
+                paragraphs.append((0, "0.0", "5.0", None, tab_setting, [
                     ("YETKİLİ KILINAN AVUKAT", True, False, True),
                     ("\t", False, False, True),
                     (":\t", False, False, False),
                     (f"{k_ad}\n" if k_ad else "\n", False, False, False)
                 ]))
-                paragraphs.append((0, "0.5", "5.0", None, tab_setting, [
+                paragraphs.append((0, "0.0", "5.0", None, tab_setting, [
                     ("Baro ve Sicil No", False, False, False),
                     ("\t:\t", False, False, False),
                     (f"{data.get('k_baro', 'Mersin Barosu - [Sicil No]')}\n", False, False, False)
                 ]))
-                paragraphs.append((0, "0.5", "5.0", None, tab_setting, [
+                paragraphs.append((0, "0.0", "5.0", None, tab_setting, [
                     ("Vergi Dairesi ve Sicil No", False, False, False),
                     ("\t:\t", False, False, False),
                     (f"{data.get('k_vergi', '[Vergi Dairesi ve Sicil No]')}\n", False, False, False)
                 ]))
-                paragraphs.append((0, "0.5", "14.17", None, tab_setting, [
+                paragraphs.append((0, "0.0", "14.17", None, tab_setting, [
                     ("Adres", False, False, False),
                     ("\t:\t", False, False, False),
                     (f"{data.get('k_adres', '[Adres]')}\n", False, False, False)
                 ]))
                 
                 # 3. VEKİL EDEN
-                paragraphs.append((0, "0.5", "5.0", None, tab_setting, [
+                paragraphs.append((0, "0.0", "5.0", None, tab_setting, [
                     ("VEKİL EDEN", True, False, True),
                     ("\t", False, False, True),
                     (":\t", False, False, False),
                     ("\n", False, False, False)
                 ]))
-                paragraphs.append((0, "0.5", "5.0", None, tab_setting, [
+                paragraphs.append((0, "0.0", "5.0", None, tab_setting, [
                     ("Ad ve Soyadı", False, False, False),
                     ("\t:\t", False, False, False),
                     (f"{data.get('asil_ad', '[Asil Ad ve Soyadı]')}\n", False, False, False)
                 ]))
-                paragraphs.append((0, "0.5", "5.0", None, tab_setting, [
+                paragraphs.append((0, "0.0", "5.0", None, tab_setting, [
                     ("Adres", False, False, False),
                     ("\t:\t", False, False, False),
                     (f"{data.get('asil_adres', '[Adres]')}\n", False, False, False)
                 ]))
-                paragraphs.append((0, "0.5", "14.17", None, tab_setting, [
+                paragraphs.append((0, "0.0", "14.17", None, tab_setting, [
                     ("Dayanak Vekaletname/Vekaletnameler\nNoter Tarih ve Yevmiye No", False, False, False),
                     ("\t:\t", False, False, False),
                     (f"{data.get('dayanak_noter', '[Noterlik, Tarih ve Yevmiye No]')}\n", False, False, False)
                 ]))
                 
                 # 4. YETKİ BELGESİNİN KAPSAMI
-                paragraphs.append((0, "0.5", "14.17", None, tab_setting, [
+                paragraphs.append((0, "0.0", "14.17", None, tab_setting, [
                     ("YETKİ BELGESİNİN KAPSAMI", True, False, True),
                     ("\t", False, False, True),
                     (":\t", False, False, False),
@@ -1963,7 +1963,7 @@ class RequestHandler(http.server.SimpleHTTPRequestHandler):
             # Dosya No
             if dosya:
                 dosya_etiket = "İCRA DOSYA NO" if ("İcra" in dosya or "İcra" in mahkeme) else "DOSYA NO"
-                paragraphs.append((0, "0.5", "5.0", None, tab_setting, [
+                paragraphs.append((0, "0.0", "5.0", None, tab_setting, [
                     (dosya_etiket, True, False, True),
                     ("\t", False, False, True),
                     (":\t", False, False, False),
@@ -1972,14 +1972,14 @@ class RequestHandler(http.server.SimpleHTTPRequestHandler):
                 
             # Müvekkil
             if m_sifat and m_ad:
-                paragraphs.append((0, "0.5", "0.0" if m_adres else "5.0", None, tab_setting, [
+                paragraphs.append((0, "0.0", "0.0" if m_adres else "5.0", None, tab_setting, [
                     (m_sifat, True, False, True),
                     ("\t", False, False, True),
                     (":\t", False, False, False),
                     (f"{m_ad}\n", True, False, False)
                 ]))
                 if m_adres:
-                    paragraphs.append((0, "0.5", "5.0", None, tab_setting, [
+                    paragraphs.append((0, "0.0", "5.0", None, tab_setting, [
                         ("", False, False, False),
                         ("\t\t", False, False, False),
                         (f"{m_adres}\n", False, True, False)
@@ -1987,7 +1987,7 @@ class RequestHandler(http.server.SimpleHTTPRequestHandler):
                     
             # Vekili
             if vekil:
-                paragraphs.append((0, "0.5", "5.0", None, tab_setting, [
+                paragraphs.append((0, "0.0", "5.0", None, tab_setting, [
                     ("VEKİLİ", True, False, True),
                     ("\t", False, False, True),
                     (":\t", False, False, False),
@@ -1996,14 +1996,14 @@ class RequestHandler(http.server.SimpleHTTPRequestHandler):
                 
             # Karşı Taraf
             if k_sifat and k_ad:
-                paragraphs.append((0, "0.5", "0.0" if k_vekil else "5.0", None, tab_setting, [
+                paragraphs.append((0, "0.0", "0.0" if k_vekil else "5.0", None, tab_setting, [
                     (k_sifat, True, False, True),
                     ("\t", False, False, True),
                     (":\t", False, False, False),
                     (f"{k_ad}\n", False, False, False)
                 ]))
                 if k_vekil:
-                    paragraphs.append((0, "0.5", "5.0", None, tab_setting, [
+                    paragraphs.append((0, "0.0", "5.0", None, tab_setting, [
                         ("VEKİLİ", True, False, True),
                         ("\t", False, False, True),
                         (":\t", False, False, False),
@@ -2012,7 +2012,7 @@ class RequestHandler(http.server.SimpleHTTPRequestHandler):
                     
             # Harca Esas Değer (H.E.D.)
             if hed:
-                paragraphs.append((0, "0.5", "5.0", None, tab_setting, [
+                paragraphs.append((0, "0.0", "5.0", None, tab_setting, [
                     ("DAVA DEĞERİ (H.E.D.)", True, False, True),
                     ("\t", False, False, True),
                     (":\t", False, False, False),
@@ -2021,7 +2021,7 @@ class RequestHandler(http.server.SimpleHTTPRequestHandler):
 
             # Konu (Satır Aralığı 1.0)
             if konu:
-                paragraphs.append((0, "1.0", "14.17", None, tab_setting, [
+                paragraphs.append((0, "0.0", "14.17", None, tab_setting, [
                     ("KONU", True, False, True),
                     ("\t", False, False, True),
                     (":\t", False, False, False),
@@ -2044,7 +2044,7 @@ class RequestHandler(http.server.SimpleHTTPRequestHandler):
                 
             # Hukuki Sebepler (Varsa)
             if hukuki_sebepler:
-                paragraphs.append((0, "0.5", "5.0", None, tab_setting, [
+                paragraphs.append((0, "0.0", "5.0", None, tab_setting, [
                     ("HUKUKİ SEBEPLER", True, False, True),
                     ("\t", False, False, True),
                     (":\t", False, False, False),
@@ -2053,7 +2053,7 @@ class RequestHandler(http.server.SimpleHTTPRequestHandler):
 
             # Hukuki Deliller (Varsa)
             if hukuki_deliller:
-                paragraphs.append((0, "0.5", "14.17", None, tab_setting, [
+                paragraphs.append((0, "0.0", "14.17", None, tab_setting, [
                     ("HUKUKİ DELİLLER", True, False, True),
                     ("\t", False, False, True),
                     (":\t", False, False, False),
