@@ -433,7 +433,7 @@ HTML_PAGE = """<!DOCTYPE html>
                 desc: "İcra inkar tazminatı talepli, takibe itirazın iptali ve takibin devamı davası.",
                 data: {
                     mahkeme: "MERSİN NÖBETÇİ ASLİYE HUKUK MAHKEMESİNE",
-                    talep: "%20 İCRA İNKÂR TAZMİNATI TALEPLİDİR",
+                    talep: "",
                     dosya: "Mersin ... İcra Dairesi - 2026/... E.",
                     m_sifat: "DAVACI (ALACAKLI)",
                     m_ad: "[Davacı Alacaklı Adı Soyadı - T.C. 12345678901]",
@@ -457,7 +457,7 @@ HTML_PAGE = """<!DOCTYPE html>
                 desc: "Kiralananın tahliyesi (tahliye taahhüdü / temerrüt) ve kira alacağı davası.",
                 data: {
                     mahkeme: "MERSİN NÖBETÇİ SULH HUKUK MAHKEMESİNE",
-                    talep: "TAHLİYE VE ALACAK TALEPLİDİR",
+                    talep: "",
                     dosya: "",
                     m_sifat: "DAVACI (KİRAYA VEREN)",
                     m_ad: "[Kiraya Veren Adı Soyadı - T.C. 12345678901]",
@@ -529,7 +529,7 @@ HTML_PAGE = """<!DOCTYPE html>
                 desc: "Kıdem, ihbar tazminatı, fazla mesai, UBGT ve yıllık izin alacakları davası.",
                 data: {
                     mahkeme: "MERSİN NÖBETÇİ İŞ MAHKEMESİNE",
-                    talep: "ARABULUCULUK SON TUTANAĞI EKTEDİR",
+                    talep: "",
                     dosya: "Arabuluculuk Büro No: 2026/...",
                     m_sifat: "DAVACI (İŞÇİ)",
                     m_ad: "[Davacı İşçi Adı Soyadı - T.C. 12345678901]",
@@ -553,7 +553,7 @@ HTML_PAGE = """<!DOCTYPE html>
                 desc: "Ayıplı mal/hizmet, sözleşmeden dönme ve bedel iadesi talepli tüketici davası.",
                 data: {
                     mahkeme: "MERSİN NÖBETÇİ TÜKETİCİ MAHKEMESİNE",
-                    talep: "ARABULUCULUK SON TUTANAĞI EKTEDİR",
+                    talep: "",
                     dosya: "",
                     m_sifat: "DAVACI (TÜKETİCİ)",
                     m_ad: "[Tüketici Müvekkil Adı Soyadı - T.C. 12345678901]",
@@ -651,7 +651,7 @@ HTML_PAGE = """<!DOCTYPE html>
                 desc: "Ara karar gereği beyan, müzekkere tekidi, duruşma günü veya dosya fotokopisi talebi.",
                 data: {
                     mahkeme: "MERSİN [..]. ASLİYE HUKUK MAHKEMESİNE",
-                    talep: "TALEPLERİMİZ HAKKINDADIR",
+                    talep: "",
                     dosya: "2026/... Esas",
                     m_sifat: "DAVACI / DAVALI",
                     m_ad: "[Müvekkil Adı Soyadı - T.C. 12345678901]",
@@ -675,7 +675,7 @@ HTML_PAGE = """<!DOCTYPE html>
                 desc: "Kısmi davada bilirkişi raporu sonrası ıslah hakkı tüketilmeden HMK 109/4 uyarınca talep artırımı ve tamamlama harcı.",
                 data: {
                     mahkeme: "MERSİN [..]. ASLİYE HUKUK MAHKEMESİNE",
-                    talep: "HMK m. 109/4 GEREĞİNCE TALEP ARTIRIMI VE TAMAMLAMA HARCI TALEBİDİR (ISLAH DEĞİLDİR)",
+                    talep: "",
                     dosya: "2026/... Esas",
                     m_sifat: "DAVACI",
                     m_ad: "[Davacı Müvekkil Adı Soyadı - T.C. 12345678901]",
@@ -819,7 +819,7 @@ HTML_PAGE = """<!DOCTYPE html>
                 desc: "Hatalı ve eksik bilirkişi raporuna itiraz ile ek rapor / yeni heyet incelemesi talebi.",
                 data: {
                     mahkeme: "MERSİN [..]. ASLİYE HUKUK MAHKEMESİNE",
-                    talep: "EK RAPOR / YENİ BİLİRKİŞİ HEYETİ TALEPLİDİR",
+                    talep: "",
                     dosya: "2026/... Esas",
                     m_sifat: "DAVACI / DAVALI",
                     m_ad: "[Müvekkil Adı Soyadı - T.C. 12345678901]",
@@ -843,7 +843,7 @@ HTML_PAGE = """<!DOCTYPE html>
                 desc: "HMK m. 281 uyarınca lehe olan bilirkişi raporuna muvafakat ve rapor doğrultusunda karar verilmesi talebi.",
                 data: {
                     mahkeme: "MERSİN [..]. ASLİYE HUKUK MAHKEMESİNE",
-                    talep: "BİLİRKİŞİ RAPORUNA BEYANLARIMIZDIR",
+                    talep: "",
                     dosya: "2026/... Esas",
                     m_sifat: "DAVACI / DAVALI",
                     m_ad: "[Müvekkil Adı Soyadı - T.C. 12345678901]",
@@ -867,7 +867,7 @@ HTML_PAGE = """<!DOCTYPE html>
                 desc: "HMK m. 281 uyarınca eksik, çelişkili veya hatalı bilirkişi raporuna itiraz ve ek/yeni bilirkişi incelemesi talebi.",
                 data: {
                     mahkeme: "MERSİN [..]. ASLİYE HUKUK MAHKEMESİNE",
-                    talep: "BİLİRKİŞİ RAPORUNA İTİRAZ VE EK RAPOR TALEBİDİR",
+                    talep: "",
                     dosya: "2026/... Esas",
                     m_sifat: "DAVACI / DAVALI",
                     m_ad: "[Müvekkil Adı Soyadı - T.C. 12345678901]",
@@ -891,7 +891,7 @@ HTML_PAGE = """<!DOCTYPE html>
                 desc: "HMK m. 272 uyarınca hâkimin reddi sebeplerine dayalı olarak tarafsızlığı şüpheli bilirkişinin reddi talebi.",
                 data: {
                     mahkeme: "MERSİN [..]. ASLİYE HUKUK MAHKEMESİNE",
-                    talep: "HMK m. 272 UYARINCA BİLİRKİŞİNİN REDDİ TALEBİDİR",
+                    talep: "",
                     dosya: "2026/... Esas",
                     m_sifat: "DAVACI / DAVALI",
                     m_ad: "[Müvekkil Adı Soyadı - T.C. 12345678901]",
@@ -915,7 +915,7 @@ HTML_PAGE = """<!DOCTYPE html>
                 desc: "HMK m. 337/2 uyarınca mahkemenin adli yardım talebini reddine karşı itiraz ve kararın kaldırılması talebi.",
                 data: {
                     mahkeme: "MERSİN [..+1]. ASLİYE HUKUK MAHKEMESİNE\\nGönderilmek Üzere\\nMERSİN [..]. ASLİYE HUKUK MAHKEMESİNE",
-                    talep: "HMK m. 337/2 UYARINCA ADLİ YARDIM TALEBİNİN REDDİNE İTİRAZDIR",
+                    talep: "",
                     dosya: "2026/... Esas",
                     m_sifat: "DAVACI / TALEP EDEN",
                     m_ad: "[Müvekkil Adı Soyadı - T.C. 12345678901]",
@@ -939,7 +939,7 @@ HTML_PAGE = """<!DOCTYPE html>
                 desc: "Mecburi dava arkadaşlığı veya husumet yöneltilmesi amacıyla davaya dahil etme talebi.",
                 data: {
                     mahkeme: "MERSİN [..]. ASLİYE HUKUK MAHKEMESİNE",
-                    talep: "DAHİLİ DAVALI EKLEME VE TEBLİGAT TALEBİDİR",
+                    talep: "",
                     dosya: "2026/... Esas",
                     m_sifat: "DAVACI",
                     m_ad: "[Davacı Müvekkil Adı Soyadı - T.C. 12345678901]",
@@ -963,7 +963,7 @@ HTML_PAGE = """<!DOCTYPE html>
                 desc: "HMK m. 304 uyarınca karardaki yazı, hesap veya isim hatalarının tashihi talebi.",
                 data: {
                     mahkeme: "MERSİN [..]. ASLİYE HUKUK MAHKEMESİNE",
-                    talep: "HMK m. 304 UYARINCA HÜKMÜN TASHİHİ TALEBİDİR",
+                    talep: "",
                     dosya: "2026/... E. - 2026/... K.",
                     m_sifat: "DAVACI / DAVALI",
                     m_ad: "[Müvekkil Adı Soyadı - T.C. 12345678901]",
@@ -987,7 +987,7 @@ HTML_PAGE = """<!DOCTYPE html>
                 desc: "HMK m. 305 uyarınca açık olmayan veya çelişkili fıkralar içeren hükmün tavzihi talebi.",
                 data: {
                     mahkeme: "MERSİN [..]. ASLİYE HUKUK MAHKEMESİNE",
-                    talep: "HMK m. 305 UYARINCA HÜKMÜN TAVZİHİ TALEBİDİR",
+                    talep: "",
                     dosya: "2026/... E. - 2026/... K.",
                     m_sifat: "DAVACI / DAVALI",
                     m_ad: "[Müvekkil Adı Soyadı - T.C. 12345678901]",
@@ -1011,7 +1011,7 @@ HTML_PAGE = """<!DOCTYPE html>
                 desc: "HMK m. 167 uyarınca yargılamanın daha hızlı yürümesi için davanın tefriki talebi.",
                 data: {
                     mahkeme: "MERSİN [..]. ASLİYE HUKUK MAHKEMESİNE",
-                    talep: "HMK m. 167 UYARINCA DAVANIN TEFRİKİ TALEBİDİR",
+                    talep: "",
                     dosya: "2026/... Esas",
                     m_sifat: "DAVACI / DAVALI",
                     m_ad: "[Müvekkil Adı Soyadı - T.C. 12345678901]",
@@ -1035,7 +1035,7 @@ HTML_PAGE = """<!DOCTYPE html>
                 desc: "Avukatlık Kanunu m. 41 ve HMK m. 82 uyarınca vekillik görevinden istifa bildirimi.",
                 data: {
                     mahkeme: "MERSİN [..]. ASLİYE HUKUK MAHKEMESİNE",
-                    talep: "VEKİLLİKTEN ÇEKİLME VE MÜVEKKİLE TEBLİGAT TALEBİDİR",
+                    talep: "",
                     dosya: "2026/... Esas",
                     m_sifat: "VEKİLLİKTEN ÇEKİLEN VEKİL",
                     m_ad: "Av. Lütfi Serkan SAYOĞLU",
@@ -1114,7 +1114,7 @@ HTML_PAGE = """<!DOCTYPE html>
                 desc: "HMK m. 307 vd. uyarınca vekaletteki özel yetkiye istinaden davadan feragat bildirimi.",
                 data: {
                     mahkeme: "MERSİN [..]. ASLİYE HUKUK MAHKEMESİNE",
-                    talep: "FERAGAT NEDENİYLE KARAR VERİLMESİ TALEBİDİR",
+                    talep: "",
                     dosya: "2026/... Esas",
                     m_sifat: "DAVACI",
                     m_ad: "[Davacı Müvekkil Adı Soyadı - T.C. 12345678901]",
@@ -1138,7 +1138,7 @@ HTML_PAGE = """<!DOCTYPE html>
                 desc: "HMK m. 349 uyarınca istinaf kanun yolundan feragat ve hükmün kesinleştirilmesi.",
                 data: {
                     mahkeme: "MERSİN [..]. ASLİYE HUKUK MAHKEMESİNE",
-                    talep: "KESİNLEŞME VE İSTİNAFTAN FERAGAT TALEBİDİR",
+                    talep: "",
                     dosya: "2026/... E. - 2026/... K.",
                     m_sifat: "İSTİNAFTAN FERAGAT EDEN",
                     m_ad: "[Müvekkil Adı Soyadı - T.C. 12345678901]",
@@ -1186,7 +1186,7 @@ HTML_PAGE = """<!DOCTYPE html>
                 desc: "HMK m. 346/2 uyarınca yerel mahkemenin istinaf başvurusunu ret kararına karşı BAM'a başvuru.",
                 data: {
                     mahkeme: "MERSİN BÖLGE ADLİYE MAHKEMESİ İLGİLİ HUKUK DAİRESİNE\\nGönderilmek Üzere\\nMERSİN [..]. ASLİYE HUKUK MAHKEMESİNE",
-                    talep: "HMK m. 346/2 UYARINCA İSTİNAF TALEBİNİN REDDİ KARARININ KALDIRILMASI TALEBİDİR",
+                    talep: "",
                     dosya: "2026/... E. - 2026/... K.",
                     m_sifat: "İSTİNAF EDEN (DAVACI / DAVALI)",
                     m_ad: "[Müvekkil Adı Soyadı - T.C. 12345678901]",
@@ -1210,7 +1210,7 @@ HTML_PAGE = """<!DOCTYPE html>
                 desc: "Bilirkişi raporu doğrultusunda dava değerinin ıslah edilmesi ve tamamlama harcı.",
                 data: {
                     mahkeme: "MERSİN [..]. ASLİYE HUKUK MAHKEMESİNE",
-                    talep: "HARÇ TAMAMLAMA MAKBUZU EKTEDİR",
+                    talep: "",
                     dosya: "2026/... Esas",
                     m_sifat: "DAVACI",
                     m_ad: "[Davacı Müvekkil Adı Soyadı - T.C. 12345678901]",
@@ -1308,7 +1308,7 @@ HTML_PAGE = """<!DOCTYPE html>
                 desc: "Kesinleşen icra takibinde borçlunun taşınır/taşınmaz mallarına haciz ve muhafaza talebi.",
                 data: {
                     mahkeme: "MERSİN ... İCRA DAİRESİNE",
-                    talep: "HACİZ VE MUHAFAZA TALEPLİDİR",
+                    talep: "",
                     dosya: "2026/... Esas",
                     m_sifat: "ALACAKLI VEKİLİ",
                     m_ad: "[Avukat Adı Soyadı]",
@@ -1430,7 +1430,7 @@ HTML_PAGE = """<!DOCTYPE html>
                 desc: "Esas hakkındaki mütalaaya karşı son savunma ve beraat talebi.",
                 data: {
                     mahkeme: "MERSİN [..]. ASLİYE CEZA MAHKEMESİNE",
-                    talep: "BERAAT TALEPLİDİR",
+                    talep: "",
                     dosya: "2026/... Esas",
                     m_sifat: "SANIK",
                     m_ad: "[Sanık Müvekkil Adı Soyadı - T.C. 12345678901]",
@@ -1454,7 +1454,7 @@ HTML_PAGE = """<!DOCTYPE html>
                 desc: "Ceza mahkemesi mahkumiyet kararının kaldırılarak beraat kararı verilmesi talebi.",
                 data: {
                     mahkeme: "MERSİN BÖLGE ADLİYE MAHKEMESİ İLGİLİ CEZA DAİRESİNE\\nGönderilmek Üzere\\nMERSİN [..]. ASLİYE CEZA MAHKEMESİNE",
-                    talep: "DURUŞMALI İNCELEME TALEPLİDİR",
+                    talep: "",
                     dosya: "2026/... E. - 2026/... K.",
                     m_sifat: "SANIK (İSTİNAF EDEN)",
                     m_ad: "[Sanık Müvekkil Adı Soyadı - T.C. 12345678901]",
@@ -1478,7 +1478,7 @@ HTML_PAGE = """<!DOCTYPE html>
                 desc: "CMK m. 134 uyarınca el konulan cep telefonu, bilgisayar ve dijital materyallerin imaj alma işlemi sonrası ivedi iadesi talebi.",
                 data: {
                     mahkeme: "MERSİN CUMHURİYET BAŞSAVCILIĞINA\\nGönderilmek Üzere\\nMERSİN [..]. ASLİYE CEZA MAHKEMESİNE",
-                    talep: "CMK m. 134 UYARINCA DİJİTAL MATERYALLERİN İVEDİ İADESİ TALEBİDİR",
+                    talep: "",
                     dosya: "Soruşturma No: 2026/... (veya 2026/... Esas)",
                     m_sifat: "ŞÜPHELİ / SANIK",
                     m_ad: "[Müvekkil Adı Soyadı - T.C. 12345678901]",
@@ -1502,7 +1502,7 @@ HTML_PAGE = """<!DOCTYPE html>
                 desc: "Gerekçeli karar tebliğine kadar istinaf başvuru süresini koruma talebi.",
                 data: {
                     mahkeme: "MERSİN BÖLGE ADLİYE MAHKEMESİ CEZA DAİRESİNE\\nGönderilmek Üzere\\nMERSİN [..]. ASLİYE CEZA MAHKEMESİNE",
-                    talep: "SÜRE TUTUM (MÜDDETİ MUHAFAZA) TALEBİDİR",
+                    talep: "",
                     dosya: "2026/... Esas",
                     m_sifat: "SANIK",
                     m_ad: "[Sanık Müvekkil Adı Soyadı - T.C. 12345678901]",
