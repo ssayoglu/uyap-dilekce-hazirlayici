@@ -129,17 +129,17 @@ HTML_PAGE = """<!DOCTYPE html>
         </div>
     </header>
 
-    <!-- Avukat Profili Modal -->
+    <!-- Avukat ve Şehir Profili Modal -->
     <div id="lawyerModal" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full p-6 space-y-4">
             <div class="flex items-center justify-between border-b border-slate-100 pb-3">
                 <h3 class="font-bold text-slate-900 text-base flex items-center gap-2">
-                    <span>👤</span> Avukat & Vekil Bilgileri
+                    <span>⚙️</span> Avukat & Varsayılan Şehir Ayarları
                 </h3>
                 <button onclick="closeLawyerModal()" class="text-slate-400 hover:text-slate-600 font-bold text-lg">✕</button>
             </div>
             <p class="text-xs text-slate-500 leading-relaxed">
-                Buraya gireceğiniz bilgiler tüm dilekçelerde <strong>VEKİLİ</strong> alanında ve imza bloğunda otomatik olarak kullanılacaktır.
+                Buraya gireceğiniz bilgiler tüm dilekçelerde <strong>VEKİLİ</strong>, imza bloğu, <strong>Yerel Mahkemeler</strong> ve <strong>Bölge Adliye Mahkemesi (İstinaf)</strong> başlıklarında dinamik olarak kullanılır.
             </p>
             <div class="space-y-3">
                 <div>
@@ -149,6 +149,16 @@ HTML_PAGE = """<!DOCTYPE html>
                 <div>
                     <label class="block text-xs font-bold text-slate-700 mb-1">UETS / Ek İletişim Bilgisi:</label>
                     <input type="text" id="modalLawyerExtra" placeholder="Örn: UETS [16153-51280-36854]" class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm font-medium text-slate-800 focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div class="grid grid-cols-2 gap-3 pt-1">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Varsayılan İl / Şehir:</label>
+                        <input type="text" id="modalLawyerCity" placeholder="Örn: MERSİN" class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm font-semibold text-slate-900 focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Bağlı Olduğu BAM (İstinaf):</label>
+                        <input type="text" id="modalLawyerBamCity" placeholder="Örn: ADANA" class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm font-semibold text-slate-900 focus:ring-2 focus:ring-blue-500">
+                    </div>
                 </div>
             </div>
             <div class="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
@@ -343,16 +353,27 @@ HTML_PAGE = """<!DOCTYPE html>
         const DELILLER_DEFAULT = "Sözleşmeler, faturalar, banka kayıtları, ticari defterler, tanık, bilirkişi, yemin ve sair hukuki deliller.";
         const SEBEPLER_DEFAULT = "HMK, TBK, TTK, TMK, İİK ve ilgili mevzuat.";
 
-        // Avukat Profili Yönetimi
+        // Avukat ve Şehir Profili Yönetimi
         const DEFAULT_LAWYER = {
             name: "Av. Lütfi Serkan SAYOĞLU",
-            extra: "UETS [16153-51280-36854]"
+            extra: "UETS [16153-51280-36854]",
+            city: "MERSİN",
+            bamCity: "ADANA"
         };
 
         function getLawyerProfile() {
             try {
                 const lp = localStorage.getItem("dilekce_lawyer_profile");
-                return lp ? JSON.parse(lp) : DEFAULT_LAWYER;
+                if (lp) {
+                    const parsed = JSON.parse(lp);
+                    return {
+                        name: parsed.name || DEFAULT_LAWYER.name,
+                        extra: parsed.extra !== undefined ? parsed.extra : DEFAULT_LAWYER.extra,
+                        city: (parsed.city || DEFAULT_LAWYER.city).toUpperCase(),
+                        bamCity: (parsed.bamCity || DEFAULT_LAWYER.bamCity).toUpperCase()
+                    };
+                }
+                return DEFAULT_LAWYER;
             } catch (e) {
                 return DEFAULT_LAWYER;
             }
@@ -368,10 +389,34 @@ HTML_PAGE = """<!DOCTYPE html>
             return lp.name;
         }
 
+        function formatMahkemeForCity(rawMahkeme) {
+            if (!rawMahkeme) return "";
+            const lp = getLawyerProfile();
+            const city = lp.city || "MERSİN";
+            const bamCity = lp.bamCity || "ADANA";
+
+            let res = rawMahkeme;
+            // 1. Replace BAM / Bölge Adliye mentions first with bamCity
+            res = res.replace(/ADANA BÖLGE ADLİYE MAHKEMESİ/g, `${bamCity} BÖLGE ADLİYE MAHKEMESİ`);
+            res = res.replace(/ADANA BÖLGE ADLİYE MAHKEMESİ/g, `${bamCity} BÖLGE ADLİYE MAHKEMESİ`);
+            
+            // 2. Replace Local city mentions
+            res = res.replace(/MERSİN/g, city);
+            return res;
+        }
+
+        function formatDataForCity(dataObj) {
+            const copy = { ...dataObj };
+            if (copy.mahkeme) copy.mahkeme = formatMahkemeForCity(copy.mahkeme);
+            if (copy.konu) copy.konu = formatMahkemeForCity(copy.konu);
+            if (copy.aciklama) copy.aciklama = formatMahkemeForCity(copy.aciklama);
+            return copy;
+        }
+
         function updateLawyerDisplay() {
             const lp = getLawyerProfile();
-            document.getElementById("activeLawyerHeader").textContent = lp.name;
-            document.getElementById("footerLawyer").textContent = lp.name;
+            document.getElementById("activeLawyerHeader").textContent = `${lp.name} (${lp.city})`;
+            document.getElementById("footerLawyer").textContent = `${lp.name} • ${lp.city}`;
             const vekilInput = document.getElementById("vekil");
             if (vekilInput) {
                 vekilInput.value = getLawyerFullText();
@@ -382,6 +427,8 @@ HTML_PAGE = """<!DOCTYPE html>
             const lp = getLawyerProfile();
             document.getElementById("modalLawyerName").value = lp.name;
             document.getElementById("modalLawyerExtra").value = lp.extra || "";
+            document.getElementById("modalLawyerCity").value = lp.city || "MERSİN";
+            document.getElementById("modalLawyerBamCity").value = lp.bamCity || "ADANA";
             document.getElementById("lawyerModal").classList.remove("hidden");
         }
 
@@ -392,11 +439,16 @@ HTML_PAGE = """<!DOCTYPE html>
         function saveLawyerProfile() {
             const name = document.getElementById("modalLawyerName").value.trim() || DEFAULT_LAWYER.name;
             const extra = document.getElementById("modalLawyerExtra").value.trim();
-            const lp = { name, extra };
+            const city = (document.getElementById("modalLawyerCity").value.trim() || DEFAULT_LAWYER.city).toUpperCase();
+            const bamCity = (document.getElementById("modalLawyerBamCity").value.trim() || DEFAULT_LAWYER.bamCity).toUpperCase();
+            
+            const lp = { name, extra, city, bamCity };
             localStorage.setItem("dilekce_lawyer_profile", JSON.stringify(lp));
             updateLawyerDisplay();
+            renderFavorites();
+            renderTemplates();
             closeLawyerModal();
-            showToast(`✅ Avukat bilgileri '${name}' olarak güncellendi!`, "success");
+            showToast(`✅ Bilgiler güncellendi: ${name} (${city} / BAM: ${bamCity})`, "success");
         }
 
         const TEMPLATES = [
@@ -794,7 +846,7 @@ HTML_PAGE = """<!DOCTYPE html>
                 title: "İstinaf Başvuru Dilekçesi (Tehiri İcra)",
                 desc: "Yerel mahkeme kararının kaldırılması ve tehir-i icra talepli istinaf başvurusu.",
                 data: {
-                    mahkeme: "MERSİN BÖLGE ADLİYE MAHKEMESİ İLGİLİ HUKUK DAİRESİNE\\nGönderilmek Üzere\\nMERSİN [..]. ASLİYE HUKUK MAHKEMESİNE",
+                    mahkeme: "ADANA BÖLGE ADLİYE MAHKEMESİ İLGİLİ HUKUK DAİRESİNE\\nGönderilmek Üzere\\nMERSİN [..]. ASLİYE HUKUK MAHKEMESİNE",
                     talep: "TEHİR-İ İCRA (İCRANIN GERİ BIRAKILMASI) TALEPLİDİR",
                     dosya: "2026/... E. - 2026/... K.",
                     m_sifat: "İSTİNAF EDEN (DAVALI)",
@@ -1161,7 +1213,7 @@ HTML_PAGE = """<!DOCTYPE html>
                 title: "İstinaf Dilekçesine Cevap Dilekçesi",
                 desc: "HMK m. 347 uyarınca davalının/davacının istinaf başvurusuna karşı esastan ret cevabı.",
                 data: {
-                    mahkeme: "MERSİN BÖLGE ADLİYE MAHKEMESİ İLGİLİ HUKUK DAİRESİNE\\nGönderilmek Üzere\\nMERSİN [..]. ASLİYE HUKUK MAHKEMESİNE",
+                    mahkeme: "ADANA BÖLGE ADLİYE MAHKEMESİ İLGİLİ HUKUK DAİRESİNE\\nGönderilmek Üzere\\nMERSİN [..]. ASLİYE HUKUK MAHKEMESİNE",
                     talep: "",
                     dosya: "2026/... E. - 2026/... K.",
                     m_sifat: "İSTİNAFA CEVAP VEREN",
@@ -1185,7 +1237,7 @@ HTML_PAGE = """<!DOCTYPE html>
                 title: "İstinaf Reddi Kararına İtiraz / İstinaf Dilekçesi",
                 desc: "HMK m. 346/2 uyarınca yerel mahkemenin istinaf başvurusunu ret kararına karşı BAM'a başvuru.",
                 data: {
-                    mahkeme: "MERSİN BÖLGE ADLİYE MAHKEMESİ İLGİLİ HUKUK DAİRESİNE\\nGönderilmek Üzere\\nMERSİN [..]. ASLİYE HUKUK MAHKEMESİNE",
+                    mahkeme: "ADANA BÖLGE ADLİYE MAHKEMESİ İLGİLİ HUKUK DAİRESİNE\\nGönderilmek Üzere\\nMERSİN [..]. ASLİYE HUKUK MAHKEMESİNE",
                     talep: "",
                     dosya: "2026/... E. - 2026/... K.",
                     m_sifat: "İSTİNAF EDEN (DAVACI / DAVALI)",
@@ -1453,7 +1505,7 @@ HTML_PAGE = """<!DOCTYPE html>
                 title: "Ceza İstinaf Başvuru Dilekçesi",
                 desc: "Ceza mahkemesi mahkumiyet kararının kaldırılarak beraat kararı verilmesi talebi.",
                 data: {
-                    mahkeme: "MERSİN BÖLGE ADLİYE MAHKEMESİ İLGİLİ CEZA DAİRESİNE\\nGönderilmek Üzere\\nMERSİN [..]. ASLİYE CEZA MAHKEMESİNE",
+                    mahkeme: "ADANA BÖLGE ADLİYE MAHKEMESİ İLGİLİ CEZA DAİRESİNE\\nGönderilmek Üzere\\nMERSİN [..]. ASLİYE CEZA MAHKEMESİNE",
                     talep: "",
                     dosya: "2026/... E. - 2026/... K.",
                     m_sifat: "SANIK (İSTİNAF EDEN)",
@@ -1501,7 +1553,7 @@ HTML_PAGE = """<!DOCTYPE html>
                 title: "Ceza Süre Tutum (Müddeti Muhafaza) Dilekçesi",
                 desc: "Gerekçeli karar tebliğine kadar istinaf başvuru süresini koruma talebi.",
                 data: {
-                    mahkeme: "MERSİN BÖLGE ADLİYE MAHKEMESİ CEZA DAİRESİNE\\nGönderilmek Üzere\\nMERSİN [..]. ASLİYE CEZA MAHKEMESİNE",
+                    mahkeme: "ADANA BÖLGE ADLİYE MAHKEMESİ CEZA DAİRESİNE\\nGönderilmek Üzere\\nMERSİN [..]. ASLİYE CEZA MAHKEMESİNE",
                     talep: "",
                     dosya: "2026/... Esas",
                     m_sifat: "SANIK",
@@ -1672,8 +1724,9 @@ HTML_PAGE = """<!DOCTYPE html>
 
             showToast(`⏳ ${t.title} UYAP'ta açılıyor...`, "info");
             
+            const formattedData = formatDataForCity(t.data);
             const payload = {
-                ...t.data,
+                ...formattedData,
                 vekil: getLawyerFullText(),
                 avukat_imza: getLawyerSignatureName(),
                 open_after: true
@@ -1700,22 +1753,23 @@ HTML_PAGE = """<!DOCTYPE html>
             const t = TEMPLATES.find(x => x.id === tplId);
             if (!t) return;
 
+            const fd = formatDataForCity(t.data);
             document.getElementById("formTitleBadge").textContent = `${t.icon} ${t.title}`;
-            document.getElementById("mahkeme").value = t.data.mahkeme || "";
-            document.getElementById("talep").value = t.data.talep || "";
-            document.getElementById("dosya").value = t.data.dosya || "";
-            document.getElementById("m_sifat").value = t.data.m_sifat || "";
-            document.getElementById("m_ad").value = t.data.m_ad || "";
-            document.getElementById("m_adres").value = t.data.m_adres || "";
+            document.getElementById("mahkeme").value = fd.mahkeme || "";
+            document.getElementById("talep").value = fd.talep || "";
+            document.getElementById("dosya").value = fd.dosya || "";
+            document.getElementById("m_sifat").value = fd.m_sifat || "";
+            document.getElementById("m_ad").value = fd.m_ad || "";
+            document.getElementById("m_adres").value = fd.m_adres || "";
             document.getElementById("vekil").value = getLawyerFullText();
-            document.getElementById("k_sifat").value = t.data.k_sifat || "";
-            document.getElementById("k_ad").value = t.data.k_ad || "";
-            document.getElementById("k_vekil").value = t.data.k_vekil || "";
-            document.getElementById("hed").value = t.data.hed || "";
-            document.getElementById("konu").value = t.data.konu || "";
-            document.getElementById("aciklama").value = t.data.aciklama || "";
-            document.getElementById("hukuki_sebepler").value = t.data.hukuki_sebepler || SEBEPLER_DEFAULT;
-            document.getElementById("hukuki_deliller").value = t.data.hukuki_deliller || DELILLER_DEFAULT;
+            document.getElementById("k_sifat").value = fd.k_sifat || "";
+            document.getElementById("k_ad").value = fd.k_ad || "";
+            document.getElementById("k_vekil").value = fd.k_vekil || "";
+            document.getElementById("hed").value = fd.hed || "";
+            document.getElementById("konu").value = fd.konu || "";
+            document.getElementById("aciklama").value = fd.aciklama || "";
+            document.getElementById("hukuki_sebepler").value = fd.hukuki_sebepler || SEBEPLER_DEFAULT;
+            document.getElementById("hukuki_deliller").value = fd.hukuki_deliller || DELILLER_DEFAULT;
 
             document.getElementById("galleryView").classList.add("hidden");
             document.getElementById("formView").classList.remove("hidden");
