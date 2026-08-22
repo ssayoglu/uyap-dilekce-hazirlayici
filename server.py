@@ -102,10 +102,12 @@ HTML_PAGE = """<!DOCTYPE html>
     <style>
         body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; user-select: none; }
         input, textarea, select { user-select: text; }
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
 <body class="bg-slate-100 min-h-screen text-slate-800 flex flex-col justify-between">
@@ -241,18 +243,18 @@ HTML_PAGE = """<!DOCTYPE html>
         </div>
 
                         <!-- Arama ve Kategori Filtreleme -->
-        <div class="flex flex-col md:flex-row items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
-            <div class="relative w-full md:w-80">
+        <div class="flex flex-col lg:flex-row items-center justify-between gap-3.5 bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm">
+            <div class="relative w-full lg:w-72 flex-shrink-0">
                 <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">🔍</span>
-                <input type="text" id="searchInput" oninput="filterTemplates()" placeholder="Tüm şablonlarda ara (Savunma, Delil, İstinaf...)" class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                <input type="text" id="searchInput" oninput="filterTemplates()" placeholder="Tüm şablonlarda ara (Savunma, Delil...)" class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
             </div>
-            <div class="flex items-center gap-1.5 overflow-x-auto w-full md:w-auto pb-1 md:pb-0">
-                <button onclick="setCategory('all')" id="cat_all" class="cat-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-blue-600 text-white shadow-sm transition whitespace-nowrap">Tümü (47)</button>
-                <button onclick="setCategory('hukuk_dava')" id="cat_hukuk_dava" class="cat-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition whitespace-nowrap">🏛️ Dava Dilekçeleri</button>
-                <button onclick="setCategory('hukuk_talep')" id="cat_hukuk_talep" class="cat-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition whitespace-nowrap">📝 Cevap / Delil / İstinaf</button>
-                <button onclick="setCategory('ceza')" id="cat_ceza" class="cat-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition whitespace-nowrap">🛡️ Ceza & Savcılık</button>
-                <button onclick="setCategory('icra')" id="cat_icra" class="cat-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition whitespace-nowrap">⚖️ İcra & İflas</button>
-                <button onclick="setCategory('ozel_dava')" id="cat_ozel_dava" class="cat-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition whitespace-nowrap">💰 Özel Dava Türleri</button>
+            <div class="flex flex-wrap items-center justify-start lg:justify-end gap-2 w-full">
+                <button onclick="setCategory('all')" id="cat_all" class="cat-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-blue-600 text-white shadow-sm transition">Tümü (47)</button>
+                <button onclick="setCategory('hukuk_dava')" id="cat_hukuk_dava" class="cat-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition">🏛️ Dava Dilekçeleri</button>
+                <button onclick="setCategory('hukuk_talep')" id="cat_hukuk_talep" class="cat-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition">📝 Cevap / Delil / İstinaf</button>
+                <button onclick="setCategory('ceza')" id="cat_ceza" class="cat-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition">🛡️ Ceza & Savcılık</button>
+                <button onclick="setCategory('icra')" id="cat_icra" class="cat-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition">⚖️ İcra & İflas</button>
+                <button onclick="setCategory('ozel_dava')" id="cat_ozel_dava" class="cat-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition">💰 Özel Dava Türleri</button>
             </div>
         </div>
 
