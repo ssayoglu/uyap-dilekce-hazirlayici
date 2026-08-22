@@ -170,6 +170,59 @@ HTML_PAGE = """<!DOCTYPE html>
         </div>
     </div>
 
+        <!-- Mahkeme Seçim Modalı (Hızlı Açılış İçin) -->
+    <div id="courtPickerModal" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full p-6 space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div class="flex items-center gap-2">
+                    <span class="text-xl">⚖️</span>
+                    <div>
+                        <h3 class="font-bold text-slate-900 text-sm" id="courtModalTitle">Mahkeme Türünü Seçin</h3>
+                        <p class="text-[11px] text-slate-500">Şablon başlığı seçtiğiniz mahkemeye göre otomatik uyarlanacaktır.</p>
+                    </div>
+                </div>
+                <button onclick="closeCourtPickerModal()" class="text-slate-400 hover:text-slate-600 font-bold text-lg">✕</button>
+            </div>
+            <div class="grid grid-cols-2 gap-2.5" id="courtOptionsGrid">
+                <button onclick="selectCourtAndGenerate('ASLİYE HUKUK')" class="p-3 text-left rounded-xl border border-slate-200 hover:border-blue-500 hover:bg-blue-50 transition">
+                    <div class="font-bold text-xs text-slate-900">🏛️ Asliye Hukuk</div>
+                    <div class="text-[10px] text-slate-500">Genel Hukuk Davaları</div>
+                </button>
+                <button onclick="selectCourtAndGenerate('SULH HUKUK')" class="p-3 text-left rounded-xl border border-slate-200 hover:border-blue-500 hover:bg-blue-50 transition">
+                    <div class="font-bold text-xs text-slate-900">🏠 Sulh Hukuk</div>
+                    <div class="text-[10px] text-slate-500">Kira / Tahliye / İzale-i Şuyu</div>
+                </button>
+                <button onclick="selectCourtAndGenerate('İŞ')" class="p-3 text-left rounded-xl border border-slate-200 hover:border-blue-500 hover:bg-blue-50 transition">
+                    <div class="font-bold text-xs text-slate-900">👷 İş Mahkemesi</div>
+                    <div class="text-[10px] text-slate-500">İşçilik & Kıdem</div>
+                </button>
+                <button onclick="selectCourtAndGenerate('AİLE')" class="p-3 text-left rounded-xl border border-slate-200 hover:border-blue-500 hover:bg-blue-50 transition">
+                    <div class="font-bold text-xs text-slate-900">💍 Aile Mahkemesi</div>
+                    <div class="text-[10px] text-slate-500">Boşanma & Nafaka</div>
+                </button>
+                <button onclick="selectCourtAndGenerate('TÜKETİCİ')" class="p-3 text-left rounded-xl border border-slate-200 hover:border-blue-500 hover:bg-blue-50 transition">
+                    <div class="font-bold text-xs text-slate-900">🛒 Tüketici Mahkemesi</div>
+                    <div class="text-[10px] text-slate-500">Ayıplı Mal & İade</div>
+                </button>
+                <button onclick="selectCourtAndGenerate('İCRA HUKUK')" class="p-3 text-left rounded-xl border border-slate-200 hover:border-blue-500 hover:bg-blue-50 transition">
+                    <div class="font-bold text-xs text-slate-900">⚖️ İcra Hukuk</div>
+                    <div class="text-[10px] text-slate-500">Şikayet & İtiraz</div>
+                </button>
+                <button onclick="selectCourtAndGenerate('ASLİYE CEZA')" class="p-3 text-left rounded-xl border border-slate-200 hover:border-blue-500 hover:bg-blue-50 transition">
+                    <div class="font-bold text-xs text-slate-900">🛡️ Asliye Ceza</div>
+                    <div class="text-[10px] text-slate-500">Ceza Mahkemesi</div>
+                </button>
+                <button onclick="selectCourtAndGenerate('AĞIR CEZA')" class="p-3 text-left rounded-xl border border-slate-200 hover:border-blue-500 hover:bg-blue-50 transition">
+                    <div class="font-bold text-xs text-slate-900">🏛️ Ağır Ceza</div>
+                    <div class="text-[10px] text-slate-500">Ağır Ceza Mahkemesi</div>
+                </button>
+            </div>
+            <div class="pt-2 border-t border-slate-100 flex justify-end">
+                <button onclick="closeCourtPickerModal()" class="px-4 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold">Vazgeç</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Bildirim Bildirisi -->
     <div id="toast" class="fixed bottom-6 right-6 z-50 hidden max-w-md p-4 rounded-xl shadow-xl text-sm font-semibold transition-all transform duration-300"></div>
 
@@ -190,32 +243,19 @@ HTML_PAGE = """<!DOCTYPE html>
             </div>
         </div>
 
-        <!-- Arama ve Filtreleme -->
+                <!-- Arama ve Mahkeme Filtreleme -->
         <div class="flex flex-col md:flex-row items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
             <div class="relative w-full md:w-80">
                 <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">🔍</span>
-                <input type="text" id="searchInput" oninput="filterTemplates()" placeholder="Tüm şablonlarda ara..." class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                <input type="text" id="searchInput" oninput="filterTemplates()" placeholder="Tüm şablonlarda ara (Savunma, Delil, İstinaf...)" class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
             </div>
-            <div class="flex flex-col gap-2 w-full md:w-auto">
-                <!-- Ana Kategoriler -->
-                <div class="flex items-center gap-1.5 overflow-x-auto pb-1">
-                    <button onclick="setMainCategory('all')" id="mcat_all" class="mcat-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-blue-600 text-white shadow-sm transition">Tümü</button>
-                    <button onclick="setMainCategory('hukuk')" id="mcat_hukuk" class="mcat-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 transition">🏛️ Hukuk Mahkemeleri</button>
-                    <button onclick="setMainCategory('ozel_dava')" id="mcat_ozel_dava" class="mcat-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 transition">💰 Özel Dava Türleri</button>
-                    <button onclick="setMainCategory('ceza')" id="mcat_ceza" class="mcat-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 transition">⚖️ Ceza & Savcılık</button>
-                </div>
-                <!-- Alt Kategoriler -->
-                <div id="subCategoryBar" class="flex items-center gap-1.5 overflow-x-auto pt-1 border-t border-slate-100">
-                    <button onclick="setCategory('all')" id="cat_all" class="cat-btn px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-slate-800 text-white transition">Tümü</button>
-                    <button onclick="setCategory('asliye_hukuk')" id="cat_asliye_hukuk" class="cat-btn px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 transition">Asliye Hukuk</button>
-                    <button onclick="setCategory('sulh_hukuk')" id="cat_sulh_hukuk" class="cat-btn px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 transition">Sulh Hukuk</button>
-                    <button onclick="setCategory('ozel_dava')" id="cat_ozel_dava" class="cat-btn px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 transition">Özel Davalar</button>
-                    <button onclick="setCategory('icra_hukuk')" id="cat_icra_hukuk" class="cat-btn px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 transition">İcra Hukuk</button>
-                    <button onclick="setCategory('asliye_ceza')" id="cat_asliye_ceza" class="cat-btn px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 transition">Asliye Ceza</button>
-                    <button onclick="setCategory('agir_ceza')" id="cat_agir_ceza" class="cat-btn px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 transition">Ağır Ceza</button>
-                    <button onclick="setCategory('icra_ceza')" id="cat_icra_ceza" class="cat-btn px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 transition">İcra Ceza</button>
-                    <button onclick="setCategory('savcilik')" id="cat_savcilik" class="cat-btn px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 transition">Savcılık</button>
-                </div>
+            <div class="flex items-center gap-1.5 overflow-x-auto w-full md:w-auto pb-1 md:pb-0">
+                <button onclick="setCategory('all')" id="cat_all" class="cat-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-blue-600 text-white shadow-sm transition whitespace-nowrap">Tümü (46)</button>
+                <button onclick="setCategory('hukuk_dava')" id="cat_hukuk_dava" class="cat-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition whitespace-nowrap">🏛️ Dava Dilekçeleri</button>
+                <button onclick="setCategory('ozel_dava')" id="cat_ozel_dava" class="cat-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition whitespace-nowrap">💰 Alacak & Özel Davalar</button>
+                <button onclick="setCategory('hukuk_talep')" id="cat_hukuk_talep" class="cat-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition whitespace-nowrap">📝 Cevap / Delil / İstinaf</button>
+                <button onclick="setCategory('ceza')" id="cat_ceza" class="cat-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition whitespace-nowrap">🛡️ Ceza & Savcılık</button>
+                <button onclick="setCategory('icra')" id="cat_icra" class="cat-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition whitespace-nowrap">⚖️ İcra & İflas</button>
             </div>
         </div>
 
@@ -492,814 +532,1125 @@ HTML_PAGE = """<!DOCTYPE html>
         }
 
         const TEMPLATES = [
+            // --- HUKUK DAVA DİLEKÇELERİ ---
             {
-                        "id": "asliye_hukuk_dava",
-                        "category": "asliye_hukuk",
-                        "main_cat": "hukuk",
-                        "icon": "⚖️",
-                        "title": "Asliye Hukuk Dava Dilekçesi",
-                        "desc": "Asliye Hukuk Mahkemesi genel dava açılış dilekçesi (H.E.D., deliller, ihtiyati tedbir).",
-                        "data": {
-                                    "mahkeme": "MERSİN NÖBETÇİ ASLİYE HUKUK MAHKEMESİNE",
-                                    "talep": "İHTİYATİ TEDBİR TALEPLİDİR",
-                                    "dosya": "",
-                                    "m_sifat": "DAVACI",
-                                    "m_ad": "[Davacı Müvekkil Adı Soyadı - T.C. 12345678901]",
-                                    "m_adres": "[Davacı Müvekkil Adresi]",
-                                    "k_sifat": "DAVALI",
-                                    "k_ad": "[Davalı Adı Soyadı / Unvanı]",
-                                    "k_vekil": "[Varsa Davalı Vekili]",
-                                    "hed": "10.000,00 TL (Fazlaya ilişkin haklarımız saklıdır)",
-                                    "konu": "Davamızın kabulü ile alacağımızın yasal faiziyle tahsili ve ihtiyati tedbir talebimizdir.",
-                                    "aciklama": "1- Taraflar arasındaki hukuki ilişkiden doğan edimler davalı tarafından ifa edilmemiştir.\\n2- Müvekkilin uğradığı zararın tazmini amacıyla işbu davanın açılması zorunluluğu doğmuştur.\\n3- Alacağın temini için davalının malvarlığına ihtiyati tedbir konulmasını talep ederiz.",
-                                    "hukuki_sebepler": "TBK, HMK, TTK ve ilgili mevzuat.",
-                                    "hukuki_deliller": "Sözleşme, faturalar, banka kayıtları, tanık, bilirkişi, yemin ve her türlü yasal delil.",
-                                    "sonuc": "Davamızın KABULÜNE, alacağımızın temerrüt faiziyle tahsiline, tedbir talebimizin kabulüne karar verilmesini vekâleten saygıyla arz ve talep ederiz."
-                        }
+                id: "alacak_dava",
+                category: "ozel_dava",
+                icon: "📄",
+                title: "Dava Dilekçesi (Alacak & Tazminat)",
+                desc: "H.E.D., tanık, bilirkişi, yemin delilleri ve ihtiyati tedbir talepli genel dava dilekçesi.",
+                data: {
+                    mahkeme: "MERSİN NÖBETÇİ ASLİYE HUKUK MAHKEMESİNE",
+                    talep: "İHTİYATİ TEDBİR TALEPLİDİR",
+                    dosya: "",
+                    m_sifat: "DAVACI",
+                    m_ad: "[Davacı Müvekkil Adı Soyadı - T.C. 12345678901]",
+                    m_adres: "[Davacı Müvekkil Adresi]",
+                    k_sifat: "DAVALI",
+                    k_ad: "[Davalı Adı Soyadı / Unvanı - T.C. / Vergi No]",
+                    k_vekil: "[Varsa Davalı Vekili]",
+                    hed: "10.000,00 TL (Fazlaya ilişkin haklarımız saklı kalmak kaydıyla)",
+                    konu: "Müvekkilin ödenmeyen alacağının ve ticari/maddi tazminatın faiziyle birlikte tahsili talebidir.",
+                    aciklama: "1- Müvekkil ile davalı taraf arasındaki ticari/hukuki ilişkiden doğan alacak vadesinde ödenmemiştir.\\n2- Davalıya gönderilen ihtarlara rağmen borç ifa edilmemiş olup dava açma zorunluluğu hasıl olmuştur.\\n3- Alacağın tahsilinin temini için davalının malvarlığı üzerine ihtiyati tedbir konulmasını talep ederiz.",
+                    hukuki_sebepler: "TBK, HMK, TTK ve ilgili mevzuat.",
+                    hukuki_deliller: "Sözleşme, faturalar, banka kayıtları, yazışmalar, tanık, bilirkişi, yemin ve sair hukuki deliller.",
+                    sonuc: "Yukarıda arz ve izah edilen nedenlerle; fazlaya ilişkin haklarımız saklı kalmak kaydıyla DAVAMIZIN KABULÜNE, alacağımızın temerrüt tarihinden itibaren işleyecek faiziyle birlikte tahsiline, yargılama giderleri ve vekâlet ücretinin davalıya yükletilmesine karar verilmesini saygıyla vekâleten arz ve talep ederiz."
+                }
             },
             {
-                        "id": "asliye_hukuk_cevap",
-                        "category": "asliye_hukuk",
-                        "main_cat": "hukuk",
-                        "icon": "📝",
-                        "title": "Asliye Hukuk Cevap Dilekçesi",
-                        "desc": "Asliye Hukuk Mahkemesi davalarına karşı ilk itirazlar ve esasa cevaplar.",
-                        "data": {
-                                    "mahkeme": "MERSİN [..]. ASLİYE HUKUK MAHKEMESİNE",
-                                    "talep": "",
-                                    "dosya": "2026/... Esas",
-                                    "m_sifat": "DAVALI",
-                                    "m_ad": "[Davalı Müvekkil Adı Soyadı - T.C. 12345678901]",
-                                    "m_adres": "[Davalı Adresi]",
-                                    "k_sifat": "DAVACI",
-                                    "k_ad": "[Davacı Adı Soyadı / Unvanı]",
-                                    "k_vekil": "[Davacı Vekili]",
-                                    "hed": "",
-                                    "konu": "Davacının haksız ve mesnetsiz dava dilekçesine karşı süresi içinde cevaplarımızın sunulmasıdır.",
-                                    "aciklama": "1- Davacının iddiaları gerçeğe aykırı olup müvekkilin herhangi bir borcu bulunmamaktadır.\\n2- Davacı taraf iddialarını yasal delillerle ispatlayamamıştır.\\n3- Haksız açılan davanın esastan reddi gerekmektedir.",
-                                    "hukuki_sebepler": "HMK, TBK, TTK ve ilgili mevzuat.",
-                                    "hukuki_deliller": "Banka kayıtları, ticari defterler, tanık, bilirkişi, yemin ve sair deliller.",
-                                    "sonuc": "Haksız ve mesnetsiz DAVANIN REDDİNE, yargılama giderleri ve vekâlet ücretinin davacıya yükletilmesine karar verilmesini vekâleten saygıyla arz ve talep ederiz."
-                        }
+                id: "itirazin_iptali",
+                category: "hukuk_dava",
+                icon: "⚖️",
+                title: "İtirazın İptali Dava Dilekçesi",
+                desc: "İcra inkar tazminatı talepli, takibe itirazın iptali ve takibin devamı davası.",
+                data: {
+                    mahkeme: "MERSİN NÖBETÇİ ASLİYE HUKUK MAHKEMESİNE",
+                    talep: "",
+                    dosya: "Mersin ... İcra Dairesi - 2026/... E.",
+                    m_sifat: "DAVACI (ALACAKLI)",
+                    m_ad: "[Davacı Alacaklı Adı Soyadı - T.C. 12345678901]",
+                    m_adres: "[Davacı Adresi]",
+                    k_sifat: "DAVALI (BORÇLU)",
+                    k_ad: "[Davalı Borçlu Adı Soyadı / Unvanı]",
+                    k_vekil: "[Varsa Davalı Vekili]",
+                    hed: "[... TL (İtiraz Edilen Takip Tutarı)]",
+                    konu: "Mersin ... İcra Dairesi'nin 2026/... E. sayılı takibine yapılan haksız itirazın iptali ile takibin devamı ve %20 icra inkâr tazminatı talebidir.",
+                    aciklama: "1- Davalı aleyhine başlatılan icra takibine davalı borçlu kötü niyetli ve haksız olarak itiraz etmiştir.\\n2- Borç likit ve muayyen olup davalının itirazı yalnızca takibi sürüncemede bırakma amaçlıdır.\\n3- İİK m. 67 uyarınca itirazın iptali ile takibin devamına karar verilmelidir.",
+                    hukuki_sebepler: "İİK m. 67, HMK, TBK, TTK ve ilgili mevzuat.",
+                    hukuki_deliller: "İcra takip dosyası, faturalar, hesap özetleri, tanık, bilirkişi, yemin ve sair hukuki deliller.",
+                    sonuc: "Davalının haksız itirazının İPTALİNE, takibin DEVAMINA, alacağın %20'sinden aşağı olmamak üzere İCRA İNKÂR TAZMİNATININ davalıdan tahsiline, yargılama giderleri ve vekâlet ücretinin davalıya yükletilmesine karar verilmesini vekâleten saygıyla arz ve talep ederiz."
+                }
             },
             {
-                        "id": "asliye_hukuk_istinaf",
-                        "category": "asliye_hukuk",
-                        "main_cat": "hukuk",
-                        "icon": "⚖️",
-                        "title": "Asliye Hukuk İstinaf Başvuru Dilekçesi",
-                        "desc": "Asliye Hukuk Mahkemesi gerekçeli kararına karşı BAM İlgili Hukuk Dairesi'ne istinaf.",
-                        "data": {
-                                    "mahkeme": "ADANA BÖLGE ADLİYE MAHKEMESİ İLGİLİ HUKUK DAİRESİNE\\nGönderilmek Üzere\\nMERSİN [..]. ASLİYE HUKUK MAHKEMESİNE",
-                                    "talep": "TEHİR-İ İCRA (İCRANIN GERİ BIRAKILMASI) TALEPLİDİR",
-                                    "dosya": "2026/... E. - 2026/... K.",
-                                    "m_sifat": "İSTİNAF EDEN (DAVALI)",
-                                    "m_ad": "[Müvekkil Adı Soyadı - T.C. 12345678901]",
-                                    "m_adres": "[Müvekkil Adresi]",
-                                    "k_sifat": "KARŞI TARAF (DAVACI)",
-                                    "k_ad": "[Davacı Adı Soyadı / Unvanı]",
-                                    "k_vekil": "[Davacı Vekili]",
-                                    "hed": "[... TL (İstinafa Konu Değer)]",
-                                    "konu": "Mersin [..]. Asliye Hukuk Mahkemesi'nin ... tarih ve ... E., ... K. sayılı ilamının istinafen incelenerek KALDIRILMASI talebimizdir.",
-                                    "aciklama": "1- Yerel mahkemece eksik tahkikat ve hatalı değerlendirme ile karar verilmiştir.\\n2- [Karardaki somut maddi ve hukuki hata gerekçeleri].\\n3- Kararın kaldırılarak taleplerimiz doğrultusunda yeniden hüküm kurulmasını talep ederiz.",
-                                    "hukuki_sebepler": "HMK m. 341 vd., İİK m. 36 ve ilgili mevzuat.",
-                                    "hukuki_deliller": "Yerel mahkeme dava dosyası, tanık, bilirkişi ve sair deliller.",
-                                    "sonuc": "İstinaf başvurumuzun KABULÜ ile yerel mahkeme kararının KALDIRILMASINA ve tehir-i icra talebimizin kabulüne karar verilmesini vekâleten saygıyla arz ve talep ederiz."
-                        }
+                id: "kira_tahliye",
+                category: "ozel_dava",
+                icon: "🏠",
+                title: "Kira Tahliye ve Alacak Dava Dilekçesi",
+                desc: "Kiralananın tahliyesi (tahliye taahhüdü / temerrüt) ve kira alacağı davası.",
+                data: {
+                    mahkeme: "MERSİN NÖBETÇİ SULH HUKUK MAHKEMESİNE",
+                    talep: "",
+                    dosya: "",
+                    m_sifat: "DAVACI (KİRAYA VEREN)",
+                    m_ad: "[Kiraya Veren Adı Soyadı - T.C. 12345678901]",
+                    m_adres: "[Müvekkil Adresi]",
+                    k_sifat: "DAVALI (KİRACI)",
+                    k_ad: "[Kiracı Adı Soyadı - T.C. No]",
+                    k_vekil: "[Varsa Kiracı Vekili]",
+                    hed: "[... TL (Bir Yıllık Kira Bedeli)]",
+                    konu: "Taşınmazın tahliyesi ile ödenmeyen kira bedellerinin yasal faiziyle tahsili talebidir.",
+                    aciklama: "1- Davalı, müvekkile ait taşınmazda ... tarihli kira sözleşmesi uyarınca kiracı olarak oturmaktadır.\\n2- Davalı taraf vadesi gelen kira bedellerini ödememiş / tahliye taahhüdüne uymamıştır.\\n3- TBK hükümleri uyarınca taşınmazın tahliyesini talep etme zorunluluğu doğmuştur.",
+                    hukuki_sebepler: "TBK m. 315, 352 vd., HMK, İİK ve ilgili mevzuat.",
+                    hukuki_deliller: "Kira sözleşmesi, tahliye taahhütnamesi, banka dekontları, ihtarname, tanık, bilirkişi, yemin ve sair hukuki deliller.",
+                    sonuc: "Davalının kiralanan taşınmazdan TAHLİYESİNE, ödenmeyen kira bedellerinin faiziyle tahsiline, yargılama giderleri ve vekâlet ücretinin davalıya yükletilmesine karar verilmesini vekâleten saygıyla arz ve talep ederiz."
+                }
             },
             {
-                        "id": "asliye_hukuk_talep_artirim",
-                        "category": "asliye_hukuk",
-                        "main_cat": "hukuk",
-                        "icon": "📊",
-                        "title": "Asliye Hukuk Talep Artırım Dilekçesi (HMK 109/4)",
-                        "desc": "Bilirkişi raporu sonrası HMK 109/4 uyarınca müddeabihin artırılması (Islah değildir).",
-                        "data": {
-                                    "mahkeme": "MERSİN [..]. ASLİYE HUKUK MAHKEMESİNE",
-                                    "talep": "",
-                                    "dosya": "2026/... Esas",
-                                    "m_sifat": "DAVACI",
-                                    "m_ad": "[Davacı Müvekkil Adı Soyadı - T.C. 12345678901]",
-                                    "m_adres": "[Davacı Adresi]",
-                                    "k_sifat": "DAVALI",
-                                    "k_ad": "[Davalı Adı Soyadı / Unvanı]",
-                                    "k_vekil": "[Davalı Vekili]",
-                                    "hed": "[... TL (Artırılan Net Alacak)]",
-                                    "konu": "HMK m. 109/4 gereğince bilirkişi raporu doğrultusunda dava değerinin artırılmasıdır. (Islah değildir).",
-                                    "aciklama": "1- Alınan bilirkişi raporu ile müvekkilin toplam alacak tutarı kesinleşmiştir.\\n2- HMK m. 109/4 uyarınca talep artırımı yapıyoruz; harcı yatırılmıştır.",
-                                    "hukuki_sebepler": "HMK m. 109/4 ve ilgili mevzuat.",
-                                    "hukuki_deliller": "Bilirkişi raporu, harç makbuzu ve dosya kapsamı.",
-                                    "sonuc": "HMK m. 109/4 gereğince TALEP ARTIRIMIMIZIN KABULÜNE karar verilmesini vekâleten saygıyla arz ve talep ederiz."
-                        }
+                id: "kira_tespit",
+                category: "ozel_dava",
+                icon: "📈",
+                title: "Kira Bedelinin Tespiti (Artırım) Dava Dilekçesi",
+                desc: "5 yılı aşan kira ilişkilerinde emsal rayiçlere göre kira bedelinin tespiti davası.",
+                data: {
+                    mahkeme: "MERSİN NÖBETÇİ SULH HUKUK MAHKEMESİNE",
+                    talep: "",
+                    dosya: "",
+                    m_sifat: "DAVACI (KİRAYA VEREN)",
+                    m_ad: "[Kiraya Veren Adı Soyadı - T.C. 12345678901]",
+                    m_adres: "[Müvekkil Adresi]",
+                    k_sifat: "DAVALI (KİRACI)",
+                    k_ad: "[Kiracı Adı Soyadı - T.C. No]",
+                    k_vekil: "[Varsa Kiracı Vekili]",
+                    hed: "[... TL (Aylık Artırım Farkının Yıllık Tutarı)]",
+                    konu: "Kira bedelinin emsal rayiç ve hakkaniyete uygun olarak aylık ... TL olarak tespit edilmesi talebidir.",
+                    aciklama: "1- Davalı ile müvekkil arasındaki kira ilişkisi 5 yıldan uzun süredir devam etmektedir.\\n2- Mevcut kira bedeli ekonomik koşullar ve çevre emsal rayiçlerin çok altında kalmıştır.\\n3- TBK m. 344/3 uyarınca yeni dönem kira bedelinin tespiti gerekmektedir.",
+                    hukuki_sebepler: "TBK m. 344 vd., HMK ve ilgili mevzuat.",
+                    hukuki_deliller: "Kira sözleşmesi, emsal kira sözleşmeleri, keşif, tanık, bilirkişi, yemin ve sair hukuki deliller.",
+                    sonuc: "Yeni kira döneminden itibaren geçerli olmak üzere kira bedelinin AYLIK ... TL OLARAK TESPİTİNE, yargılama giderleri ve vekâlet ücretinin davalıya yükletilmesine karar verilmesini vekâleten saygıyla arz ve talep ederiz."
+                }
             },
             {
-                        "id": "sulh_hukuk_dava",
-                        "category": "sulh_hukuk",
-                        "main_cat": "hukuk",
-                        "icon": "🏠",
-                        "title": "Sulh Hukuk Dava Dilekçesi",
-                        "desc": "Kira, tahliye, vesayet, ortaklığın giderilmesi ve genel Sulh Hukuk dava dilekçesi.",
-                        "data": {
-                                    "mahkeme": "MERSİN NÖBETÇİ SULH HUKUK MAHKEMESİNE",
-                                    "talep": "",
-                                    "dosya": "",
-                                    "m_sifat": "DAVACI",
-                                    "m_ad": "[Davacı Müvekkil Adı Soyadı - T.C. 12345678901]",
-                                    "m_adres": "[Müvekkil Adresi]",
-                                    "k_sifat": "DAVALI",
-                                    "k_ad": "[Davalı Adı Soyadı - T.C. / Unvan]",
-                                    "k_vekil": "[Varsa Davalı Vekili]",
-                                    "hed": "[... TL (Dava Değeri)]",
-                                    "konu": "Davamızın kabulü ile taleplerimiz doğrultusunda karar verilmesi talebimizdir.",
-                                    "aciklama": "1- Uyuşmazlığa konu taşınır/taşınmaz veya kira ilişkisinde davalı taraf edimlerine aykırı davranmıştır.\\n2- Dava açma zarureti hasıl olmuştur.",
-                                    "hukuki_sebepler": "TBK, TMK, HMK ve ilgili mevzuat.",
-                                    "hukuki_deliller": "Sözleşme, dekontlar, tapu kayıtları, tanık, bilirkişi ve sair deliller.",
-                                    "sonuc": "Davamızın KABULÜNE, yargılama giderleri ve vekâlet ücretinin davalıya yükletilmesine karar verilmesini vekâleten saygıyla arz ve talep ederiz."
-                        }
+                id: "bosanma_dava",
+                category: "hukuk_dava",
+                icon: "💔",
+                title: "Boşanma Dava Dilekçesi (Çekişmeli)",
+                desc: "Evlilik birliğinin temelinden sarsılması, nafaka, velayet ve maddi/manevi tazminat talepli.",
+                data: {
+                    mahkeme: "MERSİN NÖBETÇİ AİLE MAHKEMESİNE",
+                    talep: "TEDBİR NAFAKASI VE İHTİYATİ TEDBİR TALEPLİDİR",
+                    dosya: "",
+                    m_sifat: "DAVACI",
+                    m_ad: "[Davacı Müvekkil Adı Soyadı - T.C. 12345678901]",
+                    m_adres: "[Davacı Müvekkil Adresi]",
+                    k_sifat: "DAVALI",
+                    k_ad: "[Davalı Eş Adı Soyadı - T.C. No]",
+                    k_vekil: "[Varsa Davalı Vekili]",
+                    hed: "[... TL Maddi - ... TL Manevi Tazminat]",
+                    konu: "Evlilik birliğinin temelinden sarsılması nedeniyle BOŞANMA, velayet, nafaka ve tazminat talebimizdir.",
+                    aciklama: "1- Taraflar ... tarihinde evlenmiş olup müşterek ... çocukları bulunmaktadır.\\n2- Davalı eşin kusurlu tutum ve davranışları sebebiyle evlilik birliği onarılamaz şekilde temelinden sarsılmıştır.\\n3- TMK m. 166 uyarınca boşanma ve ferilerine hükmedilmesini talep ederiz.",
+                    hukuki_sebepler: "TMK m. 166, 169, 174, 175, 182 vd., HMK ve ilgili mevzuat.",
+                    hukuki_deliller: "Aile nüfus kaydı, mali ve sosyal durum araştırması, tanık, bilirkişi, yemin ve sair hukuki deliller.",
+                    sonuc: "Tarafların BOŞANMALARINA, müşterek çocuğun velayetinin müvekkile verilmesine, aylık ... TL tedbir/iştirak nafakasına, müvekkil lehine ... TL maddi ve ... TL manevi tazminata hükmedilmesini vekâleten saygıyla arz ve talep ederiz."
+                }
             },
             {
-                        "id": "sulh_hukuk_cevap",
-                        "category": "sulh_hukuk",
-                        "main_cat": "hukuk",
-                        "icon": "📝",
-                        "title": "Sulh Hukuk Cevap Dilekçesi",
-                        "desc": "Sulh Hukuk davalarına karşı cevap ve itirazların sunulması.",
-                        "data": {
-                                    "mahkeme": "MERSİN [..]. SULH HUKUK MAHKEMESİNE",
-                                    "talep": "",
-                                    "dosya": "2026/... Esas",
-                                    "m_sifat": "DAVALI",
-                                    "m_ad": "[Davalı Müvekkil Adı Soyadı - T.C. 12345678901]",
-                                    "m_adres": "[Davalı Adresi]",
-                                    "k_sifat": "DAVACI",
-                                    "k_ad": "[Davacı Adı Soyadı / Unvanı]",
-                                    "k_vekil": "[Davacı Vekili]",
-                                    "hed": "",
-                                    "konu": "Davacının haksız davasına karşı cevaplarımızın sunulması ile davanın reddi talebimizdir.",
-                                    "aciklama": "1- Davacının ileri sürdüğü iddialar mesnetsizdir.\\n2- Müvekkil sözleşme ve yasa hükümlerine tam uymuştur.",
-                                    "hukuki_sebepler": "TBK, TMK, HMK ve ilgili mevzuat.",
-                                    "hukuki_deliller": "Kira kontratı, ödeme dekontları, tanık ve bilirkişi.",
-                                    "sonuc": "Haksız davanın REDDİNE karar verilmesini vekâleten saygıyla arz ve talep ederiz."
-                        }
+                id: "iscilik_alacak",
+                category: "ozel_dava",
+                icon: "👷",
+                title: "İşçilik Alacakları ve Kıdem Tazminatı Dava Dilekçesi",
+                desc: "Kıdem, ihbar tazminatı, fazla mesai, UBGT ve yıllık izin alacakları davası.",
+                data: {
+                    mahkeme: "MERSİN NÖBETÇİ İŞ MAHKEMESİNE",
+                    talep: "",
+                    dosya: "Arabuluculuk Büro No: 2026/...",
+                    m_sifat: "DAVACI (İŞÇİ)",
+                    m_ad: "[Davacı İşçi Adı Soyadı - T.C. 12345678901]",
+                    m_adres: "[Davacı Adresi]",
+                    k_sifat: "DAVALI (İŞVEREN)",
+                    k_ad: "[İşveren Şirket / Şahıs Unvanı]",
+                    k_vekil: "[Varsa İşveren Vekili]",
+                    hed: "5.000,00 TL (Kısmi Dava - Fazlaya ilişkin haklarımız saklıdır)",
+                    konu: "Haksız fesih nedeniyle kıdem ve ihbar tazminatları ile ödenmeyen işçilik alacaklarının tahsili talebidir.",
+                    aciklama: "1- Müvekkil, davalı işyerinde ... ile ... tarihleri arasında çalışmıştır.\\n2- İş akdi davalı işveren tarafından haksız ve bildirimsiz olarak feshedilmiştir.\\n3- Arabuluculuk sürecinde anlaşma sağlanamamış olup dava açma zorunluluğu doğmuştur.",
+                    hukuki_sebepler: "4857 sayılı İş Kanunu, 7036 sayılı İş Mahkemeleri Kanunu, HMK ve ilgili mevzuat.",
+                    hukuki_deliller: "SGK hizmet dökümü, işyeri şahsi sicil dosyası, arabuluculuk tutanağı, emsal ücret araştırması, tanık, bilirkişi, yemin ve sair hukuki deliller.",
+                    sonuc: "Fazlaya ilişkin haklarımız saklı kalmak kaydıyla DAVAMIZIN KABULÜNE, kıdem, ihbar, fazla mesai ve yıllık izin alacaklarımızın en yüksek mevduat faiziyle davalıdan tahsiline karar verilmesini vekâleten saygıyla arz ve talep ederiz."
+                }
             },
             {
-                        "id": "sulh_hukuk_istinaf",
-                        "category": "sulh_hukuk",
-                        "main_cat": "hukuk",
-                        "icon": "⚖️",
-                        "title": "Sulh Hukuk İstinaf Başvuru Dilekçesi",
-                        "desc": "Sulh Hukuk Mahkemesi gerekçeli kararına karşı BAM İlgili Hukuk Dairesi'ne istinaf.",
-                        "data": {
-                                    "mahkeme": "ADANA BÖLGE ADLİYE MAHKEMESİ İLGİLİ HUKUK DAİRESİNE\\nGönderilmek Üzere\\nMERSİN [..]. SULH HUKUK MAHKEMESİNE",
-                                    "talep": "TEHİR-İ İCRA (İCRANIN GERİ BIRAKILMASI) TALEPLİDİR",
-                                    "dosya": "2026/... E. - 2026/... K.",
-                                    "m_sifat": "İSTİNAF EDEN (DAVALI)",
-                                    "m_ad": "[Müvekkil Adı Soyadı - T.C. 12345678901]",
-                                    "m_adres": "[Müvekkil Adresi]",
-                                    "k_sifat": "KARŞI TARAF",
-                                    "k_ad": "[Karşı Taraf Adı Soyadı]",
-                                    "k_vekil": "[Karşı Taraf Vekili]",
-                                    "hed": "[... TL]",
-                                    "konu": "Mersin [..]. Sulh Hukuk Mahkemesi'nin ... tarih ve ... E., ... K. sayılı ilamının istinafen KALDIRILMASI talebimizdir.",
-                                    "aciklama": "1- Yerel mahkemece eksik tahkikatla karar verilmiştir.\\n2- Kararın kaldırılarak davanın reddi talep olunur.",
-                                    "hukuki_sebepler": "HMK m. 341 vd., İİK m. 36 ve ilgili mevzuat.",
-                                    "hukuki_deliller": "Sulh Hukuk dava dosyası.",
-                                    "sonuc": "İstinaf başvurumuzun KABULÜ ile yerel mahkeme kararının KALDIRILMASINA karar verilmesini talep ederiz."
-                        }
+                id: "tuketici_dava",
+                category: "hukuk_dava",
+                icon: "🛒",
+                title: "Tüketici Mahkemesi Dava Dilekçesi",
+                desc: "Ayıplı mal/hizmet, sözleşmeden dönme ve bedel iadesi talepli tüketici davası.",
+                data: {
+                    mahkeme: "MERSİN NÖBETÇİ TÜKETİCİ MAHKEMESİNE",
+                    talep: "",
+                    dosya: "",
+                    m_sifat: "DAVACI (TÜKETİCİ)",
+                    m_ad: "[Tüketici Müvekkil Adı Soyadı - T.C. 12345678901]",
+                    m_adres: "[Müvekkil Adresi]",
+                    k_sifat: "DAVALI (SATICI / SAĞLAYICI)",
+                    k_ad: "[Davalı Şirket Unvanı]",
+                    k_vekil: "[Varsa Davalı Vekili]",
+                    hed: "[... TL (Satış Bedeli İadesi)]",
+                    konu: "Ayıplı mal nedeniyle sözleşmeden dönülerek ödenen bedelin yasal faiziyle iadesi talebidir.",
+                    aciklama: "1- Müvekkil, davalı firmadan ... tarihinde satın aldığı üründe gizli/açık ayıp ortaya çıkmıştır.\\n2- Yasal süre içinde ayıp ihbarında bulunulmuş ancak davalı firma sorumluluk almamıştır.\\n3- 6502 sayılı Kanun uyarınca bedel iadesini talep zorunluluğu doğmuştur.",
+                    hukuki_sebepler: "6502 sayılı TKHK, TBK, HMK ve ilgili mevzuat.",
+                    hukuki_deliller: "Fatura, servis kayıtları, ayıp ihbar yazışmaları, arabuluculuk tutanağı, tanık, bilirkişi, yemin ve sair hukuki deliller.",
+                    sonuc: "Ayıplı mal nedeniyle sözleşmeden dönülerek ÖDENEN BEDELİN FAİZİYLE İADESİNE, yargılama giderleri ve vekâlet ücretinin davalıya yükletilmesine karar verilmesini vekâleten saygıyla arz ve talep ederiz."
+                }
             },
             {
-                        "id": "ozel_alacak_dava",
-                        "category": "ozel_dava",
-                        "main_cat": "ozel_dava",
-                        "icon": "💰",
-                        "title": "Alacak ve Maddi Tazminat Dava Dilekçesi",
-                        "desc": "Sözleşmeden, haksız fiilden veya sebepsiz zenginleşmeden doğan alacak ve tazminat davası.",
-                        "data": {
-                                    "mahkeme": "MERSİN NÖBETÇİ ASLİYE HUKUK MAHKEMESİNE",
-                                    "talep": "İHTİYATİ TEDBİR TALEPLİDİR",
-                                    "dosya": "",
-                                    "m_sifat": "DAVACI",
-                                    "m_ad": "[Davacı Müvekkil Adı Soyadı - T.C. 12345678901]",
-                                    "m_adres": "[Davacı Adresi]",
-                                    "k_sifat": "DAVALI",
-                                    "k_ad": "[Davalı Adı Soyadı / Unvanı]",
-                                    "k_vekil": "[Varsa Davalı Vekili]",
-                                    "hed": "10.000,00 TL (Fazlaya ilişkin haklarımız saklı kalmak kaydıyla)",
-                                    "konu": "Müvekkilin ödenmeyen alacağının ve maddi tazminatının temerrüt faiziyle birlikte tahsili talebidir.",
-                                    "aciklama": "1- Müvekkil ile davalı arasındaki hukuki ilişkiden doğan alacak vadesinde ödenmemiştir.\\n2- Davalının edimini ifa etmemesi neticesinde müvekkil zarara uğramıştır.\\n3- Alacağın temini için davalının malvarlığı üzerine ihtiyati tedbir konulmasını talep ederiz.",
-                                    "hukuki_sebepler": "TBK m. 112 vd., HMK ve ilgili mevzuat.",
-                                    "hukuki_deliller": "Sözleşmeler, faturalar, banka dekontları, tanık, bilirkişi ve sair deliller.",
-                                    "sonuc": "Davamızın KABULÜ ile alacağımızın faiziyle tahsiline ve ihtiyati tedbir talebimizin kabulüne karar verilmesini vekâleten saygıyla arz ve talep ederiz."
-                        }
+                id: "tapu_iptal",
+                category: "ozel_dava",
+                icon: "📜",
+                title: "Tapu İptali ve Tescil Dava Dilekçesi",
+                desc: "Muris muvazaası / vekalet görevinin kötüye kullanılması nedeniyle tapu iptal ve tescil.",
+                data: {
+                    mahkeme: "MERSİN NÖBETÇİ ASLİYE HUKUK MAHKEMESİNE",
+                    talep: "TAPU KAYDINA İHTİYATİ TEDBİR TALEPLİDİR",
+                    dosya: "",
+                    m_sifat: "DAVACI",
+                    m_ad: "[Davacı Müvekkil Adı Soyadı - T.C. 12345678901]",
+                    m_adres: "[Davacı Müvekkil Adresi]",
+                    k_sifat: "DAVALI",
+                    k_ad: "[Davalı Adı Soyadı / Unvanı]",
+                    k_vekil: "[Varsa Davalı Vekili]",
+                    hed: "[... TL (Taşınmazın Harca Esas Değeri)]",
+                    konu: "Taşınmaz tapu kaydının iptali ile müvekkil adına tescili talebimizdir.",
+                    aciklama: "1- Dava konusu Mersin İli ... Parsel sayılı taşınmaz hukuka aykırı ve muvazaalı devredilmiştir.\\n2- Taşınmazın üçüncü kişilere devrinin önlenmesi için tapu kaydına tedbir konulması elzemdir.\\n3- Tapu kaydının iptali ile tesciline karar verilmesini talep ederiz.",
+                    hukuki_sebepler: "TMK, TBK, HMK ve ilgili mevzuat.",
+                    hukuki_deliller: "Tapu kayıtları, resmi senetler, mirasçılık belgesi, tanık, bilirkişi, keşif, yemin ve sair hukuki deliller.",
+                    sonuc: "Taşınmaz üzerine İHTİYATİ TEDBİR KONULMASINA, tapu kaydının İPTALİ ile müvekkil adına TESCİLİNE karar verilmesini saygıyla vekâleten arz ve talep ederiz."
+                }
+            },
+
+            // --- HUKUK CEVAP / TALEP / DELİL DİLEKÇELERİ ---
+            {
+                id: "cevap",
+                category: "hukuk_talep",
+                icon: "💬",
+                title: "Cevap Dilekçesi (Davalı)",
+                desc: "Usul ve esas itirazları, zamanaşımı ve davanın reddi talepli cevap dilekçesi.",
+                data: {
+                    mahkeme: "MERSİN [..]. ASLİYE HUKUK MAHKEMESİNE",
+                    talep: "",
+                    dosya: "2026/... Esas",
+                    m_sifat: "DAVALI",
+                    m_ad: "[Davalı Müvekkil Adı Soyadı - T.C. 12345678901]",
+                    m_adres: "[Davalı Müvekkil Adresi]",
+                    k_sifat: "DAVACI",
+                    k_ad: "[Davacı Adı Soyadı / Unvanı]",
+                    k_vekil: "[Davacı Vekili]",
+                    hed: "",
+                    konu: "Dava dilekçesine karşı yasal süresi içinde usule ve esasa ilişkin cevaplarımızın sunulmasıdır.",
+                    aciklama: "USULE İLİŞKİN İTİRAZLARIMIZ:\\n1- [Yetki, görev, zamanaşımı ve dava şartı yokluğu itirazları]\\n\\nESASA İLİŞKİN CEVAPLARIMIZ:\\n2- Davacının iddiaları gerçeği yansıtmamakta olup, hukuki dayanaktan yoksundur.\\n3- [Olayın gerçek mahiyeti ve davacının haksızlığını gösteren açıklamalar]",
+                    hukuki_sebepler: "HMK, TBK, TTK ve ilgili mevzuat.",
+                    hukuki_deliller: "Karşı deliller, yazışmalar, kayıtlar, tanık, bilirkişi, yemin ve sair hukuki deliller.",
+                    sonuc: "Öncelikle USULDEN REDDİNE, aksi kanaatte ise HAKSIZ VE MESNETSİZ DAVANIN ESASTAN REDDİNE, yargılama giderleri ile vekâlet ücretinin davacı tarafa yükletilmesine karar verilmesini vekâleten saygıyla arz ve talep ederiz."
+                }
             },
             {
-                        "id": "ozel_is_mahkemesi_dava",
-                        "category": "ozel_dava",
-                        "main_cat": "ozel_dava",
-                        "icon": "👷",
-                        "title": "İş Mahkemesi Dava Dilekçesi (Kıdem, İhbar, Ücret)",
-                        "desc": "Kıdem, ihbar, fazla mesai, UBGT, yıllık izin ve işçilik alacakları davası.",
-                        "data": {
-                                    "mahkeme": "MERSİN NÖBETÇİ İŞ MAHKEMESİNE",
-                                    "talep": "",
-                                    "dosya": "",
-                                    "m_sifat": "DAVACI (İŞÇİ)",
-                                    "m_ad": "[Davacı İşçi Adı Soyadı - T.C. 12345678901]",
-                                    "m_adres": "[Müvekkil Adresi]",
-                                    "k_sifat": "DAVALI (İŞVEREN)",
-                                    "k_ad": "[Davalı Şirket Unvanı / İşveren Adı]",
-                                    "k_vekil": "[Varsa Davalı Vekili]",
-                                    "hed": "1.000,00 TL (Kısmi Alacak - Fazlaya ilişkin haklarımız saklıdır)",
-                                    "konu": "Kıdem tazminatı, ihbar tazminatı, fazla mesai, UBGT ve ödenmeyen işçilik alacaklarımızın en yüksek banka mevduat faiziyle tahsili talebidir.",
-                                    "aciklama": "1- Müvekkil davalı işyerinde ... tarihleri arasında ... unvanıyla çalışmıştır.\\n2- İş akdi haksız ve bildirimsiz feshedilmiş, işçilik alacakları ödenmemiştir.\\n3- Arabuluculuk sürecinde anlaşma sağlanamamış olup işbu davanın açılması gerekmiştir.",
-                                    "hukuki_sebepler": "4857 sayılı İş Kanunu, 7036 sayılı İş Mahkemeleri Kanunu, HMK ve ilgili mevzuat.",
-                                    "hukuki_deliller": "SGK kayıtları, işyeri şahsi sicil dosyası, arabuluculuk son tutanağı, maaş bordroları, emsal ücret araştırması, tanık, bilirkişi ve sair deliller.",
-                                    "sonuc": "Davamızın KABULÜ ile kıdem, ihbar ve sair işçilik alacaklarımızın faiziyle tahsiline karar verilmesini vekâleten saygıyla arz ve talep ederiz."
-                        }
+                id: "delil_bildirme",
+                category: "hukuk_talep",
+                icon: "📁",
+                title: "Delil Bildirme Dilekçesi",
+                desc: "Müzekkere celp talepleri, ekli belgeler ve delil hasrı sunumu.",
+                data: {
+                    mahkeme: "MERSİN [..]. ASLİYE HUKUK MAHKEMESİNE",
+                    talep: "",
+                    dosya: "2026/... Esas",
+                    m_sifat: "DAVACI / DAVALI",
+                    m_ad: "[Müvekkil Adı Soyadı - T.C. 12345678901]",
+                    m_adres: "[Müvekkil Adresi]",
+                    k_sifat: "KARŞI TARAF",
+                    k_ad: "[Karşı Taraf Adı Soyadı / Unvanı]",
+                    k_vekil: "[Varsa Karşı Taraf Vekili]",
+                    hed: "",
+                    konu: "Mahkemeniz ara kararı uyarınca delil listemizin ve delillerimizin sunulmasıdır.",
+                    aciklama: "Sayın Mahkemenizin ara kararı doğrultusunda delil listemiz aşağıdadır:\\n\\nDELİL LİSTEMİZ:\\n1- [Delil 1: Sözleşme / Yazışmalar / Fatura vb.] (Ek-1)\\n2- [Delil 2: Banka Dekontları / Kamera Kaydı vb.] (Ek-2)\\n3- İlgili kurumlardan celbi talep edilen müzekkere cevapları\\n4- Tanık, Bilirkişi incelemesi, Keşif, Yemin ve her türlü yasal delil.",
+                    hukuki_sebepler: "HMK m. 199 vd. ve ilgili mevzuat.",
+                    hukuki_deliller: "Yazılı belgeler, müzekkere kayıtları, tanık, bilirkişi, yemin ve sair hukuki deliller.",
+                    sonuc: "Ekli delillerimizin dosya arasına alınmasına, celbi gereken kayıtlar için müzekkere yazılmasına karar verilmesini vekâleten saygıyla arz ve talep ederiz."
+                }
             },
             {
-                        "id": "ozel_bosanma_dava",
-                        "category": "ozel_dava",
-                        "main_cat": "ozel_dava",
-                        "icon": "💍",
-                        "title": "Boşanma Dava Dilekçesi (Çekişmeli / Anlaşmalı)",
-                        "desc": "Evlilik birliğinin temelinden sarsılması, nafaka, velayet ve maddi/manevi tazminat davası.",
-                        "data": {
-                                    "mahkeme": "MERSİN NÖBETÇİ AİLE MAHKEMESİNE",
-                                    "talep": "TEDBİR NAFAKASI VE İHTİYATİ TEDBİR TALEPLİDİR",
-                                    "dosya": "",
-                                    "m_sifat": "DAVACI",
-                                    "m_ad": "[Davacı Müvekkil Adı Soyadı - T.C. 12345678901]",
-                                    "m_adres": "[Müvekkil Adresi]",
-                                    "k_sifat": "DAVALI",
-                                    "k_ad": "[Davalı Eş Adı Soyadı - T.C. 12345678901]",
-                                    "k_vekil": "[Varsa Davalı Vekili]",
-                                    "hed": "[Maddi Tazminat: ... TL, Manevi Tazminat: ... TL]",
-                                    "konu": "Evlilik birliğinin temelinden sarsılması nedeniyle BOŞANMA, velayet, nafaka ve tazminat taleplerimizdir.",
-                                    "aciklama": "1- Taraflar ... tarihinde evlenmiş olup evlilik birliği davalının ağır kusurlu eylemleri nedeniyle temelinden sarsılmıştır.\\n2- Ortak çocukların velayetinin müvekkile verilmesi ve tedbir/iştirak nafakasına hükmedilmesi gerekmektedir.\\n3- Müvekkil lehine maddi ve manevi tazminata hükmedilmesini talep ederiz.",
-                                    "hukuki_sebepler": "TMK m. 166 vd., HMK ve ilgili mevzuat.",
-                                    "hukuki_deliller": "Aile nüfus kaydı, mali durum araştırması, tanık beyanları, mesaj kayıtları, bilirkişi ve sair deliller.",
-                                    "sonuc": "Tarafların BOŞANMALARINA, velayetin müvekkile verilmesine, nafakaya ve tazminata karar verilmesini vekâleten saygıyla arz ve talep ederiz."
-                        }
+                id: "genel_talep",
+                category: "hukuk_talep",
+                icon: "📌",
+                title: "Genel Talep ve Beyan Dilekçesi",
+                desc: "Ara karar gereği beyan, müzekkere tekidi, duruşma günü veya dosya fotokopisi talebi.",
+                data: {
+                    mahkeme: "MERSİN [..]. ASLİYE HUKUK MAHKEMESİNE",
+                    talep: "",
+                    dosya: "2026/... Esas",
+                    m_sifat: "DAVACI / DAVALI",
+                    m_ad: "[Müvekkil Adı Soyadı - T.C. 12345678901]",
+                    m_adres: "[Müvekkil Adresi]",
+                    k_sifat: "KARŞI TARAF",
+                    k_ad: "[Karşı Taraf Adı Soyadı / Unvanı]",
+                    k_vekil: "[Varsa Karşı Taraf Vekili]",
+                    hed: "",
+                    konu: "Mahkemeniz ara kararı doğrultusunda beyanlarımızın ve taleplerimizin sunulmasıdır.",
+                    aciklama: "1- Mahkemenizin ... tarihli duruşmasında kurulan ara karar uyarınca beyanda bulunmaktayız.\\n2- İlgili kurumlara yazılan müzekkere cevaplarının tekidini ve dosyadaki eksikliklerin ikmalini talep ederiz.\\n3- [Konuya ilişkin somut açıklamalar ve talepler]",
+                    hukuki_sebepler: "HMK ve ilgili mevzuat.",
+                    hukuki_deliller: "Dosya kapsamı.",
+                    sonuc: "Yukarıda arz edilen hususlar doğrultusunda işlem tesis edilmesini ve taleplerimizin kabulünü vekâleten saygıyla arz ve talep ederiz."
+                }
             },
             {
-                        "id": "ozel_tuketici_dava",
-                        "category": "ozel_dava",
-                        "main_cat": "ozel_dava",
-                        "icon": "🛒",
-                        "title": "Tüketici Mahkemesi Dava Dilekçesi",
-                        "desc": "Ayıplı mal/hizmet, sözleşmeden dönme ve bedel iadesi talepli tüketici davası.",
-                        "data": {
-                                    "mahkeme": "MERSİN NÖBETÇİ TÜKETİCİ MAHKEMESİNE",
-                                    "talep": "",
-                                    "dosya": "",
-                                    "m_sifat": "DAVACI (TÜKETİCİ)",
-                                    "m_ad": "[Tüketici Müvekkil Adı Soyadı - T.C. 12345678901]",
-                                    "m_adres": "[Müvekkil Adresi]",
-                                    "k_sifat": "DAVALI (SATICI / SAĞLAYICI)",
-                                    "k_ad": "[Davalı Şirket Unvanı]",
-                                    "k_vekil": "[Varsa Davalı Vekili]",
-                                    "hed": "[... TL (Satış Bedeli İadesi)]",
-                                    "konu": "Ayıplı mal nedeniyle sözleşmeden dönülerek ödenen bedelin yasal faiziyle iadesi talebidir.",
-                                    "aciklama": "1- Müvekkilce satın alınan üründe gizli/açık ayıp ortaya çıkmıştır.\\n2- Ayıp ihbarında bulunulmuş ancak davalı sorumluluk almamıştır.\\n3- 6502 sayılı Kanun uyarınca bedel iadesini talep ederiz.",
-                                    "hukuki_sebepler": "6502 sayılı TKHK, TBK, HMK ve ilgili mevzuat.",
-                                    "hukuki_deliller": "Fatura, servis formları, arabuluculuk tutanağı, tanık, bilirkişi.",
-                                    "sonuc": "ÖDENEN BEDELİN FAİZİYLE İADESİNE karar verilmesini vekâleten saygıyla arz ve talep ederiz."
-                        }
+                id: "talep_artirim",
+                category: "hukuk_talep",
+                icon: "📊",
+                title: "Talep Artırım Dilekçesi (HMK m. 109/4)",
+                desc: "Kısmi davada bilirkişi raporu sonrası ıslah hakkı tüketilmeden HMK 109/4 uyarınca talep artırımı ve tamamlama harcı.",
+                data: {
+                    mahkeme: "MERSİN [..]. ASLİYE HUKUK MAHKEMESİNE",
+                    talep: "",
+                    dosya: "2026/... Esas",
+                    m_sifat: "DAVACI",
+                    m_ad: "[Davacı Müvekkil Adı Soyadı - T.C. 12345678901]",
+                    m_adres: "[Davacı Adresi]",
+                    k_sifat: "DAVALI",
+                    k_ad: "[Davalı Adı Soyadı / Unvanı]",
+                    k_vekil: "[Davalı Vekili]",
+                    hed: "[... TL Artırılan Tutar / Toplam: ... TL]",
+                    konu: "Bilirkişi raporu doğrultusunda belirlenen alacak miktarımız uyarınca HMK m. 109/4 gereğince TALEP ARTIRIM DİLEKÇEMİZİN ve tamamlama harcımızın sunulmasıdır.",
+                    aciklama: "1- Mahkemeniz dosyasına sunulan ... tarihli bilirkişi raporu ile dava konusu alacağımızın tam ve kesin miktarı tespit edilmiştir.\\n2- Dava dilekçemizde fazlaya ilişkin haklarımız saklı tutularak açılan kısmi davada talep sonucumuz, HMK m. 109/4 hükmü uyarınca (ISLAH HAKKIMIZ SAKLI KALMAK KAYDIYLA) artırılmaktadır.\\n3- Bu kapsamda dava değerimiz ... TL artırılarak toplam ... TL'ye yükseltilmiş olup, tamamlama harcı mahkeme veznesine yatırılmıştır.\\n4- İşbu dilekçemiz HMK m. 109/4 kapsamında talep artırım dilekçesi mahiyetinde olup, ıslah niteliğinde değildir.",
+                    hukuki_sebepler: "HMK m. 109/4, Harçlar Kanunu, TBK ve ilgili mevzuat.",
+                    hukuki_deliller: "Bilirkişi raporu, harç tamamlama makbuzu, tanık, bilirkişi, yemin ve sair hukuki deliller.",
+                    sonuc: "HMK m. 109/4 uyarınca TALEP ARTIRIM DİLEKÇEMİZİN KABULÜ ile toplam ... TL alacağımızın dava/temerrüt tarihinden itibaren işleyecek faiziyle birlikte davalıdan tahsiline, yargılama giderleri ve vekâlet ücretinin davalıya yükletilmesine karar verilmesini vekâleten saygıyla arz ve talep ederiz."
+                }
             },
             {
-                        "id": "ozel_tapu_iptal",
-                        "category": "ozel_dava",
-                        "main_cat": "ozel_dava",
-                        "icon": "📜",
-                        "title": "Tapu İptali ve Tescil Dava Dilekçesi",
-                        "desc": "Muris muvazaası / inançlı işlem / vekalet görevinin kötüye kullanılması nedeniyle tapu iptal ve tescil.",
-                        "data": {
-                                    "mahkeme": "MERSİN NÖBETÇİ ASLİYE HUKUK MAHKEMESİNE",
-                                    "talep": "TAPU KAYDINA İHTİYATİ TEDBİR TALEPLİDİR",
-                                    "dosya": "",
-                                    "m_sifat": "DAVACI",
-                                    "m_ad": "[Davacı Müvekkil Adı Soyadı - T.C. 12345678901]",
-                                    "m_adres": "[Davacı Adresi]",
-                                    "k_sifat": "DAVALI",
-                                    "k_ad": "[Davalı Adı Soyadı / Unvanı]",
-                                    "k_vekil": "[Varsa Davalı Vekili]",
-                                    "hed": "[... TL (Taşınmazın Harca Esas Değeri)]",
-                                    "konu": "Taşınmaz tapu kaydının iptali ile müvekkil adına tescili talebimizdir.",
-                                    "aciklama": "1- Dava konusu taşınmaz hukuka aykırı ve muvazaalı devredilmiştir.\\n2- Üçüncü kişilere devrin önlenmesi için tapu kaydına tedbir konulması elzemdir.\\n3- Tapu kaydının iptali ile müvekkil adına tescilini talep ederiz.",
-                                    "hukuki_sebepler": "TMK, TBK, HMK ve ilgili mevzuat.",
-                                    "hukuki_deliller": "Tapu kayıtları, resmi senetler, mirasçılık belgesi, tanık, bilirkişi, keşif ve sair deliller.",
-                                    "sonuc": "Taşınmaz üzerine İHTİYATİ TEDBİR KONULMASINA, tapu kaydının İPTALİ ile tesciline karar verilmesini talep ederiz."
-                        }
+                id: "replik",
+                category: "hukuk_talep",
+                icon: "📝",
+                title: "Cevaba Cevap Dilekçesi (Replik)",
+                desc: "Davalının cevap dilekçesine karşı süresi içinde cevaba cevap sunumu.",
+                data: {
+                    mahkeme: "MERSİN [..]. ASLİYE HUKUK MAHKEMESİNE",
+                    talep: "",
+                    dosya: "2026/... Esas",
+                    m_sifat: "DAVACI",
+                    m_ad: "[Davacı Müvekkil Adı Soyadı - T.C. 12345678901]",
+                    m_adres: "[Davacı Adresi]",
+                    k_sifat: "DAVALI",
+                    k_ad: "[Davalı Adı Soyadı / Unvanı]",
+                    k_vekil: "[Davalı Vekili]",
+                    hed: "",
+                    konu: "Davalının cevap dilekçesine karşı süresi içinde cevaba cevaplarımızın sunulmasıdır.",
+                    aciklama: "1- Davalının cevap dilekçesinde ileri sürdüğü itirazların tamamı yersiz olup reddi gerekmektedir.\\n2- Davalı taraf borcun ifa edildiğini yasal delillerle ispatlayamamıştır.\\n3- Dava dilekçemizdeki haklı iddialarımızı yineliyor, davanın kabulünü talep ediyoruz.",
+                    hukuki_sebepler: "HMK, TBK ve ilgili mevzuat.",
+                    hukuki_deliller: "Dava dilekçesinde sunulan deliller, tanık, bilirkişi, yemin ve sair hukuki deliller.",
+                    sonuc: "Davalının haksız cevap ve itirazlarının reddi ile DAVAMIZIN KABULÜNE karar verilmesini vekâleten saygıyla arz ve talep ederiz."
+                }
             },
             {
-                        "id": "icra_hukuk_dava",
-                        "category": "icra_hukuk",
-                        "main_cat": "hukuk",
-                        "icon": "⚖️",
-                        "title": "İcra Hukuk Dava Dilekçesi",
-                        "desc": "Memur muamelesini şikayet, icra takibine itirazın kaldırılması ve genel İcra Hukuk davası.",
-                        "data": {
-                                    "mahkeme": "MERSİN NÖBETÇİ İCRA HUKUK MAHKEMESİNE",
-                                    "talep": "TAKİBİN DURDURULMASI TALEBİDİR",
-                                    "dosya": "Mersin ... İcra Dairesi - 2026/... E.",
-                                    "m_sifat": "DAVACI (BORÇLU / ALACAKLI)",
-                                    "m_ad": "[Müvekkil Adı Soyadı - T.C. 12345678901]",
-                                    "m_adres": "[Müvekkil Adresi]",
-                                    "k_sifat": "DAVALI",
-                                    "k_ad": "[Karşı Taraf Adı Soyadı / Unvanı]",
-                                    "k_vekil": "[Varsa Karşı Taraf Vekili]",
-                                    "hed": "",
-                                    "konu": "İcra müdürlüğünün kanuna aykırı işleminin iptali / itirazın kaldırılması talebimizdir.",
-                                    "aciklama": "1- İcra müdürlüğü işlemi İİK amir hükümlerine aykırıdır.\\n2- Takibin tedbiren durdurulması ve işlemin iptali gerekmektedir.",
-                                    "hukuki_sebepler": "İİK m. 16, 17, 68 vd. ve ilgili mevzuat.",
-                                    "hukuki_deliller": "İcra takip dosyası ve sair deliller.",
-                                    "sonuc": "Davamızın KABULÜ ile işlemin iptaline karar verilmesini vekâleten saygıyla arz ve talep ederiz."
-                        }
+                id: "duplik",
+                category: "hukuk_talep",
+                icon: "📑",
+                title: "İkinci Cevap Dilekçesi (Düplik)",
+                desc: "Davacının cevaba cevap dilekçesine karşı ikinci cevapların sunulması.",
+                data: {
+                    mahkeme: "MERSİN [..]. ASLİYE HUKUK MAHKEMESİNE",
+                    talep: "",
+                    dosya: "2026/... Esas",
+                    m_sifat: "DAVALI",
+                    m_ad: "[Davalı Müvekkil Adı Soyadı - T.C. 12345678901]",
+                    m_adres: "[Davalı Adresi]",
+                    k_sifat: "DAVACI",
+                    k_ad: "[Davacı Adı Soyadı / Unvanı]",
+                    k_vekil: "[Davacı Vekili]",
+                    hed: "",
+                    konu: "Davacının cevaba cevap dilekçesine karşı ikinci cevaplarımızın (düplik) sunulmasıdır.",
+                    aciklama: "1- Davacının cevaba cevap dilekçesindeki iddiaları soyut ve hukuki dayanaktan yoksundur.\\n2- Müvekkilimizin sorumluluğu bulunmadığı tarafımızca sunulan delillerle sabittir.",
+                    hukuki_sebepler: "HMK, TBK ve ilgili mevzuat.",
+                    hukuki_deliller: "Cevap dilekçemizde bildirilen deliller, tanık, bilirkişi, yemin ve sair hukuki deliller.",
+                    sonuc: "Haksız ve hukuki dayanaktan yoksun DAVANIN REDDİNE karar verilmesini vekâleten arz ve talep ederiz."
+                }
             },
             {
-                        "id": "icra_hukuk_cevap",
-                        "category": "icra_hukuk",
-                        "main_cat": "hukuk",
-                        "icon": "📝",
-                        "title": "İcra Hukuk Cevap Dilekçesi",
-                        "desc": "İcra Hukuk Mahkemesi şikayet ve davalarına karşı cevapların sunulması.",
-                        "data": {
-                                    "mahkeme": "MERSİN [..]. İCRA HUKUK MAHKEMESİNE",
-                                    "talep": "",
-                                    "dosya": "2026/... Esas",
-                                    "m_sifat": "DAVALI (ALACAKLI / BORÇLU)",
-                                    "m_ad": "[Müvekkil Adı Soyadı - T.C. 12345678901]",
-                                    "m_adres": "[Müvekkil Adresi]",
-                                    "k_sifat": "DAVACI",
-                                    "k_ad": "[Davacı Adı Soyadı / Unvanı]",
-                                    "k_vekil": "[Davacı Vekili]",
-                                    "hed": "",
-                                    "konu": "Davacının haksız şikayetine/davasına karşı cevaplarımızın sunulmasıdır.",
-                                    "aciklama": "1- İcra müdürlüğü işlemi usul ve yasaya tam uygundur.\\n2- Davacının iddiaları takibi sürüncemede bırakmaya matuftur.",
-                                    "hukuki_sebepler": "İİK ve ilgili mevzuat.",
-                                    "hukuki_deliller": "İcra takip dosyası.",
-                                    "sonuc": "Haksız davanın REDDİNE karar verilmesini vekâleten saygıyla arz ve talep ederiz."
-                        }
+                id: "tanik_bildirme",
+                category: "hukuk_talep",
+                icon: "👥",
+                title: "Tanık Bildirme Dilekçesi",
+                desc: "İsim, TC ve adresli tanık listesi ile dinlenecekleri konuların sunumu.",
+                data: {
+                    mahkeme: "MERSİN [..]. ASLİYE HUKUK MAHKEMESİNE",
+                    talep: "",
+                    dosya: "2026/... Esas",
+                    m_sifat: "DAVACI / DAVALI",
+                    m_ad: "[Müvekkil Adı Soyadı - T.C. 12345678901]",
+                    m_adres: "[Müvekkil Adresi]",
+                    k_sifat: "KARŞI TARAF",
+                    k_ad: "[Karşı Taraf Adı Soyadı / Unvanı]",
+                    k_vekil: "[Varsa Karşı Taraf Vekili]",
+                    hed: "",
+                    konu: "Mahkemenizin ara kararı uyarınca tanık listemizin sunulmasıdır.",
+                    aciklama: "Mahkemenizin ara kararı uyarınca tanıklarımızın isim ve adres bilgileri aşağıda sunulmuştur:\\n\\nTANIKLARIMIZ:\\n1- [Tanık 1 Adı Soyadı - T.C. No] - [Adres Bilgisi] (Hangi konuda dinleneceği: ...)\\n2- [Tanık 2 Adı Soyadı - T.C. No] - [Adres Bilgisi] (Hangi konuda dinleneceği: ...)",
+                    hukuki_sebepler: "HMK m. 240 vd. ve ilgili mevzuat.",
+                    hukuki_deliller: "Tanık beyanları ve dosyadaki sair deliller.",
+                    sonuc: "Yukarıda bildirilen tanıklarımızın duruşma günü davetiye tebliği suretiyle dinlenilmesine karar verilmesini vekâleten saygıyla arz ve talep ederiz."
+                }
             },
             {
-                        "id": "icra_hukuk_istinaf",
-                        "category": "icra_hukuk",
-                        "main_cat": "hukuk",
-                        "icon": "⚖️",
-                        "title": "İcra Hukuk İstinaf Başvuru Dilekçesi",
-                        "desc": "İcra Hukuk Mahkemesi kararına karşı BAM İlgili Hukuk Dairesi'ne istinaf başvurusu.",
-                        "data": {
-                                    "mahkeme": "ADANA BÖLGE ADLİYE MAHKEMESİ İLGİLİ HUKUK DAİRESİNE\\nGönderilmek Üzere\\nMERSİN [..]. İCRA HUKUK MAHKEMESİNE",
-                                    "talep": "",
-                                    "dosya": "2026/... E. - 2026/... K.",
-                                    "m_sifat": "İSTİNAF EDEN",
-                                    "m_ad": "[Müvekkil Adı Soyadı - T.C. 12345678901]",
-                                    "m_adres": "[Müvekkil Adresi]",
-                                    "k_sifat": "KARŞI TARAF",
-                                    "k_ad": "[Karşı Taraf Adı Soyadı / Unvanı]",
-                                    "k_vekil": "[Karşı Taraf Vekili]",
-                                    "hed": "",
-                                    "konu": "Mersin [..]. İcra Hukuk Mahkemesi kararının istinafen KALDIRILMASI talebimizdir.",
-                                    "aciklama": "1- Yerel mahkeme kararı İİK hükümlerine aykırıdır.\\n2- İstinaf başvurumuzun kabulü gerekmektedir.",
-                                    "hukuki_sebepler": "İİK m. 363 vd., HMK ve ilgili mevzuat.",
-                                    "hukuki_deliller": "Dava ve icra takip dosyası.",
-                                    "sonuc": "İstinaf başvurumuzun KABULÜ ile kararın KALDIRILMASINA karar verilmesini talep ederiz."
-                        }
+                id: "mehil",
+                category: "hukuk_talep",
+                icon: "⏱️",
+                title: "Süre Uzatım (Mehil) Talep Dilekçesi",
+                desc: "HMK 127 uyarınca cevap süresinin bir ay süreyle uzatılması talebi.",
+                data: {
+                    mahkeme: "MERSİN [..]. ASLİYE HUKUK MAHKEMESİNE",
+                    talep: "",
+                    dosya: "2026/... Esas",
+                    m_sifat: "DAVALI / DAVACI",
+                    m_ad: "[Müvekkil Adı Soyadı - T.C. 12345678901]",
+                    m_adres: "[Müvekkil Adresi]",
+                    k_sifat: "KARŞI TARAF",
+                    k_ad: "[Karşı Taraf Adı Soyadı / Unvanı]",
+                    k_vekil: "[Varsa Karşı Taraf Vekili]",
+                    hed: "",
+                    konu: "Dava dilekçesine / ara karara cevap süremizin HMK m. 127 uyarınca uzatılması talebidir.",
+                    aciklama: "1- Mahkemenizin yukarıda esas numarası yazılı dosyasında dava dilekçesi tarafımıza ... tarihinde tebliğ edilmiştir.\\n2- Toplanması gereken belge ve kayıtların çokluğu nedeniyle yasal 2 haftalık sürede cevap hazırlamak imkânsızdır.\\n3- HMK m. 127 gereğince cevap süremizin uzatılmasını talep ediyoruz.",
+                    hukuki_sebepler: "HMK m. 127 ve ilgili mevzuat.",
+                    hukuki_deliller: "Tebligat mazbatası ve dosya kapsamı.",
+                    sonuc: "Cevap süremizin HMK 127. maddesi uyarınca ilk sürenin bitiminden itibaren BİR AY SÜREYLE UZATILMASINA karar verilmesini vekâleten saygıyla arz ve talep ederiz."
+                }
             },
             {
-                        "id": "asliye_ceza_savunma",
-                        "category": "asliye_ceza",
-                        "main_cat": "ceza",
-                        "icon": "🛡️",
-                        "title": "Asliye Ceza Savunma Dilekçesi",
-                        "desc": "Asliye Ceza Mahkemesi esas hakkındaki mütalaaya karşı savunma ve beraat talebi.",
-                        "data": {
-                                    "mahkeme": "MERSİN [..]. ASLİYE CEZA MAHKEMESİNE",
-                                    "talep": "",
-                                    "dosya": "2026/... Esas",
-                                    "m_sifat": "SANIK",
-                                    "m_ad": "[Sanık Müvekkil Adı Soyadı - T.C. 12345678901]",
-                                    "m_adres": "[Müvekkil Adresi]",
-                                    "k_sifat": "KATILAN / MÜŞTEKİ",
-                                    "k_ad": "[Katılan/Müşteki Adı Soyadı]",
-                                    "k_vekil": "[Katılan Vekili]",
-                                    "hed": "",
-                                    "konu": "Esas hakkındaki mütalaaya karşı esasa ilişkin savunmalarımızın sunulması ve BERAAT talebimizdir.",
-                                    "aciklama": "1- Müvekkil üzerine atılı suçun yasal unsurları oluşmamıştır.\\n2- Mahkumiyete yeterli kesin delil bulunmamaktadır; şüpheden sanık yararlanır ilkesi gereğince beraat verilmelidir.",
-                                    "hukuki_sebepler": "TCK, CMK m. 223/2 ve ilgili mevzuat.",
-                                    "hukuki_deliller": "Duruşma tutanakları, tanık beyanları, kamera kayıtları ve dosya kapsamı.",
-                                    "sonuc": "Müvekkilin BERAATİNE karar verilmesini vekâleten saygıyla arz ve talep ederiz."
-                        }
+                id: "istinaf_hukuk",
+                category: "hukuk_talep",
+                icon: "⚖️",
+                title: "İstinaf Başvuru Dilekçesi (Tehiri İcra)",
+                desc: "Yerel mahkeme kararının kaldırılması ve tehir-i icra talepli istinaf başvurusu.",
+                data: {
+                    mahkeme: "ADANA BÖLGE ADLİYE MAHKEMESİ İLGİLİ HUKUK DAİRESİNE\\nGönderilmek Üzere\\nMERSİN [..]. ASLİYE HUKUK MAHKEMESİNE",
+                    talep: "TEHİR-İ İCRA (İCRANIN GERİ BIRAKILMASI) TALEPLİDİR",
+                    dosya: "2026/... E. - 2026/... K.",
+                    m_sifat: "İSTİNAF EDEN (DAVALI)",
+                    m_ad: "[İstinaf Eden Müvekkil - T.C. 12345678901]",
+                    m_adres: "[Müvekkil Adresi]",
+                    k_sifat: "KARŞI TARAF (DAVACI)",
+                    k_ad: "[Davacı Karşı Taraf Adı Soyadı / Unvanı]",
+                    k_vekil: "[Davacı Vekili]",
+                    hed: "[... TL (İstinafa Konu Karar Tutarı)]",
+                    konu: "Mersin .. Asliye Hukuk Mahkemesi'nin ... tarih ve ... E., ... K. sayılı haksız kararının istinafen incelenerek KALDIRILMASI talebimizdir.",
+                    aciklama: "1- Yerel mahkemece eksik inceleme ve hatalı delil değerlendirmesi sonucunda usul ve yasaya aykırı karar verilmiştir.\\n2- [Yerel mahkeme kararındaki somut maddi ve hukuki hata gerekçeleri]\\n3- Karar usul ve esas yönünden hukuka aykırı olup kaldırılması gerekmektedir.",
+                    hukuki_sebepler: "HMK m. 341 vd., İİK m. 36 ve ilgili mevzuat.",
+                    hukuki_deliller: "Yerel mahkeme dava dosyası, tanık, bilirkişi, yemin ve sair hukuki deliller.",
+                    sonuc: "İstinaf başvurumuzun KABULÜ ile yerel mahkeme kararının KALDIRILMASINA ve tehiri icra talebimizin kabulüne karar verilmesini vekâleten saygıyla arz ve talep ederiz."
+                }
             },
             {
-                        "id": "asliye_ceza_istinaf",
-                        "category": "asliye_ceza",
-                        "main_cat": "ceza",
-                        "icon": "⚖️",
-                        "title": "Asliye Ceza İstinaf Başvuru Dilekçesi",
-                        "desc": "Asliye Ceza Mahkemesi mahkumiyet kararına karşı BAM İlgili Ceza Dairesi'ne istinaf.",
-                        "data": {
-                                    "mahkeme": "ADANA BÖLGE ADLİYE MAHKEMESİ İLGİLİ CEZA DAİRESİNE\\nGönderilmek Üzere\\nMERSİN [..]. ASLİYE CEZA MAHKEMESİNE",
-                                    "talep": "",
-                                    "dosya": "2026/... E. - 2026/... K.",
-                                    "m_sifat": "SANIK",
-                                    "m_ad": "[Sanık Müvekkil Adı Soyadı - T.C. 12345678901]",
-                                    "m_adres": "[Müvekkil Adresi]",
-                                    "k_sifat": "KATILAN",
-                                    "k_ad": "[Katılan Adı Soyadı]",
-                                    "k_vekil": "[Katılan Vekili]",
-                                    "hed": "",
-                                    "konu": "Mersin [..]. Asliye Ceza Mahkemesi'nin usul ve yasaya aykırı mahkûmiyet hükmünün istinafen BOZULMASI ve BERAAT kararı verilmesi talebimizdir.",
-                                    "aciklama": "1- Yerel mahkemece eksik inceleme ile usul ve yasaya aykırı karar verilmiştir.\\n2- Suç unsurları oluşmamıştır.",
-                                    "hukuki_sebepler": "CMK m. 272 vd., TCK ve ilgili mevzuat.",
-                                    "hukuki_deliller": "Ceza dava dosyası.",
-                                    "sonuc": "İstinaf başvurumuzun KABULÜ ile kararın BOZULMASINA ve müvekkilin BERAATİNE karar verilmesini talep ederiz."
-                        }
+                id: "bilirkisi_itiraz",
+                category: "hukuk_talep",
+                icon: "📑",
+                title: "Bilirkişi Raporuna İtiraz Dilekçesi",
+                desc: "Hatalı ve eksik bilirkişi raporuna itiraz ile ek rapor / yeni heyet incelemesi talebi.",
+                data: {
+                    mahkeme: "MERSİN [..]. ASLİYE HUKUK MAHKEMESİNE",
+                    talep: "",
+                    dosya: "2026/... Esas",
+                    m_sifat: "DAVACI / DAVALI",
+                    m_ad: "[Müvekkil Adı Soyadı - T.C. 12345678901]",
+                    m_adres: "[Müvekkil Adresi]",
+                    k_sifat: "KARŞI TARAF",
+                    k_ad: "[Karşı Taraf Adı Soyadı / Unvanı]",
+                    k_vekil: "[Varsa Karşı Taraf Vekili]",
+                    hed: "",
+                    konu: "Dosyaya sunulan ... tarihli bilirkişi raporuna karşı itirazlarımızın sunulmasıdır.",
+                    aciklama: "1- Sayın Mahkemeniz dosyasına sunulan bilirkişi raporu eksik incelemeye ve hatalı kabullere dayanmaktadır.\\n2- [Rapordaki teknik, maddi ve hukuki hata kalemleri]\\n3- Hatalı rapor hükme esas alınamaz; ek rapor veya yeni bir heyetten rapor alınmalıdır.",
+                    hukuki_sebepler: "HMK m. 281 ve ilgili mevzuat.",
+                    hukuki_deliller: "Dosya kapsamı, emsal raporlar, tanık, bilirkişi, yemin ve sair hukuki deliller.",
+                    sonuc: "Hatalı bilirkişi raporuna itirazlarımızın KABULÜ ile dosyanın EK RAPOR veya YENİ BİLİRKİŞİ HEYETİNE tevdine karar verilmesini vekâleten saygıyla arz ve talep ederiz."
+                }
             },
             {
-                        "id": "agir_ceza_savunma",
-                        "category": "agir_ceza",
-                        "main_cat": "ceza",
-                        "icon": "🏛️",
-                        "title": "Ağır Ceza Savunma Dilekçesi",
-                        "desc": "Ağır Ceza Mahkemesi mütalaaya karşı son savunma, tahliye ve beraat talebi.",
-                        "data": {
-                                    "mahkeme": "MERSİN [..]. AĞIR CEZA MAHKEMESİNE",
-                                    "talep": "TAHLİYE TALEPLİDİR",
-                                    "dosya": "2026/... Esas",
-                                    "m_sifat": "SANIK",
-                                    "m_ad": "[Sanık Müvekkil Adı Soyadı - T.C. 12345678901]",
-                                    "m_adres": "[Cezaevi Bilgisi / Adres]",
-                                    "k_sifat": "KATILAN",
-                                    "k_ad": "[Katılan Adı Soyadı]",
-                                    "k_vekil": "[Katılan Vekili]",
-                                    "hed": "",
-                                    "konu": "Esas hakkındaki mütalaaya karşı savunmalarımız ile müvekkilin TAHLİYESİ ve BERAATİ talebimizdir.",
-                                    "aciklama": "1- Müvekkile isnat edilen suçun unsurları oluşmamıştır.\\n2- Tutuklulukta geçen süre gözetilerek öncelikle tahliyesine ve neticeten beraatine karar verilmelidir.",
-                                    "hukuki_sebepler": "AİHS, Anayasa, TCK, CMK m. 100, 223/2 ve ilgili mevzuat.",
-                                    "hukuki_deliller": "Adli tıp raporları, tanık beyanları, HTS kayıtları ve dosya kapsamı.",
-                                    "sonuc": "Müvekkilin öncelikle BİHAKKIN TAHLİYESİNE ve neticeten BERAATİNE karar verilmesini vekâleten saygıyla arz ve talep ederiz."
-                        }
+                id: "bilirkisi_beyan",
+                category: "hukuk_talep",
+                icon: "📋",
+                title: "Bilirkişi Raporuna Karşı Beyan Dilekçesi",
+                desc: "HMK m. 281 uyarınca lehe olan bilirkişi raporuna muvafakat ve rapor doğrultusunda karar verilmesi talebi.",
+                data: {
+                    mahkeme: "MERSİN [..]. ASLİYE HUKUK MAHKEMESİNE",
+                    talep: "",
+                    dosya: "2026/... Esas",
+                    m_sifat: "DAVACI / DAVALI",
+                    m_ad: "[Müvekkil Adı Soyadı - T.C. 12345678901]",
+                    m_adres: "[Müvekkil Adresi]",
+                    k_sifat: "KARŞI TARAF",
+                    k_ad: "[Karşı Taraf Adı Soyadı / Unvanı]",
+                    k_vekil: "[Karşı Taraf Vekili]",
+                    hed: "",
+                    konu: "Dosyaya sunulan ... tarihli Bilirkişi Raporuna karşı süresi içerisinde beyanlarımızın sunulmasıdır.",
+                    aciklama: "1- Mahkemenizce aldırılan ... tarihli bilirkişi raporu tarafımıza tebliğ edilmiştir.\\n2- Bilirkişi heyeti/uzmanı dosya kapsamındaki tüm delilleri, defter ve kayıtları bilimsel ve mevzuata uygun şekilde incelemiş; iddia ve savunmalarımızı doğrulamıştır.\\n3- Rapor gerekçeli, denetime elverişli ve hüküm kurmaya yeterli olup rapor doğrultusunda davamızın/taleplerimizin kabulüne karar verilmesini talep ederiz.",
+                    hukuki_sebepler: "HMK m. 281 ve ilgili mevzuat.",
+                    hukuki_deliller: "Tarihli bilirkişi raporu ve dosya kapsamı.",
+                    sonuc: "Hukuka ve dosya kapsamına uygun Bilirkişi Raporu doğrultusunda haklı DAVAMIZIN KABULÜNE karar verilmesini vekâleten saygıyla arz ve talep ederiz."
+                }
             },
             {
-                        "id": "agir_ceza_tutuklama_itiraz",
-                        "category": "agir_ceza",
-                        "main_cat": "ceza",
-                        "icon": "⛓️",
-                        "title": "Ağır Ceza Tutukluluğa İtiraz ve Tahliye Dilekçesi",
-                        "desc": "Ağır Ceza tutukluluğun devamı kararına karşı itiraz ve tahliye talebi.",
-                        "data": {
-                                    "mahkeme": "MERSİN [..+1]. AĞIR CEZA MAHKEMESİNE\\nGönderilmek Üzere\\nMERSİN [..]. AĞIR CEZA MAHKEMESİNE",
-                                    "talep": "TAHLİYE TALEPLİDİR",
-                                    "dosya": "2026/... Esas",
-                                    "m_sifat": "SANIK",
-                                    "m_ad": "[Sanık Müvekkil Adı Soyadı - T.C. 12345678901]",
-                                    "m_adres": "[Cezaevi Bilgisi / Adres]",
-                                    "k_sifat": "MÜŞTEKİ",
-                                    "k_ad": "[Müşteki Adı Soyadı]",
-                                    "k_vekil": "",
-                                    "hed": "",
-                                    "konu": "Mahkemenizin ... tarihli tutukluluğun devamı kararına İTİRAZLARIMIZ ve TAHLİYE talebimizdir.",
-                                    "aciklama": "1- Tutuklama tedbir niteliğinde olup deliller toplanmıştır.\\n2- Kaçma şüphesi bulunmamaktadır; adli kontrol tedbirleri yeterlidir.",
-                                    "hukuki_sebepler": "CMK m. 100, 101, 109, 267 vd.",
-                                    "hukuki_deliller": "Dosya kapsamı, ikametgah belgeleri.",
-                                    "sonuc": "İtirazımızın KABULÜ ile tutuklama kararının kaldırılarak müvekkilin TAHLİYESİNE karar verilmesini talep ederiz."
-                        }
+                id: "bilirkisi_rapora_itiraz",
+                category: "hukuk_talep",
+                icon: "📊",
+                title: "Bilirkişi Raporuna Karşı İtiraz Dilekçesi",
+                desc: "HMK m. 281 uyarınca eksik, çelişkili veya hatalı bilirkişi raporuna itiraz ve ek/yeni bilirkişi incelemesi talebi.",
+                data: {
+                    mahkeme: "MERSİN [..]. ASLİYE HUKUK MAHKEMESİNE",
+                    talep: "",
+                    dosya: "2026/... Esas",
+                    m_sifat: "DAVACI / DAVALI",
+                    m_ad: "[Müvekkil Adı Soyadı - T.C. 12345678901]",
+                    m_adres: "[Müvekkil Adresi]",
+                    k_sifat: "KARŞI TARAF",
+                    k_ad: "[Karşı Taraf Adı Soyadı / Unvanı]",
+                    k_vekil: "[Karşı Taraf Vekili]",
+                    hed: "",
+                    konu: "Dosyaya sunulan ... tarihli usul ve yasaya aykırı Bilirkişi Raporuna karşı İTİRAZLARIMIZIN sunulması ile EK RAPOR / YENİ HEYET RAPORU aldırılması talebimizdir.",
+                    aciklama: "1- Mahkemeniz dosyasına ibraz olunan ... havale tarihli bilirkişi raporu tarafımıza tebliğ edilmiş olup yasal süresi içinde itirazlarımızı sunuyoruz.\\n2- [İtiraz Maddesi 1: Bilirkişinin somut verileri veya belgeleri değerlendirmemesi].\\n3- [İtiraz Maddesi 2: Hatalı hesaplama yöntemi veya mevzuata aykırı değerlendirme].\\n4- Rapor denetime elverişsiz ve hüküm kurmaya yetersiz olduğundan itirazlarımız doğrultusunda ek rapor veya yeni bir bilirkişi heyetinden rapor aldırılmalıdır.",
+                    hukuki_sebepler: "HMK m. 266, 281, 282 ve ilgili mevzuat.",
+                    hukuki_deliller: "Tarihli bilirkişi raporu, ticari defterler, banka kayıtları, emsal Yargıtay kararları.",
+                    sonuc: "Hatalı ve eksik Bilirkişi Raporuna vaki İTİRAZLARIMIZIN KABULÜ ile itirazlarımız doğrultusunda EK RAPOR ALDIRILMASINA (veya yeni bir uzman heyetten YENİ RAPOR teminine) karar verilmesini vekâleten saygıyla arz ve talep ederiz."
+                }
             },
             {
-                        "id": "agir_ceza_istinaf",
-                        "category": "agir_ceza",
-                        "main_cat": "ceza",
-                        "icon": "⚖️",
-                        "title": "Ağır Ceza İstinaf Başvuru Dilekçesi",
-                        "desc": "Ağır Ceza Mahkemesi hükmüne karşı BAM İlgili Ceza Dairesi'ne istinaf başvurusu.",
-                        "data": {
-                                    "mahkeme": "ADANA BÖLGE ADLİYE MAHKEMESİ İLGİLİ CEZA DAİRESİNE\\nGönderilmek Üzere\\nMERSİN [..]. AĞIR CEZA MAHKEMESİNE",
-                                    "talep": "",
-                                    "dosya": "2026/... E. - 2026/... K.",
-                                    "m_sifat": "SANIK",
-                                    "m_ad": "[Sanık Müvekkil Adı Soyadı - T.C. 12345678901]",
-                                    "m_adres": "[Müvekkil Adresi]",
-                                    "k_sifat": "KATILAN",
-                                    "k_ad": "[Katılan Adı Soyadı]",
-                                    "k_vekil": "[Katılan Vekili]",
-                                    "hed": "",
-                                    "konu": "Mersin [..]. Ağır Ceza Mahkemesi kararının istinafen incelenerek BOZULMASI talebimizdir.",
-                                    "aciklama": "1- Yerel mahkemece eksik araştırma ile karar verilmiştir.\\n2- Suçun unsurları oluşmamıştır.",
-                                    "hukuki_sebepler": "CMK m. 272 vd., TCK ve ilgili mevzuat.",
-                                    "hukuki_deliller": "Dava dosyası.",
-                                    "sonuc": "İstinaf başvurumuzun KABULÜ ile kararın BOZULMASINA ve müvekkilin BERAATİNE karar verilmesini talep ederiz."
-                        }
+                id: "bilirkisiye_itiraz_reddi",
+                category: "hukuk_talep",
+                icon: "🚫",
+                title: "Bilirkişinin Şahsına İtiraz / Reddi Dilekçesi",
+                desc: "HMK m. 272 uyarınca hâkimin reddi sebeplerine dayalı olarak tarafsızlığı şüpheli bilirkişinin reddi talebi.",
+                data: {
+                    mahkeme: "MERSİN [..]. ASLİYE HUKUK MAHKEMESİNE",
+                    talep: "",
+                    dosya: "2026/... Esas",
+                    m_sifat: "DAVACI / DAVALI",
+                    m_ad: "[Müvekkil Adı Soyadı - T.C. 12345678901]",
+                    m_adres: "[Müvekkil Adresi]",
+                    k_sifat: "KARŞI TARAF",
+                    k_ad: "[Karşı Taraf Adı Soyadı / Unvanı]",
+                    k_vekil: "[Karşı Taraf Vekili]",
+                    hed: "",
+                    konu: "Mahkemenizce bilirkişi olarak görevlendirilen [Bilirkişinin Adı Soyadı - Uzmanlık Alanı]'nın HMK m. 272 ve m. 36 uyarınca REDDİ ve yeni bir tarafsız bilirkişi görevlendirilmesi talebimizdir.",
+                    aciklama: "1- Mahkemeniz tensip/ara kararı ile dosya incelemesi için [Bilirkişi Adı Soyadı] bilirkişi olarak tayin edilmiştir.\\n2- Bilirkişi ile karşı taraf/şirket arasında [Husumet / İş ilişkisi / Menfaat birliği / Tarafsızlığı şüpheye düşürecek somut bağ] bulunmaktadır.\\n3- HMK m. 272/1 gereğince bilirkişiler hakkında hâkimin reddine ilişkin sebepler uygulanır. Tarafsızlığını yitirmiş bilirkişinin dosyada görev yapması hukuka aykırıdır.",
+                    hukuki_sebepler: "HMK m. 36, 272 ve ilgili mevzuat.",
+                    hukuki_deliller: "Bilirkişi atama ara kararı, bilirkişi ile taraf arasındaki ilişkiyi gösterir belgeler.",
+                    sonuc: "Bilirkişinin REDDİ TALEBİMİZİN KABULÜNE, görevlendirmenin iptali ile dosyanın tarafsız ve bağımsız yeni bir bilirkişiye tevdiine karar verilmesini vekâleten saygıyla arz ve talep ederiz."
+                }
             },
             {
-                        "id": "icra_ceza_savunma",
-                        "category": "icra_ceza",
-                        "main_cat": "ceza",
-                        "icon": "🛡️",
-                        "title": "İcra Ceza Savunma Dilekçesi",
-                        "desc": "Taahhüdü ihlal veya nafaka ödememe şikayetine karşı savunma ve beraat.",
-                        "data": {
-                                    "mahkeme": "MERSİN [..]. İCRA CEZA MAHKEMESİNE",
-                                    "talep": "",
-                                    "dosya": "2026/... Esas",
-                                    "m_sifat": "SANIK (BORÇLU)",
-                                    "m_ad": "[Sanık Borçlu Adı Soyadı - T.C. 12345678901]",
-                                    "m_adres": "[Müvekkil Adresi]",
-                                    "k_sifat": "MÜŞTEKİ (ALACAKLI)",
-                                    "k_ad": "[Müşteki Alacaklı Adı Soyadı]",
-                                    "k_vekil": "[Müşteki Vekili]",
-                                    "hed": "",
-                                    "konu": "Müştekinin haksız şikayetine karşı savunmalarımızın sunulması ve BERAAT talebimizdir.",
-                                    "aciklama": "1- Şikayete konu taahhüt geçerlilik şartlarını taşımamaktadır.\\n2- Suç unsurları oluşmadığından tazyik hapsi cezası verilemez.",
-                                    "hukuki_sebepler": "İİK m. 340, 344, CMK ve ilgili mevzuat.",
-                                    "hukuki_deliller": "İcra takip dosyası, ödeme dekontları.",
-                                    "sonuc": "Müvekkilin BERAATİNE ve şikayetin REDDİNE karar verilmesini vekâleten saygıyla arz ve talep ederiz."
-                        }
+                id: "adli_yardim_ret_itiraz",
+                category: "hukuk_talep",
+                icon: "⚖️",
+                title: "Adli Yardım Talebinin Reddini İtiraz Dilekçesi",
+                desc: "HMK m. 337/2 uyarınca mahkemenin adli yardım talebini reddine karşı itiraz ve kararın kaldırılması talebi.",
+                data: {
+                    mahkeme: "MERSİN [..+1]. ASLİYE HUKUK MAHKEMESİNE\\nGönderilmek Üzere\\nMERSİN [..]. ASLİYE HUKUK MAHKEMESİNE",
+                    talep: "",
+                    dosya: "2026/... Esas",
+                    m_sifat: "DAVACI / TALEP EDEN",
+                    m_ad: "[Müvekkil Adı Soyadı - T.C. 12345678901]",
+                    m_adres: "[Müvekkil Adresi]",
+                    k_sifat: "DAVALI",
+                    k_ad: "[Davalı Adı Soyadı / Unvanı]",
+                    k_vekil: "[Davalı Vekili]",
+                    hed: "",
+                    konu: "Mersin [..]. Asliye Hukuk Mahkemesi'nin ... tarihli adli yardım talebimizin reddine dair ara kararına karşı HMK m. 337/2 uyarınca İTİRAZLARIMIZIN sunulmasıdır.",
+                    aciklama: "1- Müvekkilin kendisi ve ailesinin geçimini önemli ölçüde zor duruma düşürmeksizin gereken yargılama ve harç giderlerini kısmen veya tamamen ödeme gücünden yoksun olduğu ekli belgelerle sabittir.\\n2- Müvekkil adına kayıtlı herhangi bir gayrimenkul veya gelir getirici malvarlığı bulunmamakta olup fakirlik belgesi, SGK dökümü ve banka kayıtları dosyada mevcuttur.\\n3- Mahkemenin ret gerekçesi Anayasa m. 36 ile teminat altına alınan hak arama hürriyetini ve mahkemeye erişim hakkını engellemektedir.",
+                    hukuki_sebepler: "Anayasa m. 36, AİHS m. 6, HMK m. 334, 336, 337/2 ve ilgili mevzuat.",
+                    hukuki_deliller: "Fakirlik ilmuhaberi, SGK hizmet dökümü, tapu ve araç sorgu kayıtları, mahkemenin ret ara kararı.",
+                    sonuc: "Adli yardım talebimizin reddine ilişkin ara karara vaki İTİRAZIMIZIN KABULÜ ile ret kararının KALDIRILMASINA ve müvekkil hakkında ADLİ YARDIM TALEBİNİN KABULÜNE karar verilmesini vekâleten saygıyla arz ve talep ederiz."
+                }
             },
             {
-                        "id": "icra_ceza_sikayet",
-                        "category": "icra_ceza",
-                        "main_cat": "ceza",
-                        "icon": "⚖️",
-                        "title": "İcra Ceza Şikayet Dilekçesi (Taahhüdü İhlal / Nafaka)",
-                        "desc": "İİK m. 340 taahhüdü ihlal veya m. 344 nafaka borcunu ödememe şikayeti.",
-                        "data": {
-                                    "mahkeme": "MERSİN NÖBETÇİ İCRA CEZA MAHKEMESİNE",
-                                    "talep": "",
-                                    "dosya": "Mersin ... İcra Dairesi - 2026/... E.",
-                                    "m_sifat": "MÜŞTEKİ (ALACAKLI)",
-                                    "m_ad": "[Müşteki Alacaklı Adı Soyadı - T.C. 12345678901]",
-                                    "m_adres": "[Müvekkil Adresi]",
-                                    "k_sifat": "SANIK (BORÇLU)",
-                                    "k_ad": "[Borçlu Sanık Adı Soyadı - T.C. No]",
-                                    "k_vekil": "",
-                                    "hed": "",
-                                    "konu": "Sanığın taahhüdünü ihlal etmesi / nafaka borcunu ödememesi nedeniyle İİK uyarınca CEZALANDIRILMASI talebidir.",
-                                    "aciklama": "1- Sanık borçlu taksitleri ödememiştir.\\n2- İİK m. 340 uyarınca tazyik hapsi ile cezalandırılması gerekmektedir.",
-                                    "hukuki_sebepler": "İİK m. 340, 344 ve ilgili mevzuat.",
-                                    "hukuki_deliller": "İcra takip dosyası ve taahhüt tutanağı.",
-                                    "sonuc": "Sanığın TAZYİK HAPSİ İLE CEZALANDIRILMASINA karar verilmesini talep ederiz."
-                        }
+                id: "dahili_davali",
+                category: "hukuk_talep",
+                icon: "👥",
+                title: "Dahili Davalı Ekleme Dilekçesi",
+                desc: "Mecburi dava arkadaşlığı veya husumet yöneltilmesi amacıyla davaya dahil etme talebi.",
+                data: {
+                    mahkeme: "MERSİN [..]. ASLİYE HUKUK MAHKEMESİNE",
+                    talep: "",
+                    dosya: "2026/... Esas",
+                    m_sifat: "DAVACI",
+                    m_ad: "[Davacı Müvekkil Adı Soyadı - T.C. 12345678901]",
+                    m_adres: "[Davacı Adresi]",
+                    k_sifat: "DAVALI",
+                    k_ad: "[Davalı Adı Soyadı / Unvanı]",
+                    k_vekil: "[Davalı Vekili]",
+                    hed: "",
+                    konu: "Uyuşmazlığın mahiyeti gereği [Dahil Edilecek Kişi Adı Soyadı - T.C. / Unvanı - Adres] şahsın/şirketin davaya DAHİLİ DAVALI olarak eklenmesi ve dava dilekçesinin tebliği talebimizdir.",
+                    aciklama: "1- Mahkemenizin yukarıda esas numarası yazılı dosyasında görülmekte olan davada, dava konusu hakkın/borcun niteliği gereği üçüncü kişinin davada yer alması zorunludur.\\n2- HMK hükümleri ve maddi hukuk gereğince husumetin işbu şahsa/şirkete de yöneltilmesi ve davaya dahil edilmesi gerekmektedir.\\n3- Dahili davalıya tensip zaptı ve dava dilekçesi ekli davetiye tebliğe çıkarılmalıdır.",
+                    hukuki_sebepler: "HMK m. 124 ve ilgili mevzuat.",
+                    hukuki_deliller: "Dava dosyası kapsamı ve resmi kayıtlar.",
+                    sonuc: "Bildirilen şahsın/şirketin davaya DAHİLİ DAVALI olarak eklenmesine, duruşma günü ve dava dilekçesinin tebliğine karar verilmesini vekâleten saygıyla arz ve talep ederiz."
+                }
             },
             {
-                        "id": "icra_ceza_itiraz",
-                        "category": "icra_ceza",
-                        "main_cat": "ceza",
-                        "icon": "📋",
-                        "title": "İcra Ceza Kararına İtiraz Dilekçesi",
-                        "desc": "İcra Ceza Mahkemesi tazyik hapsi kararına karşı Asliye Ceza Mahkemesi'ne itiraz.",
-                        "data": {
-                                    "mahkeme": "MERSİN [..]. ASLİYE CEZA MAHKEMESİNE\\nGönderilmek Üzere\\nMERSİN [..]. İCRA CEZA MAHKEMESİNE",
-                                    "talep": "",
-                                    "dosya": "2026/... Esas - 2026/... Karar",
-                                    "m_sifat": "SANIK (BORÇLU)",
-                                    "m_ad": "[Sanık Borçlu Adı Soyadı - T.C. 12345678901]",
-                                    "m_adres": "[Müvekkil Adresi]",
-                                    "k_sifat": "MÜŞTEKİ",
-                                    "k_ad": "[Müşteki Adı Soyadı]",
-                                    "k_vekil": "[Müşteki Vekili]",
-                                    "hed": "",
-                                    "konu": "İcra Ceza Mahkemesi'nin ... tarihli tazyik hapsi kararına karşı İTİRAZLARIMIZIN sunulmasıdır.",
-                                    "aciklama": "1- Yerel mahkemece hatalı değerlendirmeyle tazyik hapsi kararı verilmiştir.\\n2- İtirazımızın incelenerek kararın kaldırılması gerekmektedir.",
-                                    "hukuki_sebepler": "İİK m. 353 ve ilgili mevzuat.",
-                                    "hukuki_deliller": "İcra Ceza dava dosyası.",
-                                    "sonuc": "İtirazımızın KABULÜ ile kararın KALDIRILMASINA karar verilmesini talep ederiz."
-                        }
+                id: "tashih_dilekcesi",
+                category: "hukuk_talep",
+                icon: "✏️",
+                title: "Tashih (Hükmün Tashihi) Dilekçesi",
+                desc: "HMK m. 304 uyarınca karardaki yazı, hesap veya isim hatalarının tashihi talebi.",
+                data: {
+                    mahkeme: "MERSİN [..]. ASLİYE HUKUK MAHKEMESİNE",
+                    talep: "",
+                    dosya: "2026/... E. - 2026/... K.",
+                    m_sifat: "DAVACI / DAVALI",
+                    m_ad: "[Müvekkil Adı Soyadı - T.C. 12345678901]",
+                    m_adres: "[Müvekkil Adresi]",
+                    k_sifat: "KARŞI TARAF",
+                    k_ad: "[Karşı Taraf Adı Soyadı / Unvanı]",
+                    k_vekil: "[Karşı Taraf Vekili]",
+                    hed: "",
+                    konu: "Mahkemenizin ... tarih ve ... E., ... K. sayılı gerekçeli kararında yer alan açık yazı/hesap/isim hatasının HMK m. 304 uyarınca TASHİHİ (düzeltilmesi) talebimizdir.",
+                    aciklama: "1- Sayın Mahkemenizce yukarıda numarası belirtilen dosyada verilen gerekçeli kararın hüküm fıkrasında açık bir yazı/hesaplama/isim hatası yapılmıştır.\\n2- [Yapılan somut maddi hatanın açıklaması: Örn. vekalet ücreti hesaplaması, taraf ismi, TC no veya alacak miktarı rakam hatası] sehven yanlış yazılmıştır.\\n3- HMK m. 304 uyarınca kararın taraflara tebliğ edilmiş olup olmadığına bakılmaksızın tashih edilmesini talep ederiz.",
+                    hukuki_sebepler: "HMK m. 304 ve ilgili mevzuat.",
+                    hukuki_deliller: "Mahkeme ilamı ve dosya kapsamı.",
+                    sonuc: "Gerekçeli kararda yer alan açık maddi hatanın HMK m. 304 uyarınca TASHİHİNE ve düzeltme şerhli kararın taraflara tebliğine karar verilmesini vekâleten saygıyla arz ve talep ederiz."
+                }
             },
             {
-                        "id": "savcilik_suc_duyurusu",
-                        "category": "savcilik",
-                        "main_cat": "ceza",
-                        "icon": "⚖️",
-                        "title": "Savcılık Suç Duyurusu (Şikayet) Dilekçesi",
-                        "desc": "Cumhuriyet Başsavcılığı'na suç duyurusu ve kamu davası açılması talebi.",
-                        "data": {
-                                    "mahkeme": "MERSİN CUMHURİYET BAŞSAVCILIĞINA",
-                                    "talep": "",
-                                    "dosya": "",
-                                    "m_sifat": "MÜŞTEKİ (ŞİKAYET EDEN)",
-                                    "m_ad": "[Müşteki Müvekkil Adı Soyadı - T.C. 12345678901]",
-                                    "m_adres": "[Müvekkil Adresi]",
-                                    "k_sifat": "ŞÜPHELİ / ŞÜPHELİLER",
-                                    "k_ad": "[Şüpheli Adı Soyadı - T.C. / Adres]",
-                                    "k_vekil": "",
-                                    "hed": "",
-                                    "konu": "Şüpheli hakkında soruşturma yürütülerek KAMU DAVASI AÇILMASI talebimizdir.",
-                                    "aciklama": "1- Şüpheli şahıs müvekkile karşı suç teşkil eden eylemlerde bulunmuştur.\\n2- Şüphelinin cezalandırılması için kamu davası açılmalıdır.",
-                                    "hukuki_sebepler": "TCK, CMK ve ilgili mevzuat.",
-                                    "hukuki_deliller": "Yazışmalar, dekontlar, kamera kayıtları, tanık.",
-                                    "sonuc": "Şüpheli hakkında KAMU DAVASI AÇILMASINA karar verilmesini talep ederiz."
-                        }
+                id: "tavzih_dilekcesi",
+                category: "hukuk_talep",
+                icon: "📖",
+                title: "Tavzih (Hükmün Açıklanması) Dilekçesi",
+                desc: "HMK m. 305 uyarınca açık olmayan veya çelişkili fıkralar içeren hükmün tavzihi talebi.",
+                data: {
+                    mahkeme: "MERSİN [..]. ASLİYE HUKUK MAHKEMESİNE",
+                    talep: "",
+                    dosya: "2026/... E. - 2026/... K.",
+                    m_sifat: "DAVACI / DAVALI",
+                    m_ad: "[Müvekkil Adı Soyadı - T.C. 12345678901]",
+                    m_adres: "[Müvekkil Adresi]",
+                    k_sifat: "KARŞI TARAF",
+                    k_ad: "[Karşı Taraf Adı Soyadı / Unvanı]",
+                    k_vekil: "[Karşı Taraf Vekili]",
+                    hed: "",
+                    konu: "Mahkemenizin ... tarih ve ... E., ... K. sayılı ilamının hüküm fıkrasındaki müphemliğin/çelişkinin HMK m. 305 uyarınca TAVZİHİ (açıklığa kavuşturulması) talebimizdir.",
+                    aciklama: "1- Mahkemeniz ilamının hüküm kısmı icra/infaz aşamasında tereddüt ve belirsizlik yaratacak nitelikte müphem kalmıştır.\\n2- [Hüküm fıkrasındaki açıklığa kavuşturulması gereken kısım ve icra dairesinin infaz edememe gerekçesi].\\n3- HMK m. 305 uyarınca hükmün sınırları genişletilmeksizin fıkranın açık ve tereddütsüz hale getirilmesi için tavzih kararı verilmesini talep ederiz.",
+                    hukuki_sebepler: "HMK m. 305, 306 ve ilgili mevzuat.",
+                    hukuki_deliller: "Mahkeme gerekçeli kararı, icra müdürlüğü tensip/kararı ve dosya kapsamı.",
+                    sonuc: "Hüküm fıkrasındaki belirsizliğin HMK m. 305 uyarınca TAVZİHEN AÇIKLIĞA KAVUŞTURULMASINA karar verilmesini vekâleten saygıyla arz ve talep ederiz."
+                }
             },
             {
-                        "id": "savcilik_savunma",
-                        "category": "savcilik",
-                        "main_cat": "ceza",
-                        "icon": "🛡️",
-                        "title": "Savcılık Savunma Dilekçesi",
-                        "desc": "Soruşturma dosyasında şüpheli müdafi olarak savunma sunumu ve KYOK (Takipsizlik) talebi.",
-                        "data": {
-                                    "mahkeme": "MERSİN CUMHURİYET BAŞSAVCILIĞINA",
-                                    "talep": "",
-                                    "dosya": "Soruşturma No: 2026/...",
-                                    "m_sifat": "ŞÜPHELİ",
-                                    "m_ad": "[Şüpheli Müvekkil Adı Soyadı - T.C. 12345678901]",
-                                    "m_adres": "[Müvekkil Adresi]",
-                                    "k_sifat": "MÜŞTEKİ",
-                                    "k_ad": "[Müşteki Adı Soyadı]",
-                                    "k_vekil": "[Müşteki Vekili]",
-                                    "hed": "",
-                                    "konu": "Müştekinin soyut şikayetine karşı savunmalarımızın sunulması ve KOVUŞTURMAYA YER OLMADIĞINA DAİR KARAR (KYOK) verilmesi talebimizdir.",
-                                    "aciklama": "1- Şikayet soyut ve asılsız iddialardan ibarettir.\\n2- Suçun unsurları oluşmamıştır.\\n3- CMK m. 172 uyarınca KYOK kararı verilmelidir.",
-                                    "hukuki_sebepler": "TCK, CMK m. 170, 172 ve ilgili mevzuat.",
-                                    "hukuki_deliller": "Belgeler, yazışmalar, tanık beyanları.",
-                                    "sonuc": "Müvekkil hakkında KOVUŞTURMAYA YER OLMADIĞINA DAİR KARAR (KYOK) verilmesini talep ederiz."
-                        }
+                id: "tefrik_dilekcesi",
+                category: "hukuk_talep",
+                icon: "✂️",
+                title: "Davanın Tefriki (Ayırma) Dilekçesi",
+                desc: "HMK m. 167 uyarınca yargılamanın daha hızlı yürümesi için davanın tefriki talebi.",
+                data: {
+                    mahkeme: "MERSİN [..]. ASLİYE HUKUK MAHKEMESİNE",
+                    talep: "",
+                    dosya: "2026/... Esas",
+                    m_sifat: "DAVACI / DAVALI",
+                    m_ad: "[Müvekkil Adı Soyadı - T.C. 12345678901]",
+                    m_adres: "[Müvekkil Adresi]",
+                    k_sifat: "KARŞI TARAF",
+                    k_ad: "[Karşı Taraf Adı Soyadı / Unvanı]",
+                    k_vekil: "[Karşı Taraf Vekili]",
+                    hed: "",
+                    konu: "Birlikte açılan veya birleştirilen talepler/davalılar yönünden davanın HMK m. 167 uyarınca TEFRİK EDİLEREK ayrı bir esasa kaydedilmesi talebimizdir.",
+                    aciklama: "1- Mahkemeniz dosyasında birden fazla talep/davalı bir arada yer almakta olup, delillerin toplanması ve yargılama usulü birbirinden farklılaşmıştır.\\n2- Taleplerin bir arada görülmesi yargılamayı sürüncemede bırakmakta ve usul ekonomisine aykırılık teşkil etmektedir.\\n3- HMK m. 167 gereğince davanın tefriki ile ayrı bir esasa kaydı gerekmektedir.",
+                    hukuki_sebepler: "HMK m. 30, 167 ve ilgili mevzuat.",
+                    hukuki_deliller: "Dava dosyası kapsamı.",
+                    sonuc: "Davanın [.. talebi / .. davalısı] yönünden TEFRİK EDİLEREK ayrı bir esasa kaydına ve yargılamanın ayrı dosya üzerinden yürütülmesine karar verilmesini vekâleten saygıyla arz ve talep ederiz."
+                }
             },
             {
-                        "id": "savcilik_kyok_itiraz",
-                        "category": "savcilik",
-                        "main_cat": "ceza",
-                        "icon": "📑",
-                        "title": "Savcılık KYOK (Takipsizlik) Kararına İtiraz Dilekçesi",
-                        "desc": "Cumhuriyet Başsavcılığı takipsizlik kararına karşı Sulh Ceza Hakimliği'ne itiraz.",
-                        "data": {
-                                    "mahkeme": "MERSİN NÖBETÇİ SULH CEZA HÂKİMLİĞİNE\\nGönderilmek Üzere\\nMERSİN CUMHURİYET BAŞSAVCILIĞINA",
-                                    "talep": "",
-                                    "dosya": "Soruşturma No: 2026/... - Karar No: 2026/...",
-                                    "m_sifat": "MÜŞTEKİ (İTİRAZ EDEN)",
-                                    "m_ad": "[Müşteki Müvekkil Adı Soyadı - T.C. 12345678901]",
-                                    "m_adres": "[Müvekkil Adresi]",
-                                    "k_sifat": "ŞÜPHELİ",
-                                    "k_ad": "[Şüpheli Adı Soyadı]",
-                                    "k_vekil": "",
-                                    "hed": "",
-                                    "konu": "Cumhuriyet Başsavcılığı'nın KYOK kararına İTİRAZLARIMIZIN sunulmasıdır.",
-                                    "aciklama": "1- Eksik soruşturma ile takipsizlik kararı verilmiştir.\\n2- Kamu davası açılması için yeterli şüphe mevcuttur.",
-                                    "hukuki_sebepler": "CMK m. 172, 173 ve ilgili mevzuat.",
-                                    "hukuki_deliller": "Soruşturma dosyası.",
-                                    "sonuc": "KYOK kararının KALDIRILMASINA ve kamu davası açılmasına karar verilmesini talep ederiz."
-                        }
+                id: "vekillikten_cekilme",
+                category: "hukuk_talep",
+                icon: "🚪",
+                title: "Vekillikten Çekilme (İstifa) Dilekçesi",
+                desc: "Avukatlık Kanunu m. 41 ve HMK m. 82 uyarınca vekillik görevinden istifa bildirimi.",
+                data: {
+                    mahkeme: "MERSİN [..]. ASLİYE HUKUK MAHKEMESİNE",
+                    talep: "",
+                    dosya: "2026/... Esas",
+                    m_sifat: "VEKİLLİKTEN ÇEKİLEN VEKİL",
+                    m_ad: "Av. Lütfi Serkan SAYOĞLU",
+                    m_adres: "[Büro Adresi]",
+                    k_sifat: "ASİL (MÜVEKKİL)",
+                    k_ad: "[Vekillikten Çekilinen Müvekkil Adı Soyadı - T.C. No - Adres]",
+                    k_vekil: "",
+                    hed: "",
+                    konu: "Görülen lüzum üzerine dosyadaki vekillik görevimizden İSTİFA ETTİĞİMİZİN (çekildiğimizin) bildirilmesidir.",
+                    aciklama: "1- Mahkemenizin yukarıda esas numarası yazılı dosyasında müvekkil [Müvekkil Adı Soyadı] adına vekillik görevini yürütmekte idik.\\n2- Görülen lüzum üzerine vekillik görevinden istifa ediyoruz.\\n3- Avukatlık Kanunu m. 41 ve HMK m. 82 gereğince vekillikten çekilme dilekçemizin asil müvekkile tebliğe çıkarılmasını ve UYAP kaydımızın silinmesini talep ederiz.",
+                    hukuki_sebepler: "1136 sayılı Avukatlık Kanunu m. 41, HMK m. 81, 82, 83 ve ilgili mevzuat.",
+                    hukuki_deliller: "Vekaletname ve dosya kapsamı.",
+                    sonuc: "Vekillikten çekilme talebimizin KABULÜ ile dosyadaki vekillik kaydımızın silinmesine ve durumun asile tebliğine karar verilmesini vekâleten saygıyla arz ve talep ederim."
+                }
             },
             {
-                        "id": "savcilik_dijital_materyal_iade",
-                        "category": "savcilik",
-                        "main_cat": "ceza",
-                        "icon": "💻",
-                        "title": "Savcılık Dijital Materyallerin İadesi Dilekçesi",
-                        "desc": "CMK m. 134 uyarınca el konulan dijital materyallerin ivedi iadesi talebi.",
-                        "data": {
-                                    "mahkeme": "MERSİN CUMHURİYET BAŞSAVCILIĞINA",
-                                    "talep": "",
-                                    "dosya": "Soruşturma No: 2026/...",
-                                    "m_sifat": "ŞÜPHELİ",
-                                    "m_ad": "[Müvekkil Adı Soyadı - T.C. 12345678901]",
-                                    "m_adres": "[Müvekkil Adresi]",
-                                    "k_sifat": "MÜŞTEKİ",
-                                    "k_ad": "[Varsa Müşteki]",
-                                    "k_vekil": "",
-                                    "hed": "",
-                                    "konu": "Müvekkilden el konulan dijital materyallerin CMK m. 134 uyarınca İVEDİ OLARAK İADESİ talebimizdir.",
-                                    "aciklama": "1- Dijital cihazların imaj alma/adli bilişim incelemesi tamamlanmıştır.\\n2- CMK m. 134/4 gereğince materyallerin gecikmeksizin iadesi zorunludur.",
-                                    "hukuki_sebepler": "CMK m. 131, 134 ve ilgili mevzuat.",
-                                    "hukuki_deliller": "Elkoyma tutanağı ve dosya kapsamı.",
-                                    "sonuc": "Dijital materyallerin MÜVEKKİLE / VEKİLİNE İVEDİLİKLE İADESİNE karar verilmesini talep ederiz."
-                        }
+                id: "adres_bildirim",
+                category: "hukuk_talep",
+                icon: "📍",
+                title: "Adres Bildirim Dilekçesi",
+                desc: "Tebligata yarar yeni MERNİS / ikamet adresinin mahkemeye bildirilmesi.",
+                data: {
+                    mahkeme: "MERSİN [..]. ASLİYE HUKUK MAHKEMESİNE",
+                    talep: "",
+                    dosya: "2026/... Esas",
+                    m_sifat: "DAVACI / DAVALI",
+                    m_ad: "[Müvekkil Adı Soyadı - T.C. 12345678901]",
+                    m_adres: "[Yeni ve Güncel Tebligat Adresi]",
+                    k_sifat: "KARŞI TARAF",
+                    k_ad: "[Karşı Taraf Adı Soyadı / Unvanı]",
+                    k_vekil: "[Varsa Karşı Taraf Vekili]",
+                    hed: "",
+                    konu: "Müvekkilin / davalının tebligata elverişli güncel adresinin Mahkemenize bildirilmesidir.",
+                    aciklama: "1- Mahkemeniz dosyasında müvekkilin / karşı tarafın adresi değişmiş olup eski adrese yapılan tebligatlar bila ikmal dönmüştür.\\n2- Tebligata yarar yeni ve güncel adres aşağıda sunulmuştur:\\n\\nYENİ TEBLİGAT ADRESİ:\\n[Açık Mahalle, Cadde, Sokak, No, İlçe, İl Bilgisi]\\n\\n3- Bundan sonraki tüm tebligatların bu adrese çıkartılmasını talep ederiz.",
+                    hukuki_sebepler: "Tebligat Kanunu m. 35, HMK ve ilgili mevzuat.",
+                    hukuki_deliller: "MERNİS yerleşim yeri kaydı ve dosya kapsamı.",
+                    sonuc: "Bildirilen yeni adresin UYAP ve dosya sistemine kaydedilmesine, tebligatların bu adrese yapılmasına karar verilmesini vekâleten saygıyla arz ve talep ederiz."
+                }
             },
             {
-                        "id": "yetki_belgesi_sunum",
-                        "category": "asliye_hukuk",
-                        "main_cat": "hukuk",
-                        "icon": "📑",
-                        "title": "Avukatlık Yetki Belgesi",
-                        "desc": "1136 sayılı Avukatlık Kanunu m. 56 uyarınca resmi Yetki Belgesi.",
-                        "data": {
-                                    "is_yetki_belgesi": true,
-                                    "mahkeme": "YETKİ BELGESİ",
-                                    "talep": "",
-                                    "dosya": "",
-                                    "m_sifat": "YETKİ BELGESİ VEREN AVUKAT/AVUKATLIK ORTAKLIĞI",
-                                    "m_ad": "Av. [Yetki Veren Avukat Adı Soyadı]",
-                                    "m_adres": "[Yetki Veren Avukat Bürosu Adresi]",
-                                    "m_baro": "Mersin Barosu - [Sicil No]",
-                                    "m_vergi": "[Vergi Dairesi ve Sicil No]",
-                                    "k_sifat": "YETKİLİ KILINAN AVUKAT",
-                                    "k_ad": "Av. Lütfi Serkan SAYOĞLU",
-                                    "k_adres": "[Yetkili Kılınan Avukat Adresi]",
-                                    "k_baro": "Mersin Barosu - [Sicil No]",
-                                    "k_vergi": "[Vergi Dairesi ve Sicil No]",
-                                    "asil_ad": "[Vekil Eden Asil / Müvekkil Adı Soyadı - T.C.]",
-                                    "asil_adres": "[Vekil Eden Adresi]",
-                                    "dayanak_noter": "[Noterlik Adı, Tarih ve Yevmiye No]",
-                                    "konu": "",
-                                    "aciklama": "Bu yetki belgesi, 1136 sayılı Avukatlık Kanunu’nu değiştiren 4667 sayılı Kanun’un 36. maddesi ile 56. maddesine eklenen hüküm uyarınca, vekaletname yerine geçmek üzere, tarafımdan düzenlenmiştir.",
-                                    "hukuki_sebepler": "",
-                                    "hukuki_deliller": "",
-                                    "sonuc": ""
-                        }
+                id: "yetki_belgesi_sunum",
+                category: "hukuk_talep",
+                icon: "📑",
+                title: "Avukatlık Yetki Belgesi",
+                desc: "1136 sayılı Avukatlık Kanunu m. 56 uyarınca vekaletname yerine geçen resmi Yetki Belgesi.",
+                data: {
+                    is_yetki_belgesi: true,
+                    mahkeme: "YETKİ BELGESİ",
+                    talep: "",
+                    dosya: "",
+                    m_sifat: "YETKİ BELGESİ VEREN AVUKAT/AVUKATLIK ORTAKLIĞI",
+                    m_ad: "Av. [Yetki Veren Avukat Adı Soyadı]",
+                    m_adres: "[Yetki Veren Avukat Bürosu Adresi]",
+                    m_baro: "Mersin Barosu - [Sicil No]",
+                    m_vergi: "[Vergi Dairesi ve Sicil No]",
+                    k_sifat: "YETKİLİ KILINAN AVUKAT",
+                    k_ad: "Av. Lütfi Serkan SAYOĞLU",
+                    k_adres: "[Yetkili Kılınan Avukat Adresi]",
+                    k_baro: "Mersin Barosu - [Sicil No]",
+                    k_vergi: "[Vergi Dairesi ve Sicil No]",
+                    asil_ad: "[Vekil Eden Asil / Müvekkil Adı Soyadı - T.C.]",
+                    asil_adres: "[Vekil Eden Adresi]",
+                    dayanak_noter: "[Noterlik Adı, Tarih ve Yevmiye No]",
+                    konu: "",
+                    aciklama: "Bu yetki belgesi, 1136 sayılı Avukatlık Kanunu’nu değiştiren 4667 sayılı Kanun’un 36. maddesi ile 56. maddesine eklenen hüküm uyarınca, vekaletname yerine geçmek üzere, tarafımdan düzenlenmiştir.",
+                    hukuki_sebepler: "",
+                    hukuki_deliller: "",
+                    sonuc: ""
+                }
             },
             {
-                        "id": "vekillikten_cekilme",
-                        "category": "asliye_hukuk",
-                        "main_cat": "hukuk",
-                        "icon": "🚪",
-                        "title": "Vekillikten Çekilme (İstifa) Dilekçesi",
-                        "desc": "Avukatlık Kanunu m. 41 ve HMK m. 82 uyarınca vekillikten istifa bildirimi.",
-                        "data": {
-                                    "mahkeme": "MERSİN [..]. ASLİYE HUKUK MAHKEMESİNE",
-                                    "talep": "",
-                                    "dosya": "2026/... Esas",
-                                    "m_sifat": "VEKİLLİKTEN ÇEKİLEN VEKİL",
-                                    "m_ad": "Av. Lütfi Serkan SAYOĞLU",
-                                    "m_adres": "[Büro Adresi]",
-                                    "k_sifat": "ASİL (MÜVEKKİL)",
-                                    "k_ad": "[Vekillikten Çekilinen Müvekkil Adı Soyadı - T.C. No]",
-                                    "k_vekil": "",
-                                    "hed": "",
-                                    "konu": "Görülen lüzum üzerine dosyadaki vekillik görevimizden İSTİFA ETTİĞİMİZİN bildirilmesidir.",
-                                    "aciklama": "1- Dosyadaki vekillik görevimizden istifa ediyoruz.\\n2- Durumun asil müvekkile tebliğe çıkarılmasını talep ederiz.",
-                                    "hukuki_sebepler": "1136 sayılı Avukatlık Kanunu m. 41, HMK m. 82.",
-                                    "hukuki_deliller": "Vekaletname ve dosya kapsamı.",
-                                    "sonuc": "Vekillikten çekilme talebimizin kabulü ile kaydımızın silinmesine ve durumun asile tebliğine karar verilmesini talep ederim."
-                        }
+                id: "davadan_feragat",
+                category: "hukuk_talep",
+                icon: "🛑",
+                title: "Davadan Feragat Dilekçesi",
+                desc: "HMK m. 307 vd. uyarınca vekaletteki özel yetkiye istinaden davadan feragat bildirimi.",
+                data: {
+                    mahkeme: "MERSİN [..]. ASLİYE HUKUK MAHKEMESİNE",
+                    talep: "",
+                    dosya: "2026/... Esas",
+                    m_sifat: "DAVACI",
+                    m_ad: "[Davacı Müvekkil Adı Soyadı - T.C. 12345678901]",
+                    m_adres: "[Davacı Adresi]",
+                    k_sifat: "DAVALI",
+                    k_ad: "[Davalı Adı Soyadı / Unvanı]",
+                    k_vekil: "[Davalı Vekili]",
+                    hed: "",
+                    konu: "Sayın Mahkemenizde görülmekte olan davamızdan HMK m. 307 vd. uyarınca FERAGAT ETTİĞİMİZİN bildirilmesidir.",
+                    aciklama: "1- Mahkemenizin yukarıda esas numarası yazılı dosyasında açmış olduğumuz davadan, vekaletnamemizdeki feragat yetkisine istinaden gayrikabili rücu FERAGAT EDİYORUZ.\\n2- Taraflar arasında sulh olunmuş olup, karşılıklı olarak yargılama gideri ve vekâlet ücreti talebimiz bulunmamaktadır.\\n3- Feragat doğrultusunda karar verilmesini talep ederiz.",
+                    hukuki_sebepler: "HMK m. 307, 309, 310, 311, 312 ve ilgili mevzuat.",
+                    hukuki_deliller: "Özel feragat yetkili vekaletname ve dosya kapsamı.",
+                    sonuc: "Feragat beyanımız doğrultusunda DAVANIN FERAGAT NEDENİYLE REDDİNE, tarafların yargılama gideri ve vekâlet ücreti talebi olmadığından bu hususta hüküm kurulmasına yer olmadığına karar verilmesini vekâleten saygıyla arz ve talep ederiz."
+                }
             },
             {
-                        "id": "davadan_feragat",
-                        "category": "asliye_hukuk",
-                        "main_cat": "hukuk",
-                        "icon": "🛑",
-                        "title": "Davadan Feragat Dilekçesi",
-                        "desc": "HMK m. 307 vd. uyarınca davadan feragat bildirimi.",
-                        "data": {
-                                    "mahkeme": "MERSİN [..]. ASLİYE HUKUK MAHKEMESİNE",
-                                    "talep": "",
-                                    "dosya": "2026/... Esas",
-                                    "m_sifat": "DAVACI",
-                                    "m_ad": "[Davacı Müvekkil Adı Soyadı - T.C. 12345678901]",
-                                    "m_adres": "[Davacı Adresi]",
-                                    "k_sifat": "DAVALI",
-                                    "k_ad": "[Davalı Adı Soyadı / Unvanı]",
-                                    "k_vekil": "[Davalı Vekili]",
-                                    "hed": "",
-                                    "konu": "Davamızdan HMK m. 307 vd. uyarınca FERAGAT ETTİĞİMİZİN bildirilmesidir.",
-                                    "aciklama": "1- Vekaletnamemizdeki feragat yetkisine istinaden davadan FERAGAT EDİYORUZ.\\n2- Yargılama gideri ve vekâlet ücreti talebimiz yoktur.",
-                                    "hukuki_sebepler": "HMK m. 307 vd.",
-                                    "hukuki_deliller": "Vekaletname ve dosya.",
-                                    "sonuc": "Davanın FERAGAT NEDENİYLE REDDİNE karar verilmesini talep ederiz."
-                        }
+                id: "istinaftan_feragat",
+                category: "hukuk_talep",
+                icon: "🛑",
+                title: "İstinaf Başvurusundan Feragat Dilekçesi",
+                desc: "HMK m. 349 uyarınca istinaf kanun yolundan feragat ve hükmün kesinleştirilmesi.",
+                data: {
+                    mahkeme: "MERSİN [..]. ASLİYE HUKUK MAHKEMESİNE",
+                    talep: "",
+                    dosya: "2026/... E. - 2026/... K.",
+                    m_sifat: "İSTİNAFTAN FERAGAT EDEN",
+                    m_ad: "[Müvekkil Adı Soyadı - T.C. 12345678901]",
+                    m_adres: "[Müvekkil Adresi]",
+                    k_sifat: "KARŞI TARAF",
+                    k_ad: "[Karşı Taraf Adı Soyadı / Unvanı]",
+                    k_vekil: "[Karşı Taraf Vekili]",
+                    hed: "",
+                    konu: "Mahkemenizin ... tarih ve ... E., ... K. sayılı kararına karşı İSTİNAF KANUN YOLUNA BAŞVURU HAKKIMIZDAN FERAGAT ETTİĞİMİZİN bildirilmesidir.",
+                    aciklama: "1- Mahkemenizce yukarıda numarası yazılı dosyada verilen karar tarafımıza tebliğ edilmiştir.\\n2- Vekaletnamemizdeki yetkiye dayanarak istinaf kanun yoluna başvuru hakkımızdan gayrikabili rücu feragat ediyoruz.\\n3- Kararın kesinleştirilerek kesinleşme şerhinin düzenlenmesini talep ederiz.",
+                    hukuki_sebepler: "HMK m. 349 ve ilgili mevzuat.",
+                    hukuki_deliller: "Özel yetkili vekaletname ve mahkeme ilamı.",
+                    sonuc: "İstinaf kanun yolundan FERAGAT TALEBİMİZİN KABULÜ ile yerel mahkeme kararının KESİNLEŞTİRİLMESİNE karar verilmesini vekâleten saygıyla arz ve talep ederiz."
+                }
             },
             {
-                        "id": "istinaftan_feragat",
-                        "category": "asliye_hukuk",
-                        "main_cat": "hukuk",
-                        "icon": "🛑",
-                        "title": "İstinaf Başvurusundan Feragat Dilekçesi",
-                        "desc": "HMK m. 349 uyarınca istinaf kanun yolundan feragat ve hükmün kesinleştirilmesi.",
-                        "data": {
-                                    "mahkeme": "MERSİN [..]. ASLİYE HUKUK MAHKEMESİNE",
-                                    "talep": "",
-                                    "dosya": "2026/... E. - 2026/... K.",
-                                    "m_sifat": "İSTİNAFTAN FERAGAT EDEN",
-                                    "m_ad": "[Müvekkil Adı Soyadı - T.C. 12345678901]",
-                                    "m_adres": "[Müvekkil Adresi]",
-                                    "k_sifat": "KARŞI TARAF",
-                                    "k_ad": "[Karşı Taraf Adı Soyadı / Unvanı]",
-                                    "k_vekil": "[Karşı Taraf Vekili]",
-                                    "hed": "",
-                                    "konu": "Mahkemenizin kararına karşı İSTİNAF KANUN YOLUNA BAŞVURU HAKKIMIZDAN FERAGAT ETTİĞİMİZİN bildirilmesidir.",
-                                    "aciklama": "1- Karara karşı istinaf başvuru hakkımızdan gayrikabili rücu feragat ediyoruz.\\n2- Kararın kesinleştirilmesini talep ederiz.",
-                                    "hukuki_sebepler": "HMK m. 349 ve ilgili mevzuat.",
-                                    "hukuki_deliller": "Vekaletname ve mahkeme ilamı.",
-                                    "sonuc": "İstinaftan feragat talebimizin KABULÜ ile kararın KESİNLEŞTİRİLMESİNE karar verilmesini talep ederiz."
-                        }
+                id: "istinafa_cevap",
+                category: "hukuk_talep",
+                icon: "💬",
+                title: "İstinaf Dilekçesine Cevap Dilekçesi",
+                desc: "HMK m. 347 uyarınca davalının/davacının istinaf başvurusuna karşı esastan ret cevabı.",
+                data: {
+                    mahkeme: "ADANA BÖLGE ADLİYE MAHKEMESİ İLGİLİ HUKUK DAİRESİNE\\nGönderilmek Üzere\\nMERSİN [..]. ASLİYE HUKUK MAHKEMESİNE",
+                    talep: "",
+                    dosya: "2026/... E. - 2026/... K.",
+                    m_sifat: "İSTİNAFA CEVAP VEREN",
+                    m_ad: "[Müvekkil Adı Soyadı - T.C. 12345678901]",
+                    m_adres: "[Müvekkil Adresi]",
+                    k_sifat: "İSTİNAF EDEN (KARŞI TARAF)",
+                    k_ad: "[Karşı Taraf Adı Soyadı / Unvanı]",
+                    k_vekil: "[Karşı Taraf Vekili]",
+                    hed: "",
+                    konu: "Karşı tarafın usul ve yasaya aykırı istinaf başvuru dilekçesine karşı süresi içinde cevaplarımızın sunulmasıdır.",
+                    aciklama: "1- Yerel mahkemece yapılan kapsamlı tahkikat ve toplanan deliller doğrultusunda usul ve yasaya tam uygun olarak karar tesis edilmiştir.\\n2- Karşı tarafın istinaf dilekçesinde ileri sürdüğü itirazların tamamı hukuki dayanaktan yoksundur.\\n3- Yerel mahkeme kararı hukuka uygun olup istinaf başvurusunun esastan reddi gerekmektedir.",
+                    hukuki_sebepler: "HMK m. 347, 353/1-b-1 ve ilgili mevzuat.",
+                    hukuki_deliller: "Yerel mahkeme dava dosyası ve dosya kapsamı.",
+                    sonuc: "Karşı tarafın haksız ve hukuki dayanaktan yoksun İSTİNAF BAŞVURUSUNUN ESASTAN REDDİNE, yerel mahkeme kararının ONANMASINA, yargılama giderleri ve vekâlet ücretinin karşı tarafa yükletilmesine karar verilmesini vekâleten saygıyla arz ve talep ederiz."
+                }
             },
             {
-                        "id": "istinafa_cevap",
-                        "category": "asliye_hukuk",
-                        "main_cat": "hukuk",
-                        "icon": "💬",
-                        "title": "İstinaf Dilekçesine Cevap Dilekçesi",
-                        "desc": "HMK m. 347 uyarınca karşı tarafın istinaf başvurusuna esastan ret cevabı.",
-                        "data": {
-                                    "mahkeme": "ADANA BÖLGE ADLİYE MAHKEMESİ İLGİLİ HUKUK DAİRESİNE\\nGönderilmek Üzere\\nMERSİN [..]. ASLİYE HUKUK MAHKEMESİNE",
-                                    "talep": "",
-                                    "dosya": "2026/... E. - 2026/... K.",
-                                    "m_sifat": "İSTİNAFA CEVAP VEREN",
-                                    "m_ad": "[Müvekkil Adı Soyadı - T.C. 12345678901]",
-                                    "m_adres": "[Müvekkil Adresi]",
-                                    "k_sifat": "İSTİNAF EDEN (KARŞI TARAF)",
-                                    "k_ad": "[Karşı Taraf Adı Soyadı / Unvanı]",
-                                    "k_vekil": "[Karşı Taraf Vekili]",
-                                    "hed": "",
-                                    "konu": "Karşı tarafın usul ve yasaya aykırı istinaf başvurusuna karşı cevaplarımızın sunulmasıdır.",
-                                    "aciklama": "1- Yerel mahkeme kararı hukuka uygundur.\\n2- Karşı tarafın istinaf başvurusunun esastan reddi gerekmektedir.",
-                                    "hukuki_sebepler": "HMK m. 347, 353/1-b-1 ve ilgili mevzuat.",
-                                    "hukuki_deliller": "Yerel mahkeme dava dosyası.",
-                                    "sonuc": "Karşı tarafın İSTİNAF BAŞVURUSUNUN ESASTAN REDDİNE, yerel mahkeme kararının ONANMASINA karar verilmesini talep ederiz."
-                        }
+                id: "istinaf_red_istinafi",
+                category: "hukuk_talep",
+                icon: "⚖️",
+                title: "İstinaf Reddi Kararına İtiraz / İstinaf Dilekçesi",
+                desc: "HMK m. 346/2 uyarınca yerel mahkemenin istinaf başvurusunu ret kararına karşı BAM'a başvuru.",
+                data: {
+                    mahkeme: "ADANA BÖLGE ADLİYE MAHKEMESİ İLGİLİ HUKUK DAİRESİNE\\nGönderilmek Üzere\\nMERSİN [..]. ASLİYE HUKUK MAHKEMESİNE",
+                    talep: "",
+                    dosya: "2026/... E. - 2026/... K.",
+                    m_sifat: "İSTİNAF EDEN (DAVACI / DAVALI)",
+                    m_ad: "[Müvekkil Adı Soyadı - T.C. 12345678901]",
+                    m_adres: "[Müvekkil Adresi]",
+                    k_sifat: "KARŞI TARAF",
+                    k_ad: "[Karşı Taraf Adı Soyadı / Unvanı]",
+                    k_vekil: "[Karşı Taraf Vekili]",
+                    hed: "",
+                    konu: "Yerel Mahkemenin ... tarihli usul ve yasaya aykırı 'İstinaf Talebinin Reddine' dair ek kararının HMK m. 346/2 uyarınca KALDIRILMASI ve asıl istinaf başvurumuzun incelenmesi talebidir.",
+                    aciklama: "1- Yerel mahkemece süresi içinde yapılan ve harcı yatırılan istinaf başvurumuz hakkında hatalı değerlendirme ile 'süre / kesinlik' yönünden ret kararı verilmiştir.\\n2- İstinaf başvurumuz yasal süresi içindedir / karar kesinlik sınırının üzerindedir.\\n3- HMK m. 346/2 gereğince yerel mahkemenin ret kararının kaldırılarak asıl istinaf incelemesine geçilmesini talep ederiz.",
+                    hukuki_sebepler: "HMK m. 346/2, 352 ve ilgili mevzuat.",
+                    hukuki_deliller: "Tebligat mazbatası, istinaf harç makbuzları, dava dosyası.",
+                    sonuc: "Yerel mahkemenin istinaf talebimizin reddine dair ... tarihli ek kararının KALDIRILMASINA, asıl istinaf başvurumuzun kabulü ile yerel mahkeme kararının KALDIRILARAK taleplerimiz doğrultusunda karar tesisine karar verilmesini vekâleten saygıyla arz ve talep ederiz."
+                }
+            },
+            {
+                id: "islah_dilekcesi",
+                category: "hukuk_talep",
+                icon: "📈",
+                title: "Islah ve Değer Artırım Dilekçesi (HMK 176)",
+                desc: "Bilirkişi raporu doğrultusunda dava değerinin ıslah edilmesi ve tamamlama harcı.",
+                data: {
+                    mahkeme: "MERSİN [..]. ASLİYE HUKUK MAHKEMESİNE",
+                    talep: "",
+                    dosya: "2026/... Esas",
+                    m_sifat: "DAVACI",
+                    m_ad: "[Davacı Müvekkil Adı Soyadı - T.C. 12345678901]",
+                    m_adres: "[Davacı Adresi]",
+                    k_sifat: "DAVALI",
+                    k_ad: "[Davalı Adı Soyadı / Unvanı]",
+                    k_vekil: "[Davalı Vekili]",
+                    hed: "[... TL (Islah Edilen Yeni Dava Değeri)]",
+                    konu: "Bilirkişi raporu uyarınca dava değerinin ... TL artırılarak toplam ... TL olarak ıslah edilmesidir.",
+                    aciklama: "1- Dosyaya sunulan bilirkişi raporu ile müvekkilin toplam alacağı ... TL olarak hesaplanmıştır.\\n2- HMK m. 176 vd. uyarınca dava değerimizi ıslah ediyor ve tamamlama harcını yatırıyoruz.",
+                    hukuki_sebepler: "HMK m. 176 vd., Harçlar Kanunu ve ilgili mevzuat.",
+                    hukuki_deliller: "Bilirkişi raporu, harç makbuzu ve dosya kapsamı.",
+                    sonuc: "Islah talebimizin kabulü ile toplam ... TL alacağımızın temerrüt faiziyle davalıdan tahsiline karar verilmesini vekâleten saygıyla arz ve talep ederiz."
+                }
+            },
+
+            // --- İCRA VE İFLAS HUKUKU ---
+            {
+                id: "icra_sikayet",
+                category: "icra",
+                icon: "📌",
+                title: "İcra Mahkemesi Şikayet Dilekçesi",
+                desc: "Usulsüz tebligat, takibin iptali ve tedbiren durdurulması talepli şikayet dilekçesi.",
+                data: {
+                    mahkeme: "MERSİN NÖBETÇİ İCRA HUKUK MAHKEMESİNE",
+                    talep: "İCRANIN DURDURULMASI TALEPLİDİR",
+                    dosya: "Mersin ... İcra Dairesi - 2026/... E.",
+                    m_sifat: "ŞİKAYET EDEN",
+                    m_ad: "[Müvekkil Adı Soyadı - T.C. 12345678901]",
+                    m_adres: "[Müvekkil Adresi]",
+                    k_sifat: "KARŞI TARAF",
+                    k_ad: "[Karşı Taraf Adı Soyadı / Unvanı]",
+                    k_vekil: "[Varsa Karşı Taraf Vekili]",
+                    hed: "",
+                    konu: "Yapılan usulsüz tebligatın şikayeti ile takibin iptali ve durdurulması talebimizi içerir.",
+                    aciklama: "1- Mersin ... İcra Dairesi'nin 2026/... Esas sayılı dosyasında müvekkil aleyhine icra takibi başlatılmıştır.\\n2- Ödeme emri müvekkilin MERNİS adresine usulüne uygun şekilde tebliğ edilmemiştir.\\n3- Yasal süresi içinde usulsüz tebligatın iptalini ve takibin tedbiren durdurulmasını talep ederiz.",
+                    hukuki_sebepler: "İİK m. 16, Tebligat Kanunu m. 10, 21, 32 ve ilgili mevzuat.",
+                    hukuki_deliller: "İcra takip dosyası, tebligat mazbatası, tanık, bilirkişi, yemin ve sair hukuki deliller.",
+                    sonuc: "Öncelikle icra takibinin TEDBİREN DURDURULMASINA, tebligatın USULSÜZ OLMASI NEDENİYLE İPTALİNE, öğrenme tarihinin tebliğ tarihi olarak kabulüne karar verilmesini vekâleten saygıyla arz ve talep ederiz."
+                }
+            },
+            {
+                id: "icra_itiraz",
+                category: "icra",
+                icon: "🛑",
+                title: "İcra Takibine İtiraz Dilekçesi",
+                desc: "İlamsız icra takibinde ödeme emrine, borca, faize ve tüm fer'ilerine itiraz.",
+                data: {
+                    mahkeme: "MERSİN ... İCRA DAİRESİNE",
+                    talep: "TAKİBİN DURDURULMASI TALEBİDİR",
+                    dosya: "2026/... Esas",
+                    m_sifat: "BORÇLU (İTİRAZ EDEN)",
+                    m_ad: "[Müvekkil Borçlu Adı Soyadı - T.C. 12345678901]",
+                    m_adres: "[Müvekkil Adresi]",
+                    k_sifat: "ALACAKLI",
+                    k_ad: "[Alacaklı Adı Soyadı / Unvanı]",
+                    k_vekil: "[Alacaklı Vekili]",
+                    hed: "",
+                    konu: "Ödeme emrine, borca, faize, vekalet ücretine ve tüm fer'ilerine itirazlarımızın sunulmasıdır.",
+                    aciklama: "1- Alacaklı tarafından başlatılan ilamsız icra takibine ilişkin ödeme emri müvekkile ... tarihinde tebliğ edilmiştir.\\n2- Müvekkilin alacaklı tarafa herhangi bir borcu bulunmamaktadır. Borcun tamamına, asıl alacağa, faize ve tüm ferilerine açıkça itiraz ediyoruz.",
+                    hukuki_sebepler: "İİK m. 62 vd. ve ilgili mevzuat.",
+                    hukuki_deliller: "Ödeme belgeleri, banka dekontları ve dosya kapsamı.",
+                    sonuc: "Yasal süresi içinde yaptığımız itirazlarımızın kabulü ile icra takibinin DURDURULMASINA karar verilmesini vekâleten saygıyla talep ederiz."
+                }
+            },
+            {
+                id: "kambiyo_itiraz",
+                category: "icra",
+                icon: "💳",
+                title: "Kambiyo Senetlerine Özgü Takibe İtiraz / Şikayet",
+                desc: "İcra Hukuk Mahkemesi'ne imza inkarı, borca itiraz ve takibin geçici durdurulması.",
+                data: {
+                    mahkeme: "MERSİN NÖBETÇİ İCRA HUKUK MAHKEMESİNE",
+                    talep: "TAKİBİN GEÇİCİ OLARAK DURDURULMASI TALEPLİDİR",
+                    dosya: "Mersin ... İcra Dairesi - 2026/... E.",
+                    m_sifat: "BORÇLU (İTİRAZ EDEN)",
+                    m_ad: "[Müvekkil Borçlu - T.C. 12345678901]",
+                    m_adres: "[Müvekkil Adresi]",
+                    k_sifat: "ALACAKLI",
+                    k_ad: "[Alacaklı Adı Soyadı / Unvanı]",
+                    k_vekil: "[Alacaklı Vekili]",
+                    hed: "[... TL (Senet Bedeli)]",
+                    konu: "Kambiyo takibine konu senetteki İMZAYA / BORCA AÇIKÇA İTİRAZIMIZDIR.",
+                    aciklama: "1- Takibe konu senetteki imza müvekkilin eli ürünü değildir; imza müvekkile ait değildir.\\n2- Müvekkilin alacaklıya hiçbir borcu bulunmamaktadır.\\n3- İİK m. 168-170 uyarınca takibin durdurulması ve iptali gerekmektedir.",
+                    hukuki_sebepler: "İİK m. 168, 169, 170, TTK ve ilgili mevzuat.",
+                    hukuki_deliller: "İcra dosyası, müvekkilin imza örnekleri, tanık, bilirkişi, yemin ve sair hukuki deliller.",
+                    sonuc: "Takibin GEÇİCİ OLARAK DURDURULMASINA, imza incelemesi neticesinde TAKİBİN İPTALİNE ve alacaklının kötü niyet tazminatına mahkum edilmesine karar verilmesini vekâleten saygıyla arz ve talep ederiz."
+                }
+            },
+            {
+                id: "haciz_talep",
+                category: "icra",
+                icon: "🔒",
+                title: "İcra Dairesi Haciz ve Muhafaza Talep Dilekçesi",
+                desc: "Kesinleşen icra takibinde borçlunun taşınır/taşınmaz mallarına haciz ve muhafaza talebi.",
+                data: {
+                    mahkeme: "MERSİN ... İCRA DAİRESİNE",
+                    talep: "",
+                    dosya: "2026/... Esas",
+                    m_sifat: "ALACAKLI VEKİLİ",
+                    m_ad: "[Avukat Adı Soyadı]",
+                    m_adres: "[Büro Adresi]",
+                    k_sifat: "BORÇLU",
+                    k_ad: "[Borçlu Adı Soyadı / Unvanı - T.C. / Vergi No]",
+                    k_vekil: "",
+                    hed: "",
+                    konu: "Borçlunun menkul, gayrimenkul ve banka hesaplarına haciz konulması talebidir.",
+                    aciklama: "1- Takip kesinleşmiş olup borç ödenmemiştir.\\n2- Borçlunun UYAP / TAKBİS / POLNET / EGM / SGK sorgularının yapılarak taşınmazlarına, araçlarına ve banka hesaplarına haciz konulmasını talep ederiz.",
+                    hukuki_sebepler: "İİK m. 78 vd. ve ilgili mevzuat.",
+                    hukuki_deliller: "İcra takip dosyası.",
+                    sonuc: "Gereği gibi haciz işlemlerinin tatbiki ile ilgili kurumlara haciz müzekkeresi yazılmasına karar verilmesini talep ederim."
+                }
+            },
+
+            // --- CEZA MAHKEMELERİ VE SAVCILIK ---
+            {
+                id: "sikayet",
+                category: "ceza",
+                icon: "👮",
+                title: "Müşteki Suç Duyurusu (Cumhuriyet Başsavcılığı)",
+                desc: "Cumhuriyet Başsavcılığı'na kamu davası açılması istemli suç duyurusu.",
+                data: {
+                    mahkeme: "MERSİN CUMHURİYET BAŞSAVCILIĞINA",
+                    talep: "",
+                    dosya: "",
+                    m_sifat: "MÜŞTEKİ",
+                    m_ad: "[Müşteki Müvekkil Adı Soyadı - T.C. 12345678901]",
+                    m_adres: "[Müşteki Adresi]",
+                    k_sifat: "ŞÜPHELİ / ŞÜPHELİLER",
+                    k_ad: "[Şüpheli Adı Soyadı / Kimliği Belirlenecek Şahıslar]",
+                    k_vekil: "",
+                    hed: "",
+                    konu: "Şüpheli/ler hakkında TCK m. ... (Suç Adı) uyarınca kamu davası açılması talepli suç duyurumuzdur.",
+                    aciklama: "SUÇ : [Örn: Dolandırıcılık, Tehdit, Hakaret vb.]\\nSUÇ TARİHİ : .../.../2026\\n\\n1- Şüpheli şahıs ... tarihinde müvekkile karşı atılı suçu işlemiştir.\\n2- Olayın gerçekleşme şekli, tanık beyanları ve ekteki delillerle sabittir.\\n3- Şüphelinin cezalandırılması için hakkında kamu davası açılması zorunludur.",
+                    hukuki_sebepler: "TCK, CMK ve ilgili mevzuat.",
+                    hukuki_deliller: "Yazışma kayıtları, kamera görüntüleri, tanık beyanları ve her türlü yasal delil.",
+                    sonuc: "Şüpheli hakkında gerekli soruşturmanın yapılarak KAMU DAVASI AÇILMASINA karar verilmesini vekâleten saygıyla arz ve talep ederiz."
+                }
+            },
+            {
+                id: "kyok",
+                category: "ceza",
+                icon: "🚫",
+                title: "KYOK (Takipsizlik) Kararına İtiraz",
+                desc: "Kovuşturmaya yer olmadığına dair kararın Sulh Ceza Hâkimliğince kaldırılması talebi.",
+                data: {
+                    mahkeme: "MERSİN NÖBETÇİ SULH CEZA HÂKİMLİĞİNE\\nGönderilmek Üzere\\nMERSİN CUMHURİYET BAŞSAVCILIĞINA",
+                    talep: "",
+                    dosya: "Soruşturma No: 2026/... - Karar No: 2026/...",
+                    m_sifat: "İTİRAZ EDEN (MÜŞTEKİ)",
+                    m_ad: "[Müşteki Müvekkil Adı Soyadı - T.C. 12345678901]",
+                    m_adres: "[Müşteki Adresi]",
+                    k_sifat: "ŞÜPHELİ",
+                    k_ad: "[Şüpheli Adı Soyadı]",
+                    k_vekil: "",
+                    hed: "",
+                    konu: "Mersin Cumhuriyet Başsavcılığı'nın ... tarihli Kovuşturmaya Yer Olmadığına Dair Kararına (KYOK) itirazlarımızın sunulmasıdır.",
+                    aciklama: "1- Başsavcılıkça dosya kapsamındaki deliller toplanmadan eksik soruşturma ile takipsizlik kararı verilmiştir.\\n2- [Soruşturulmayan deliller ve somut delil durumu]\\n3- Kamu davası açılması için yeterli şüphe mevcuttur.",
+                    hukuki_sebepler: "CMK m. 172, 173 ve ilgili mevzuat.",
+                    hukuki_deliller: "Soruşturma dosyası, kamera kayıtları, tanık, bilirkişi ve sair deliller.",
+                    sonuc: "KYOK kararının KALDIRILMASINA ve şüpheli hakkında KAMU DAVASI AÇILMASINA karar verilmesini vekâleten saygıyla arz ve talep ederiz."
+                }
+            },
+            {
+                id: "tutuklama",
+                category: "ceza",
+                icon: "⛓️",
+                title: "Tutukluluğa İtiraz ve Tahliye Dilekçesi",
+                desc: "Sulh Ceza / Ağır Ceza tutuklama kararına itiraz ve ivedi tahliye talebi.",
+                data: {
+                    mahkeme: "MERSİN NÖBETÇİ ASLİYE CEZA MAHKEMESİNE\\nGönderilmek Üzere\\nMERSİN [..]. SULH CEZA HÂKİMLİĞİNE",
+                    talep: "TAHLİYE TALEPLİDİR",
+                    dosya: "Sorgu No: 2026/... Sorgu",
+                    m_sifat: "ŞÜPHELİ / SANIK",
+                    m_ad: "[Müvekkil Şüpheli/Sanık - T.C. 12345678901]",
+                    m_adres: "[Müvekkil Adresi / Cezaevi Bilgisi]",
+                    k_sifat: "MÜŞTEKİ",
+                    k_ad: "[Müşteki Adı Soyadı]",
+                    k_vekil: "[Müşteki Vekili]",
+                    hed: "",
+                    konu: "Mersin .. Sulh Ceza Hâkimliği'nin ... tarihli tutuklama kararına itirazımız ve TAHLİYE talebimizdir.",
+                    aciklama: "1- Müvekkil hakkında verilen tutuklama kararı CMK 100 ve devamı maddelerine aykırıdır.\\n2- Müvekkilin kaçma veya delil karartma şüphesi bulunmamaktadır.\\n3- Tutuklama ölçülülük ilkesine aykırıdır.",
+                    hukuki_sebepler: "AİHM içtihatları, Anayasa, CMK m. 100, 101, 109 ve ilgili mevzuat.",
+                    hukuki_deliller: "Soruşturma evrakı, ikametgah belgesi, tanık, bilirkişi ve sair deliller.",
+                    sonuc: "TUTUKLAMA KARARININ KALDIRILARAK MÜVEKKİLİN TAHLİYESİNE karar verilmesini vekâleten saygıyla arz ve talep ederiz."
+                }
+            },
+            {
+                id: "adli_kontrol",
+                category: "ceza",
+                icon: "📋",
+                title: "Adli Kontrol Kararına İtiraz Dilekçesi",
+                desc: "İmza yükümlülüğü veya yurtdışı yasağı adli kontrol tedbirlerinin kaldırılması talebi.",
+                data: {
+                    mahkeme: "MERSİN NÖBETÇİ ASLİYE CEZA MAHKEMESİNE\\nGönderilmek Üzere\\nMERSİN [..]. SULH CEZA HÂKİMLİĞİNE",
+                    talep: "ADLİ KONTROLÜN KALDIRILMASI TALEPLİDİR",
+                    dosya: "2026/... Sorgu (veya Esas)",
+                    m_sifat: "ŞÜPHELİ / SANIK",
+                    m_ad: "[Müvekkil Şüpheli/Sanık - T.C. 12345678901]",
+                    m_adres: "[Müvekkil Adresi]",
+                    k_sifat: "MÜŞTEKİ",
+                    k_ad: "[Müşteki Adı Soyadı]",
+                    k_vekil: "",
+                    hed: "",
+                    konu: "Müvekkil hakkında uygulanan adli kontrol tedbirinin kaldırılması talebimizdir.",
+                    aciklama: "1- Müvekkil hakkında tesis edilen adli kontrol kararı çalışma ve seyahat hürriyetini ölçüsüz biçimde kısıtlamaktadır.\\n2- Müvekkil tüm adli kontrol tedbirlerine eksiksiz uymuştur.\\n3- Tedbirin devamında hukuki yarar kalmamıştır.",
+                    hukuki_sebepler: "CMK m. 109, 110, 111 ve ilgili mevzuat.",
+                    hukuki_deliller: "Dosya kapsamı ve adli kontrol takip tutanakları.",
+                    sonuc: "Müvekkil hakkındaki ADLİ KONTROL TEDBİRLERİNİN KALDIRILMASINA karar verilmesini vekâleten saygıyla arz ve talep ederiz."
+                }
+            },
+            {
+                id: "ceza_savunma",
+                category: "ceza",
+                icon: "🛡️",
+                title: "Asliye Ceza Savunma ve Beraat Dilekçesi",
+                desc: "Esas hakkındaki mütalaaya karşı son savunma ve beraat talebi.",
+                data: {
+                    mahkeme: "MERSİN [..]. ASLİYE CEZA MAHKEMESİNE",
+                    talep: "",
+                    dosya: "2026/... Esas",
+                    m_sifat: "SANIK",
+                    m_ad: "[Sanık Müvekkil Adı Soyadı - T.C. 12345678901]",
+                    m_adres: "[Sanık Adresi]",
+                    k_sifat: "KATILAN / MÜŞTEKİ",
+                    k_ad: "[Katılan/Müşteki Adı Soyadı]",
+                    k_vekil: "[Katılan Vekili]",
+                    hed: "",
+                    konu: "Esas hakkındaki mütalaaya karşı savunmalarımız ve BERAAT talebimizin sunulmasıdır.",
+                    aciklama: "1- İddianamede isnat edilen fiillerin müvekkil tarafından işlendiğine dair somut delil bulunmamaktadır.\\n2- Suçun yasal unsurları oluşmamış olup 'şüpheden sanık yararlanır' ilkesi geçerlidir.",
+                    hukuki_sebepler: "TCK, CMK m. 223/2 ve ilgili mevzuat.",
+                    hukuki_deliller: "Duruşma tutanakları, tanık beyanları, bilirkişi raporu ve sair deliller.",
+                    sonuc: "Müvekkil sanığın BERAATİNE karar verilmesini vekâleten saygıyla arz ve talep ederiz."
+                }
+            },
+            {
+                id: "ceza_istinaf",
+                category: "ceza",
+                icon: "⚖️",
+                title: "Ceza İstinaf Başvuru Dilekçesi",
+                desc: "Ceza mahkemesi mahkumiyet kararının kaldırılarak beraat kararı verilmesi talebi.",
+                data: {
+                    mahkeme: "ADANA BÖLGE ADLİYE MAHKEMESİ İLGİLİ CEZA DAİRESİNE\\nGönderilmek Üzere\\nMERSİN [..]. ASLİYE CEZA MAHKEMESİNE",
+                    talep: "",
+                    dosya: "2026/... E. - 2026/... K.",
+                    m_sifat: "SANIK (İSTİNAF EDEN)",
+                    m_ad: "[Sanık Müvekkil Adı Soyadı - T.C. 12345678901]",
+                    m_adres: "[Müvekkil Adresi]",
+                    k_sifat: "KATILAN",
+                    k_ad: "[Katılan Adı Soyadı]",
+                    k_vekil: "[Katılan Vekili]",
+                    hed: "",
+                    konu: "Mersin .. Asliye Ceza Mahkemesi'nin ... tarih ve ... E., ... K. sayılı mahkumiyet kararının istinafen incelenerek BOZULMASI ve BERAAT kararı verilmesi talebidir.",
+                    aciklama: "1- Yerel mahkemece eksik kovuşturma ve delillerin hatalı takdiri ile usul ve yasaya aykırı mahkumiyet hükmü kurulmuştur.\\n2- [Karardaki somut maddi ve hukuki hata gerekçeleri]\\n3- Suç unsurları oluşmamıştır.",
+                    hukuki_sebepler: "CMK m. 272 vd., TCK ve ilgili mevzuat.",
+                    hukuki_deliller: "Ceza dava dosyası, tanık, bilirkişi ve sair deliller.",
+                    sonuc: "İstinaf başvurumuzun KABULÜ ile yerel mahkeme kararının BOZULMASINA ve müvekkilin BERAATİNE karar verilmesini vekâleten saygıyla arz ve talep ederiz."
+                }
+            },
+            {
+                id: "dijital_materyal_iade",
+                category: "ceza",
+                icon: "💻",
+                title: "Dijital Materyallerin İadesi Dilekçesi",
+                desc: "CMK m. 134 uyarınca el konulan cep telefonu, bilgisayar ve dijital materyallerin imaj alma işlemi sonrası ivedi iadesi talebi.",
+                data: {
+                    mahkeme: "MERSİN CUMHURİYET BAŞSAVCILIĞINA\\nGönderilmek Üzere\\nMERSİN [..]. ASLİYE CEZA MAHKEMESİNE",
+                    talep: "",
+                    dosya: "Soruşturma No: 2026/... (veya 2026/... Esas)",
+                    m_sifat: "ŞÜPHELİ / SANIK",
+                    m_ad: "[Müvekkil Adı Soyadı - T.C. 12345678901]",
+                    m_adres: "[Müvekkil Adresi]",
+                    k_sifat: "MÜŞTEKİ",
+                    k_ad: "[Varsa Müşteki Adı Soyadı]",
+                    k_vekil: "",
+                    hed: "",
+                    konu: "Müvekkilden muhafaza altına alınan/el konulan dijital materyallerin imaj alma/adli bilişim incelemesi tamamlandığından CMK m. 134 ve CMK m. 131 uyarınca İVEDİ OLARAK İADESİ talebimizdir.",
+                    aciklama: "1- Başsavcılığınızın/Mahkemenizin yukarıda numarası yazılı dosyasında gerçekleştirilen arama ve elkoyma işlemi neticesinde müvekkile ait dijital materyallere el konulmuştur.\\n2- CMK m. 134/4 hükmü gereğince dijital materyallerin kopyası/imajı alındıktan sonra gecikmeksizin ilgilisine iade edilmesi zorunludur.\\n3- Cihazlarda müvekkilin ticari, mesleki ve özel yaşamına ilişkin zorunlu veriler bulunmakta olup cihazların alıkonulması müvekkili mağdur etmektedir.\\n4- Adli bilişim incelemesi ve yedekleme işlemleri tamamlandığından cihazların el altında tutulmasında hukuki yarar kalmamıştır.",
+                    hukuki_sebepler: "Anayasa m. 20, 22, 35, CMK m. 131, 134 ve ilgili mevzuat.",
+                    hukuki_deliller: "Arama ve elkoyma tutanağı, teslim-tesellüm tutanağı ve dosya kapsamı.",
+                    sonuc: "Yukarıda arz ve izah olunan nedenlerle; müvekkilden el konulan dijital materyallerin CMK m. 134/4 ve CMK m. 131 uyarınca MÜVEKKİLE / VEKİLİNE İVEDİLİKLE İADESİNE karar verilmesini vekâleten saygıyla arz ve talep ederiz."
+                }
+            },
+            {
+                id: "sure_tutum",
+                category: "ceza",
+                icon: "⏱️",
+                title: "Ceza Süre Tutum (Müddeti Muhafaza) Dilekçesi",
+                desc: "Gerekçeli karar tebliğine kadar istinaf başvuru süresini koruma talebi.",
+                data: {
+                    mahkeme: "ADANA BÖLGE ADLİYE MAHKEMESİ CEZA DAİRESİNE\\nGönderilmek Üzere\\nMERSİN [..]. ASLİYE CEZA MAHKEMESİNE",
+                    talep: "",
+                    dosya: "2026/... Esas",
+                    m_sifat: "SANIK",
+                    m_ad: "[Sanık Müvekkil Adı Soyadı - T.C. 12345678901]",
+                    m_adres: "[Müvekkil Adresi]",
+                    k_sifat: "KATILAN",
+                    k_ad: "[Katılan Adı Soyadı]",
+                    k_vekil: "",
+                    hed: "",
+                    konu: "Mahkemenizin ... tarihli tefhim olunan kararına karşı süresi içinde istinaf kanun yoluna başvurduğumuza dair süre tutum dilekçemizdir.",
+                    aciklama: "1- Mahkemenizce ... tarihli duruşmada müvekkil aleyhine verilen karar usul ve yasaya aykırıdır.\\n2- Gerekçeli kararın tarafımıza tebliğinden sonra ayrıntılı istinaf gerekçelerimizi sunmak üzere istinaf süremizi muhafaza ediyoruz.",
+                    hukuki_sebepler: "CMK m. 273 ve ilgili mevzuat.",
+                    hukuki_deliller: "Duruşma tutanağı ve dosya kapsamı.",
+                    sonuc: "İstinaf başvuru süremizin korunmasına, gerekçeli kararın tarafımıza tebliğine karar verilmesini vekâleten saygıyla arz ve talep ederiz."
+                }
             }
-];
+        ];
 
         // Varsayılan Sık Kullanılanlar
         const DEFAULT_FAVORITES = ["asliye_hukuk_dava", "asliye_ceza_savunma", "ozel_alacak_dava", "savcilik_savunma"];
@@ -1377,41 +1728,24 @@ HTML_PAGE = """<!DOCTYPE html>
         }
 
         let currentMainCategory = "all";
-        let currentCategory = "all";
-
-        function setMainCategory(mcat) {
-            currentMainCategory = mcat;
-            currentCategory = "all";
-            document.querySelectorAll(".mcat-btn").forEach(btn => {
-                btn.classList.remove("bg-blue-600", "text-white", "shadow-sm");
-                btn.classList.add("bg-slate-100", "text-slate-700");
-            });
-            const activeBtn = document.getElementById("mcat_" + mcat);
-            if (activeBtn) {
-                activeBtn.classList.remove("bg-slate-100", "text-slate-700");
-                activeBtn.classList.add("bg-blue-600", "text-white", "shadow-sm");
-            }
-            // Update subcategory buttons
-            updateCategoryButtons();
-            renderTemplates();
-        }
+                let currentCategory = "all";
 
         function setCategory(cat) {
             currentCategory = cat;
-            updateCategoryButtons();
+            document.querySelectorAll(".cat-btn").forEach(btn => {
+                btn.classList.remove("bg-blue-600", "text-white", "shadow-sm");
+                btn.classList.add("bg-slate-100", "text-slate-600");
+            });
+            const activeBtn = document.getElementById("cat_" + cat);
+            if (activeBtn) {
+                activeBtn.classList.remove("bg-slate-100", "text-slate-600");
+                activeBtn.classList.add("bg-blue-600", "text-white", "shadow-sm");
+            }
             renderTemplates();
         }
 
-        function updateCategoryButtons() {
-            document.querySelectorAll(".cat-btn").forEach(btn => {
-                btn.classList.remove("bg-slate-800", "text-white");
-                btn.classList.add("bg-slate-100", "text-slate-600");
-            });
-            const activeBtn = document.getElementById("cat_" + currentCategory);
-            if (activeBtn) {
-                activeBtn.classList.remove("bg-slate-100", "text-slate-600");
-                activeBtn.classList.add("bg-slate-800", "text-white");
-            }
+        function filterTemplates() {
+            renderTemplates();
         }
 
         function renderTemplates() {
@@ -1421,15 +1755,8 @@ HTML_PAGE = """<!DOCTYPE html>
             grid.innerHTML = "";
 
             const filtered = TEMPLATES.filter(t => {
-                // If search query is active, search across ALL categories (global search)
-                let matchCat = true;
-                if (!query) {
-                    if (currentCategory !== "all") {
-                        matchCat = (t.category === currentCategory);
-                    } else if (currentMainCategory !== "all") {
-                        matchCat = (t.main_cat === currentMainCategory || t.category === currentMainCategory);
-                    }
-                }
+                // If user types search query, search globally across all 46 templates!
+                const matchCat = (!query) ? (currentCategory === "all" || t.category === currentCategory) : true;
                 const matchQuery = (!query || t.title.toLowerCase().includes(query) || t.desc.toLowerCase().includes(query));
                 return matchCat && matchQuery;
             });
@@ -1474,33 +1801,67 @@ HTML_PAGE = """<!DOCTYPE html>
             });
         }
 
-        function setCategory(cat) {
-            currentCategory = cat;
-            document.querySelectorAll(".cat-btn").forEach(btn => {
-                btn.classList.remove("bg-blue-600", "text-white", "shadow-sm");
-                btn.classList.add("bg-slate-100", "text-slate-600");
-            });
-            const activeBtn = document.getElementById("cat_" + cat);
-            if (activeBtn) {
-                activeBtn.classList.remove("bg-slate-100", "text-slate-600");
-                activeBtn.classList.add("bg-blue-600", "text-white", "shadow-sm");
-            }
-            renderTemplates();
-            
-        }
+        let pendingTemplateId = null;
 
-        function filterTemplates() {
-            renderTemplates();
-            
-        }
-
-        async function openDirect(tplId) {
+        function openDirect(tplId) {
             const t = TEMPLATES.find(x => x.id === tplId);
             if (!t) return;
 
-            showToast(`⏳ ${t.title} UYAP'ta açılıyor...`, "info");
+            // Generic templates that can be customized with Court Picker Modal:
+            const genericPetitions = ["alacak_dava", "cevap", "delil_bildirme", "tanik_bildirme", "istinaf_tehiri_icra", "genel_talep", "sure_uzatim", "bilirkisi_itiraz", "bilirkisi_beyan", "davadan_feragat", "ceza_istinaf", "savunma_beraat"];
             
-            const formattedData = formatDataForCity(t.data);
+            if (genericPetitions.includes(tplId)) {
+                pendingTemplateId = tplId;
+                document.getElementById("courtModalTitle").textContent = `${t.title} - Mahkeme Seçimi`;
+                document.getElementById("courtPickerModal").classList.remove("hidden");
+                return;
+            }
+
+            executeDirectGenerate(t.data, t.title);
+        }
+
+        function closeCourtPickerModal() {
+            document.getElementById("courtPickerModal").classList.add("hidden");
+            pendingTemplateId = null;
+        }
+
+        function selectCourtAndGenerate(courtType) {
+            if (!pendingTemplateId) return;
+            const t = TEMPLATES.find(x => x.id === pendingTemplateId);
+            if (!t) return;
+
+            const lp = getLawyerProfile();
+            const city = lp.city || "MERSİN";
+            const bamCity = lp.bamCity || "ADANA";
+
+            let copyData = { ...t.data };
+            
+            // Adapt court heading dynamically
+            if (t.id.includes("istinaf")) {
+                if (courtType.includes("CEZA")) {
+                    copyData.mahkeme = `${bamCity} BÖLGE ADLİYE MAHKEMESİ İLGİLİ CEZA DAİRESİNE\\nGönderilmek Üzere\\n${city} [..]. ${courtType} MAHKEMESİNE`;
+                } else {
+                    copyData.mahkeme = `${bamCity} BÖLGE ADLİYE MAHKEMESİ İLGİLİ HUKUK DAİRESİNE\\nGönderilmek Üzere\\n${city} [..]. ${courtType} MAHKEMESİNE`;
+                }
+            } else if (courtType.includes("ASLİYE HUKUK") || courtType.includes("SULH HUKUK") || courtType.includes("İŞ") || courtType.includes("AİLE") || courtType.includes("TÜKETİCİ") || courtType.includes("İCRA HUKUK")) {
+                if (t.id.includes("dava")) {
+                    copyData.mahkeme = `${city} NÖBETÇİ ${courtType} MAHKEMESİNE`;
+                } else {
+                    copyData.mahkeme = `${city} [..]. ${courtType} MAHKEMESİNE`;
+                }
+            } else if (courtType.includes("CEZA")) {
+                copyData.mahkeme = `${city} [..]. ${courtType} MAHKEMESİNE`;
+                if (copyData.m_sifat === "DAVACI") copyData.m_sifat = "MÜŞTEKİ / KATILAN";
+                if (copyData.m_sifat === "DAVALI") copyData.m_sifat = "SANIK";
+            }
+
+            closeCourtPickerModal();
+            executeDirectGenerate(copyData, `${t.title} (${courtType})`);
+        }
+
+        async function executeDirectGenerate(dataObj, title) {
+            showToast(`⏳ ${title} UYAP'ta açılıyor...`, "info");
+            const formattedData = formatDataForCity(dataObj);
             const payload = {
                 ...formattedData,
                 vekil: getLawyerFullText(),
@@ -1516,7 +1877,7 @@ HTML_PAGE = """<!DOCTYPE html>
                 });
                 const r = await res.json();
                 if (r.success) {
-                    showToast(`✅ ${t.title} UYAP Doküman Editörü'nde açıldı!`, "success");
+                    showToast(`✅ ${title} UYAP Doküman Editörü'nde açıldı!`, "success");
                 } else {
                     showToast(`❌ Hata: ${r.message}`, "error");
                 }
