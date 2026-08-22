@@ -196,7 +196,15 @@ HTML_PAGE = """<!DOCTYPE html>
             <!-- 2. Adım: Taraf Sıfatı Seçenekleri (Müvekkil Sıfatı) -->
             <div id="step2PartyContainer" class="hidden space-y-3">
                 <p class="text-xs font-bold text-slate-700">Müvekkilinizin bu dosyadaki sıfatı nedir?</p>
-                <div class="grid grid-cols-2 gap-2.5 max-h-72 overflow-y-auto pr-1" id="partyOptionsGrid">
+                <div class="grid grid-cols-2 gap-2.5 max-h-64 overflow-y-auto pr-1" id="partyOptionsGrid">
+                </div>
+
+                <!-- Özel / Diğer Sıfat Girişi -->
+                <div class="pt-2 border-t border-slate-100 flex items-center gap-2">
+                    <input type="text" id="customPartyInput" placeholder="Örn: VASİ / KISITLI / MİRASÇI / ÜÇÜNCÜ KİŞİ..." class="flex-1 px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-semibold text-slate-900 focus:bg-white focus:ring-2 focus:ring-blue-500">
+                    <button onclick="applyCustomPartyRole()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-sm transition">
+                        ✓ Uygula
+                    </button>
                 </div>
             </div>
 
@@ -575,7 +583,7 @@ HTML_PAGE = """<!DOCTYPE html>
                         "id": "cevap",
                         "category": "hukuk_talep",
                         "icon": "📝",
-                        "title": "Cevap Dilekçesi (Davalı)",
+                        "title": "Cevap Dilekçesi",
                         "desc": "Dava dilekçesine karşı ilk itirazlar, zamanaşımı ve esasa ilişkin cevapların sunulması.",
                         "court_type": "hukuk",
                         "data": {
@@ -1331,7 +1339,7 @@ HTML_PAGE = """<!DOCTYPE html>
                         "id": "sikayet",
                         "category": "ceza",
                         "icon": "⚖️",
-                        "title": "Müşteki Suç Duyurusu (Cumhuriyet Başsavcılığı)",
+                        "title": "Suç Duyurusu (Cumhuriyet Başsavcılığı)",
                         "desc": "Cumhuriyet Başsavcılığı'na şikayet ve kamu davası açılması talebi.",
                         "court_type": "savcilik",
                         "data": {
@@ -1917,25 +1925,31 @@ HTML_PAGE = """<!DOCTYPE html>
             { type: "İCRA CEZA", icon: "📋", title: "İcra Ceza", desc: "Taahhüdü İhlal / Tazyik Hapsi" }
         ];
 
-        // Taraf Sıfatları (Hukuk & Ceza İçin Standart Eşleşmeler)
+        // Taraf Sıfatları (Hukuk & Ceza İçin Kapsamlı Standart Eşleşmeler)
         const HUKUK_PARTY_ROLES = [
             { m_sifat: "DAVACI", k_sifat: "DAVALI", icon: "⚖️", title: "Davacı", desc: "Karşı Taraf: DAVALI" },
             { m_sifat: "DAVALI", k_sifat: "DAVACI", icon: "🛡️", title: "Davalı", desc: "Karşı Taraf: DAVACI" },
-            { m_sifat: "TALEP EDEN", k_sifat: "KARŞI TARAF", icon: "📝", title: "Talep Eden", desc: "Değişik İş / Vesayet / İtiraz" },
+            { m_sifat: "TALEP EDEN", k_sifat: "KARŞI TARAF", icon: "📝", title: "Talep Eden", desc: "Değişik İş / Vesayet / Genel Talep" },
+            { m_sifat: "VASİ", k_sifat: "KISITLI", icon: "🤝", title: "Vasi", desc: "Vesayet Dosyaları / Karşı Taraf: KISITLI" },
+            { m_sifat: "KISITLI ADAYI / KISITLI", k_sifat: "TALEP EDEN", icon: "👤", title: "Kısıtlı / Kısıtlı Adayı", desc: "Vesayet Altına Alınma İtirazı" },
             { m_sifat: "İHTİYATİ TEDBİR TALEP EDEN", k_sifat: "ALEYHİNE TEDBİR TALEP EDİLEN", icon: "🔒", title: "Tedbir Talep Eden", desc: "Karşı Taraf: Aleyhine Tedbir Talep Edilen" },
             { m_sifat: "ALEYHİNE TEDBİR TALEP EDİLEN", k_sifat: "İHTİYATİ TEDBİR TALEP EDEN", icon: "🔓", title: "Aleyhine Tedbir Talep Edilen", desc: "Tedbire İtiraz / Karşı Taraf" },
-            { m_sifat: "ŞİKAYET EDEN (ALACAKLI / BORÇLU)", k_sifat: "ŞİKAYET OLUNAN", icon: "⚠️", title: "Şikayet Eden", desc: "İcra Memur Muamelesini Şikayet" },
-            { m_sifat: "ŞİKAYET OLUNAN", k_sifat: "ŞİKAYET EDEN", icon: "🛡️", title: "Şikayet Olunan", desc: "Şikayete Cevap" },
-            { m_sifat: "İSTİNAF EDEN", k_sifat: "İSTİNAFA CEVAP VEREN", icon: "📑", title: "İstinaf Eden", desc: "İstinaf Başvurusu Yapan" }
+            { m_sifat: "ŞİKAYET EDEN", k_sifat: "ŞİKAYET OLUNAN", icon: "⚠️", title: "Şikayet Eden", desc: "İcra Memur Muamelesi Şikayeti" },
+            { m_sifat: "ŞİKAYET OLUNAN", k_sifat: "ŞİKAYET EDEN", icon: "🛡️", title: "Şikayet Olunan", desc: "İcra Şikayetine Cevap" },
+            { m_sifat: "İSTİNAF EDEN", k_sifat: "İSTİNAFA CEVAP VEREN", icon: "📑", title: "İstinaf Eden", desc: "BAM Hukuk Dairesi İstinafı" },
+            { m_sifat: "İSTİNAFA CEVAP VEREN", k_sifat: "İSTİNAF EDEN", icon: "💬", title: "İstinafa Cevap Veren", desc: "İstinaf Cevap Layihası" },
+            { m_sifat: "İHBAR OLUNAN", k_sifat: "DAVACI / DAVALI", icon: "📢", title: "İhbar Olunan", desc: "Davanın İhbarı / Yan Müdahale" }
         ];
 
         const CEZA_PARTY_ROLES = [
-            { m_sifat: "SANIK", k_sifat: "MÜŞTEKİ / KATILAN", icon: "⚖️", title: "Sanık", desc: "Kovuşturma Aşaması / Ceza Mahkemesi" },
+            { m_sifat: "SANIK", k_sifat: "MÜŞTEKİ / KATILAN", icon: "⚖️", title: "Sanık", desc: "Kovuşturma / Ceza Mahkemesi" },
             { m_sifat: "ŞÜPHELİ", k_sifat: "MÜŞTEKİ", icon: "🛡️", title: "Şüpheli", desc: "Soruşturma / Sulh Ceza Sorgu" },
-            { m_sifat: "MÜŞTEKİ / KATILAN", k_sifat: "SANIK", icon: "📋", title: "Müşteki / Katılan", desc: "Şikayetçi / Suçtan Zarar Gören" },
-            { m_sifat: "MÜŞTEKİ (ŞİKAYET EDEN)", k_sifat: "ŞÜPHELİ", icon: "⚖️", title: "Müşteki (Soruşturma)", desc: "Savcılık Suç Duyurusu" },
-            { m_sifat: "İTİRAZ EDEN (ŞÜPHELİ / SANIK)", k_sifat: "MÜŞTEKİ", icon: "⛓️", title: "İtiraz Eden (Tahliye / Adli Kontrol)", desc: "Tutuklama / Adli Kontrol İtirazı" },
-            { m_sifat: "İSTİNAF EDEN (SANIK)", k_sifat: "KATILAN", icon: "📑", title: "İstinaf Eden (Sanık)", desc: "BAM Ceza Dairesi İstinafı" }
+            { m_sifat: "KATILAN", k_sifat: "SANIK", icon: "🏛️", title: "Katılan (Müdahil)", desc: "Kamu Davasına Katılan" },
+            { m_sifat: "MÜŞTEKİ", k_sifat: "SANIK / ŞÜPHELİ", icon: "📋", title: "Müşteki (Şikayetçi)", desc: "Suçtan Zarar Gören / Şikayet Eden" },
+            { m_sifat: "İTİRAZ EDEN (ŞÜPHELİ / SANIK)", k_sifat: "MÜŞTEKİ", icon: "⛓️", title: "İtiraz Eden", desc: "Tahliye / Adli Kontrol İtirazı" },
+            { m_sifat: "İSTİNAF EDEN (SANIK)", k_sifat: "KATILAN", icon: "📑", title: "İstinaf Eden (Sanık)", desc: "BAM Ceza Dairesi İstinafı" },
+            { m_sifat: "İSTİNAF EDEN (KATILAN VEKİLİ)", k_sifat: "SANIK", icon: "📑", title: "İstinaf Eden (Katılan)", desc: "Beraat Kararına Karşı İstinaf" },
+            { m_sifat: "MALEN SORUMLU", k_sifat: "KATILAN", icon: "💼", title: "Malen Sorumlu", desc: "Tazminat / Müsadere Sorumlusu" }
         ];
 
         function openDirect(tplId) {
@@ -2028,6 +2042,16 @@ HTML_PAGE = """<!DOCTYPE html>
             document.getElementById("courtPickerModal").classList.add("hidden");
             pendingTemplateId = null;
             selectedCourtType = null;
+        }
+
+                function applyCustomPartyRole() {
+            const input = document.getElementById("customPartyInput");
+            const val = input.value.trim().toUpperCase();
+            if (!val) {
+                showToast("Lütfen bir sıfat yazın", "error");
+                return;
+            }
+            finishWizardAndGenerate(val, "KARŞI TARAF");
         }
 
         function finishWizardAndGenerate(m_sifat, k_sifat) {
