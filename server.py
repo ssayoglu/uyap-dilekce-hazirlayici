@@ -171,24 +171,43 @@ HTML_PAGE = """<!DOCTYPE html>
     </div>
 
         <!-- Mahkeme Seçim Modalı (Hızlı Açılış İçin) -->
-        <!-- Mahkeme Seçim Modalı (Hukuk ve Ceza Ayrımıyla) -->
+        <!-- Mahkeme ve Taraf Sıfatı Seçim Modalı (2 Adımlı Hızlı Sihirbaz) -->
     <div id="courtPickerModal" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full p-6 space-y-4">
+        <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-lg w-full p-6 space-y-4">
+            
+            <!-- Başlık Alanı -->
             <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-                <div class="flex items-center gap-2">
-                    <span class="text-xl">⚖️</span>
+                <div class="flex items-center gap-2.5">
+                    <span class="text-2xl" id="modalStepIcon">🏛️</span>
                     <div>
-                        <h3 class="font-bold text-slate-900 text-sm" id="courtModalTitle">Mahkeme Türünü Seçin</h3>
-                        <p class="text-[11px] text-slate-500">Şablon başlığı seçtiğiniz mahkemeye göre otomatik uyarlanacaktır.</p>
+                        <h3 class="font-bold text-slate-900 text-sm" id="courtModalTitle">1. Adım: Mahkeme Seçimi</h3>
+                        <p class="text-[11px] text-slate-500" id="courtModalSubtitle">Dilekçenin sunulacağı mahkemeyi seçin.</p>
                     </div>
                 </div>
                 <button onclick="closeCourtPickerModal()" class="text-slate-400 hover:text-slate-600 font-bold text-lg">✕</button>
             </div>
-            <!-- Dinamik doldurulacak mahkeme seçenekleri -->
-            <div class="grid grid-cols-2 gap-2.5" id="courtOptionsGrid">
+
+            <!-- 1. Adım: Mahkeme Seçenekleri -->
+            <div id="step1CourtContainer">
+                <div class="grid grid-cols-2 gap-2.5 max-h-72 overflow-y-auto pr-1" id="courtOptionsGrid">
+                </div>
             </div>
-            <div class="pt-2 border-t border-slate-100 flex justify-end">
-                <button onclick="closeCourtPickerModal()" class="px-4 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold">Vazgeç</button>
+
+            <!-- 2. Adım: Taraf Sıfatı Seçenekleri (Müvekkil Sıfatı) -->
+            <div id="step2PartyContainer" class="hidden space-y-3">
+                <p class="text-xs font-bold text-slate-700">Müvekkilinizin bu dosyadaki sıfatı nedir?</p>
+                <div class="grid grid-cols-2 gap-2.5 max-h-72 overflow-y-auto pr-1" id="partyOptionsGrid">
+                </div>
+            </div>
+
+            <!-- Alt Butonlar -->
+            <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
+                <button id="btnBackToCourts" onclick="backToStep1()" class="hidden px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition">
+                    ← Mahkeme Seçimine Dön
+                </button>
+                <div class="flex items-center gap-2 ml-auto">
+                    <button onclick="closeCourtPickerModal()" class="px-4 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition">Vazgeç</button>
+                </div>
             </div>
         </div>
     </div>
@@ -1878,7 +1897,8 @@ HTML_PAGE = """<!DOCTYPE html>
             });
         }
 
-                let pendingTemplateId = null;
+                        let pendingTemplateId = null;
+        let selectedCourtType = null;
 
         const HUKUK_COURT_OPTIONS = [
             { type: "ASLİYE HUKUK", icon: "🏛️", title: "Asliye Hukuk", desc: "Genel Hukuk Davaları" },
@@ -1897,25 +1917,58 @@ HTML_PAGE = """<!DOCTYPE html>
             { type: "İCRA CEZA", icon: "📋", title: "İcra Ceza", desc: "Taahhüdü İhlal / Tazyik Hapsi" }
         ];
 
+        // Taraf Sıfatları (Hukuk & Ceza İçin Standart Eşleşmeler)
+        const HUKUK_PARTY_ROLES = [
+            { m_sifat: "DAVACI", k_sifat: "DAVALI", icon: "⚖️", title: "Davacı", desc: "Karşı Taraf: DAVALI" },
+            { m_sifat: "DAVALI", k_sifat: "DAVACI", icon: "🛡️", title: "Davalı", desc: "Karşı Taraf: DAVACI" },
+            { m_sifat: "TALEP EDEN", k_sifat: "KARŞI TARAF", icon: "📝", title: "Talep Eden", desc: "Değişik İş / Vesayet / İtiraz" },
+            { m_sifat: "İHTİYATİ TEDBİR TALEP EDEN", k_sifat: "ALEYHİNE TEDBİR TALEP EDİLEN", icon: "🔒", title: "Tedbir Talep Eden", desc: "Karşı Taraf: Aleyhine Tedbir Talep Edilen" },
+            { m_sifat: "ALEYHİNE TEDBİR TALEP EDİLEN", k_sifat: "İHTİYATİ TEDBİR TALEP EDEN", icon: "🔓", title: "Aleyhine Tedbir Talep Edilen", desc: "Tedbire İtiraz / Karşı Taraf" },
+            { m_sifat: "ŞİKAYET EDEN (ALACAKLI / BORÇLU)", k_sifat: "ŞİKAYET OLUNAN", icon: "⚠️", title: "Şikayet Eden", desc: "İcra Memur Muamelesini Şikayet" },
+            { m_sifat: "ŞİKAYET OLUNAN", k_sifat: "ŞİKAYET EDEN", icon: "🛡️", title: "Şikayet Olunan", desc: "Şikayete Cevap" },
+            { m_sifat: "İSTİNAF EDEN", k_sifat: "İSTİNAFA CEVAP VEREN", icon: "📑", title: "İstinaf Eden", desc: "İstinaf Başvurusu Yapan" }
+        ];
+
+        const CEZA_PARTY_ROLES = [
+            { m_sifat: "SANIK", k_sifat: "MÜŞTEKİ / KATILAN", icon: "⚖️", title: "Sanık", desc: "Kovuşturma Aşaması / Ceza Mahkemesi" },
+            { m_sifat: "ŞÜPHELİ", k_sifat: "MÜŞTEKİ", icon: "🛡️", title: "Şüpheli", desc: "Soruşturma / Sulh Ceza Sorgu" },
+            { m_sifat: "MÜŞTEKİ / KATILAN", k_sifat: "SANIK", icon: "📋", title: "Müşteki / Katılan", desc: "Şikayetçi / Suçtan Zarar Gören" },
+            { m_sifat: "MÜŞTEKİ (ŞİKAYET EDEN)", k_sifat: "ŞÜPHELİ", icon: "⚖️", title: "Müşteki (Soruşturma)", desc: "Savcılık Suç Duyurusu" },
+            { m_sifat: "İTİRAZ EDEN (ŞÜPHELİ / SANIK)", k_sifat: "MÜŞTEKİ", icon: "⛓️", title: "İtiraz Eden (Tahliye / Adli Kontrol)", desc: "Tutuklama / Adli Kontrol İtirazı" },
+            { m_sifat: "İSTİNAF EDEN (SANIK)", k_sifat: "KATILAN", icon: "📑", title: "İstinaf Eden (Sanık)", desc: "BAM Ceza Dairesi İstinafı" }
+        ];
+
         function openDirect(tplId) {
             const t = TEMPLATES.find(x => x.id === tplId);
             if (!t) return;
 
-            // If template has court_type specified, open Court Picker with tailored options!
+            // If template has court_type specified, open Court & Party Picker Wizard!
             if (t.court_type === "hukuk" || t.court_type === "ceza") {
                 pendingTemplateId = tplId;
-                document.getElementById("courtModalTitle").textContent = `${t.title} - Mahkeme Seçimi`;
+                selectedCourtType = null;
+
+                // Step 1: Render Courts
+                document.getElementById("modalStepIcon").textContent = (t.court_type === "ceza") ? "🛡️" : "🏛️";
+                document.getElementById("courtModalTitle").textContent = "1. Adım: Mahkeme Türünü Seçin";
+                document.getElementById("courtModalSubtitle").textContent = `${t.title} için mahkeme seçin.`;
+                
+                document.getElementById("step1CourtContainer").classList.remove("hidden");
+                document.getElementById("step2PartyContainer").classList.add("hidden");
+                document.getElementById("btnBackToCourts").classList.add("hidden");
+
                 const grid = document.getElementById("courtOptionsGrid");
                 grid.innerHTML = "";
 
                 const options = (t.court_type === "ceza") ? CEZA_COURT_OPTIONS : HUKUK_COURT_OPTIONS;
                 options.forEach(opt => {
                     const btn = document.createElement("button");
-                    btn.className = "p-3 text-left rounded-xl border border-slate-200 hover:border-blue-500 hover:bg-blue-50/60 transition";
-                    btn.onclick = () => selectCourtAndGenerate(opt.type);
+                    btn.className = "p-3 text-left rounded-xl border border-slate-200 hover:border-blue-500 hover:bg-blue-50/70 transition flex flex-col justify-between";
+                    btn.onclick = () => onCourtSelected(opt.type);
                     btn.innerHTML = `
-                        <div class="font-bold text-xs text-slate-900">${opt.icon} ${opt.title}</div>
-                        <div class="text-[10px] text-slate-500">${opt.desc}</div>
+                        <div class="font-bold text-xs text-slate-900 flex items-center gap-1.5">
+                            <span>${opt.icon}</span> <span>${opt.title}</span>
+                        </div>
+                        <div class="text-[10px] text-slate-500 mt-1">${opt.desc}</div>
                     `;
                     grid.appendChild(btn);
                 });
@@ -1927,40 +1980,82 @@ HTML_PAGE = """<!DOCTYPE html>
             executeDirectGenerate(t.data, t.title);
         }
 
+        function onCourtSelected(courtType) {
+            selectedCourtType = courtType;
+            const t = TEMPLATES.find(x => x.id === pendingTemplateId);
+
+            // Step 2: Show Party Roles
+            document.getElementById("step1CourtContainer").classList.add("hidden");
+            document.getElementById("step2PartyContainer").classList.remove("hidden");
+            document.getElementById("btnBackToCourts").classList.remove("hidden");
+
+            document.getElementById("modalStepIcon").textContent = "👤";
+            document.getElementById("courtModalTitle").textContent = `2. Adım: Müvekkil Sıfatı (${courtType})`;
+            document.getElementById("courtModalSubtitle").textContent = "Dilekçedeki taraf sıfatını tek tıkla belirleyin:";
+
+            const partyGrid = document.getElementById("partyOptionsGrid");
+            partyGrid.innerHTML = "";
+
+            const isCeza = (t.court_type === "ceza" || courtType.includes("CEZA") || courtType.includes("AĞIR"));
+            const roles = isCeza ? CEZA_PARTY_ROLES : HUKUK_PARTY_ROLES;
+
+            roles.forEach(role => {
+                const btn = document.createElement("button");
+                btn.className = "p-3 text-left rounded-xl border border-slate-200 hover:border-blue-500 hover:bg-blue-50/70 transition flex flex-col justify-between";
+                btn.onclick = () => finishWizardAndGenerate(role.m_sifat, role.k_sifat);
+                btn.innerHTML = `
+                    <div class="font-bold text-xs text-slate-900 flex items-center gap-1.5">
+                        <span>${role.icon}</span> <span>${role.title}</span>
+                    </div>
+                    <div class="text-[10px] text-slate-500 mt-1">${role.desc}</div>
+                `;
+                partyGrid.appendChild(btn);
+            });
+        }
+
+        function backToStep1() {
+            document.getElementById("step1CourtContainer").classList.remove("hidden");
+            document.getElementById("step2PartyContainer").classList.add("hidden");
+            document.getElementById("btnBackToCourts").classList.add("hidden");
+
+            const t = TEMPLATES.find(x => x.id === pendingTemplateId);
+            document.getElementById("modalStepIcon").textContent = (t && t.court_type === "ceza") ? "🛡️" : "🏛️";
+            document.getElementById("courtModalTitle").textContent = "1. Adım: Mahkeme Türünü Seçin";
+            document.getElementById("courtModalSubtitle").textContent = "Dilekçenin sunulacağı mahkemeyi seçin.";
+        }
+
         function closeCourtPickerModal() {
             document.getElementById("courtPickerModal").classList.add("hidden");
             pendingTemplateId = null;
+            selectedCourtType = null;
         }
 
-        function selectCourtAndGenerate(courtType) {
-            if (!pendingTemplateId) return;
+        function finishWizardAndGenerate(m_sifat, k_sifat) {
+            if (!pendingTemplateId || !selectedCourtType) return;
             const t = TEMPLATES.find(x => x.id === pendingTemplateId);
             if (!t) return;
 
             const lp = getLawyerProfile();
             const city = lp.city || "MERSİN";
             const bamCity = lp.bamCity || "ADANA";
+            const courtType = selectedCourtType;
 
             let copyData = { ...t.data };
             
-            // 1. Adapt İstinaf routing
+            // 1. Adapt Mahkeme Heading
             if (t.id.includes("istinaf")) {
                 if (courtType.includes("CEZA") || courtType.includes("AĞIR")) {
-                    copyData.mahkeme = `${bamCity} BÖLGE ADLİYE MAHKEMESİ İLGİLİ CEZA DAİRESİNE\\nGönderilmek Üzere\\n${city} [..]. ${courtType} MAHKEMESİNE`;
+                    copyData.mahkeme = `${bamCity} BÖLGE ADLİYE MAHKEMESİ İLGİLİ CEZA DAİRESİNE\nGönderilmek Üzere\n${city} [..]. ${courtType} MAHKEMESİNE`;
                 } else {
-                    copyData.mahkeme = `${bamCity} BÖLGE ADLİYE MAHKEMESİ İLGİLİ HUKUK DAİRESİNE\\nGönderilmek Üzere\\n${city} [..]. ${courtType} MAHKEMESİNE`;
+                    copyData.mahkeme = `${bamCity} BÖLGE ADLİYE MAHKEMESİ İLGİLİ HUKUK DAİRESİNE\nGönderilmek Üzere\n${city} [..]. ${courtType} MAHKEMESİNE`;
                 }
-            } 
-            // 2. Adapt Dava Opening Dilekçeleri (Nöbetçi)
-            else if (t.id.includes("dava") || t.id.includes("iptali")) {
+            } else if (t.id.includes("dava") || t.id.includes("iptali")) {
                 if (courtType === "SULH CEZA") {
                     copyData.mahkeme = `${city} NÖBETÇİ SULH CEZA HÂKİMLİĞİNE`;
                 } else {
                     copyData.mahkeme = `${city} NÖBETÇİ ${courtType} MAHKEMESİNE`;
                 }
-            } 
-            // 3. Adapt Esas/Ara Dilekçeleri
-            else {
+            } else {
                 if (courtType === "SULH CEZA") {
                     copyData.mahkeme = `${city} [..]. SULH CEZA HÂKİMLİĞİNE`;
                 } else {
@@ -1968,14 +2063,12 @@ HTML_PAGE = """<!DOCTYPE html>
                 }
             }
 
-            // Adapt parties for Ceza courts
-            if (courtType.includes("CEZA") || courtType.includes("AĞIR")) {
-                if (copyData.m_sifat === "DAVACI") copyData.m_sifat = "MÜŞTEKİ / KATILAN";
-                if (copyData.m_sifat === "DAVALI") copyData.m_sifat = "SANIK";
-            }
+            // 2. Apply Custom Party Roles (Sıfatlar)
+            if (m_sifat) copyData.m_sifat = m_sifat;
+            if (k_sifat) copyData.k_sifat = k_sifat;
 
             closeCourtPickerModal();
-            executeDirectGenerate(copyData, `${t.title} (${courtType})`);
+            executeDirectGenerate(copyData, `${t.title} (${courtType} - ${m_sifat})`);
         }
 
         async function executeDirectGenerate(dataObj, title) {
