@@ -10,6 +10,7 @@ import zipfile
 import os
 import sys
 import subprocess
+import re
 from datetime import datetime
 
 PORT = 5678
@@ -50,13 +51,24 @@ def build_udf(paragraphs, output_file):
     elements_xml = []
     current_offset = 0
     
-    for align, lspacing, sbelow, findent, tabset, runs in paragraphs:
+    for item in paragraphs:
+        # Support both 6-tuple and 7-tuple (with extra XML attributes dict)
+        if len(item) == 7:
+            align, lspacing, sbelow, findent, tabset, extra_attrs, runs = item
+        else:
+            align, lspacing, sbelow, findent, tabset, runs = item
+            extra_attrs = None
+            
         p_attr = []
         if align is not None: p_attr.append(f'Alignment="{align}"')
         if lspacing is not None: p_attr.append(f'LineSpacing="{lspacing}"')
         if sbelow is not None: p_attr.append(f'SpaceBelow="{sbelow}"')
         if findent is not None: p_attr.append(f'FirstLineIndent="{findent}"')
         if tabset is not None: p_attr.append(f'TabSet="{tabset}"')
+        
+        if extra_attrs and isinstance(extra_attrs, dict):
+            for k, v in extra_attrs.items():
+                p_attr.append(f'{k}="{v}"')
         
         attr_str = " ".join(p_attr)
         p_xml = f"<paragraph {attr_str}>" if attr_str else "<paragraph>"
@@ -267,139 +279,416 @@ HTML_PAGE = """<!DOCTYPE html>
         </div>
     </main>
 
-    <!-- 2. GÖRÜNÜM: FORM DÜZENLEYİCİ -->
-    <main id="formView" class="max-w-5xl mx-auto px-6 py-6 hidden flex-1 w-full">
+    <!-- 2. GÖRÜNÜM: FORM DÜZENLEYİCİ (GELİŞMİŞ EDİTÖR) -->
+    <main id="formView" class="max-w-7xl mx-auto px-4 sm:px-6 py-6 hidden flex-1 w-full space-y-4">
         
-        <div class="mb-4 flex items-center justify-between">
-            <button onclick="showGalleryView()" class="inline-flex items-center gap-2 px-4 py-2 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 rounded-xl text-sm font-semibold shadow-sm transition">
-                ← Şablon Listesine Dön
-            </button>
-            <span id="formTitleBadge" class="text-sm font-bold text-blue-900 bg-blue-50 px-3 py-1.5 rounded-xl border border-blue-200"></span>
+        <!-- Üst Kontrol Barı -->
+        <div class="flex flex-wrap items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+            <div class="flex items-center gap-3">
+                <button onclick="showGalleryView()" class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition shadow-sm">
+                    ← Şablonlara Dön
+                </button>
+                <span id="formTitleBadge" class="text-xs sm:text-sm font-bold text-blue-950 bg-blue-50 px-3 py-1.5 rounded-xl border border-blue-200"></span>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <button type="button" onclick="openClientDirectoryModal()" class="px-3.5 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm">
+                    👥 Müvekkil Rehberi
+                </button>
+                <button type="button" onclick="saveCurrentClientToDirectory()" class="px-3.5 py-2 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-xl text-xs font-bold transition flex items-center gap-1" title="Formdaki müvekkil bilgilerini rehbere kaydet">
+                    💾 Rehbere Ekle
+                </button>
+                <button type="button" onclick="toggleLivePreview()" id="btnTogglePreview" class="px-3.5 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm">
+                    👁️ Canlı Önizleme
+                </button>
+            </div>
         </div>
 
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 space-y-6">
+        <!-- Ana Düzenleme Alanı: Form & Canlı Önizleme (Grid) -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
             
-            <!-- Bölüm 1: Mahkeme & Dosya -->
-            <div>
-                <h2 class="text-base font-bold text-slate-900 flex items-center gap-2 mb-3">
-                    <span class="w-6 h-6 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-xs">1</span>
-                    Mahkeme ve Dosya Bilgileri
-                </h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="md:col-span-2">
-                        <label class="block text-xs font-semibold text-slate-600 mb-1">Mahkeme Başlığı (Ortalı, Kalın):</label>
-                        <textarea id="mahkeme" rows="2" class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm font-semibold text-slate-900 focus:ring-2 focus:ring-blue-500"></textarea>
-                    </div>
+            <!-- SOL / ORTA PANEL: Form Alanları (lg:col-span-7 veya 12) -->
+            <div id="formFieldsCol" class="lg:col-span-7 space-y-5">
+                
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 sm:p-6 space-y-6">
+                    
+                    <!-- Bölüm 1: Mahkeme & Dosya -->
                     <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1">Özel Talep (Sağ Üst Başlık):</label>
-                        <input type="text" id="talep" class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm font-semibold text-red-600 focus:ring-2 focus:ring-blue-500">
+                        <h2 class="text-sm font-bold text-slate-900 flex items-center gap-2 mb-3">
+                            <span class="w-5 h-5 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-xs font-bold">1</span>
+                            Mahkeme ve Dosya Bilgileri
+                        </h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                            <div class="md:col-span-2">
+                                <label class="block text-xs font-bold text-slate-600 mb-1">Mahkeme Başlığı (Ortalı, Kalın):</label>
+                                <textarea id="mahkeme" oninput="updateLivePreview()" rows="2" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs sm:text-sm font-bold text-slate-900 focus:ring-2 focus:ring-blue-500"></textarea>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-600 mb-1">Özel Talep (Sağ Üst Başlık):</label>
+                                <input type="text" id="talep" oninput="updateLivePreview()" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs font-bold text-red-600 focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-600 mb-1">Dosya / İcra / Soruşturma No:</label>
+                                <input type="text" id="dosya" oninput="updateLivePreview()" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs font-semibold text-slate-900 focus:ring-2 focus:ring-blue-500">
+                            </div>
+                        </div>
                     </div>
+
+                    <hr class="border-slate-200">
+
+                    <!-- Bölüm 2: Taraflar -->
                     <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1">Dosya / İcra / Soruşturma No:</label>
-                        <input type="text" id="dosya" class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm font-medium text-slate-900 focus:ring-2 focus:ring-blue-500">
+                        <div class="flex items-center justify-between mb-3">
+                            <h2 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                                <span class="w-5 h-5 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-xs font-bold">2</span>
+                                Taraf ve Vekil Bilgileri
+                            </h2>
+                            <button type="button" onclick="openClientDirectoryModal()" class="text-xs text-indigo-600 hover:text-indigo-800 font-bold flex items-center gap-1">
+                                👥 Rehberden Seç
+                            </button>
+                        </div>
+                        
+                        <!-- Müvekkil Bloğu -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200 mb-3.5">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-600 mb-1">Müvekkil Sıfatı:</label>
+                                <input type="text" id="m_sifat" oninput="updateLivePreview()" class="w-full px-3 py-1.5 border border-slate-300 rounded-xl text-xs font-bold text-slate-800 bg-white">
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="block text-xs font-bold text-slate-600 mb-1">Müvekkil İsim / T.C. / Vergi No:</label>
+                                <input type="text" id="m_ad" oninput="updateLivePreview()" class="w-full px-3 py-1.5 border border-slate-300 rounded-xl text-xs font-semibold text-slate-900 bg-white">
+                            </div>
+                            <div class="md:col-span-3">
+                                <label class="block text-xs font-bold text-slate-600 mb-1">Müvekkil Adresi (İtalik yerleşir):</label>
+                                <input type="text" id="m_adres" oninput="updateLivePreview()" class="w-full px-3 py-1.5 border border-slate-300 rounded-xl text-xs italic text-slate-700 bg-white">
+                            </div>
+                        </div>
+
+                        <!-- Vekil Bloğu -->
+                        <div class="mb-3.5">
+                            <div class="flex items-center justify-between mb-1">
+                                <label class="block text-xs font-bold text-slate-600">Vekili:</label>
+                                <button type="button" onclick="openLawyerModal()" class="text-[11px] text-blue-600 hover:underline font-bold">⚙️ Avukat Ayarları</button>
+                            </div>
+                            <input type="text" id="vekil" oninput="updateLivePreview()" class="w-full px-3 py-1.5 border border-blue-200 bg-blue-50/50 rounded-xl text-xs font-bold text-blue-950">
+                        </div>
+
+                        <!-- Karşı Taraf Bloğu -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-600 mb-1">Karşı Taraf Sıfatı:</label>
+                                <input type="text" id="k_sifat" oninput="updateLivePreview()" class="w-full px-3 py-1.5 border border-slate-300 rounded-xl text-xs font-bold text-slate-800 bg-white">
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="block text-xs font-bold text-slate-600 mb-1">Karşı Taraf İsim / Unvan:</label>
+                                <input type="text" id="k_ad" oninput="updateLivePreview()" class="w-full px-3 py-1.5 border border-slate-300 rounded-xl text-xs font-semibold text-slate-900 bg-white">
+                            </div>
+                            <div class="md:col-span-3">
+                                <label class="block text-xs font-bold text-slate-600 mb-1">Karşı Taraf Vekili (Varsa):</label>
+                                <input type="text" id="k_vekil" oninput="updateLivePreview()" class="w-full px-3 py-1.5 border border-slate-300 rounded-xl text-xs font-medium text-slate-700 bg-white">
+                            </div>
+                        </div>
                     </div>
+
+                    <hr class="border-slate-200">
+
+                    <!-- Bölüm 3: Konu, Dava Değeri ve Harç Hesaplama -->
+                    <div>
+                        <h2 class="text-sm font-bold text-slate-900 flex items-center gap-2 mb-3">
+                            <span class="w-5 h-5 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-xs font-bold">3</span>
+                            Dilekçe Konusu ve Dava Değeri
+                        </h2>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+                            <div class="md:col-span-2">
+                                <label class="block text-xs font-bold text-slate-600 mb-1">Dilekçe Konusu:</label>
+                                <input type="text" id="konu" oninput="updateLivePreview()" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs font-medium text-slate-900 focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-600 mb-1">Dava Değeri (H.E.D.):</label>
+                                <input type="text" id="hed" oninput="calculateCourtFees(); updateLivePreview();" placeholder="Örn: 100000" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs font-bold text-slate-900 focus:ring-2 focus:ring-blue-500">
+                            </div>
+                        </div>
+
+                        <!-- 💰 CANLI HARÇ & MASRAF HESAPLAMA KARTI -->
+                        <div id="feeCalculatorCard" class="hidden bg-gradient-to-r from-emerald-50 via-teal-50 to-slate-50 border border-emerald-200 rounded-xl p-3.5 space-y-2">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-bold text-emerald-900 flex items-center gap-1.5">
+                                    💰 Otomatik Harç & Masraf Hesabı
+                                </span>
+                                <span class="text-[11px] font-semibold text-emerald-700" id="calcBaseValueLabel"></span>
+                            </div>
+                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                                <div class="bg-white p-2 rounded-lg border border-emerald-100">
+                                    <span class="text-[10px] text-slate-500 block">Peşin Nispi Harç (1/4):</span>
+                                    <span class="font-bold text-slate-900" id="calcPesinHarc">0,00 TL</span>
+                                </div>
+                                <div class="bg-white p-2 rounded-lg border border-emerald-100">
+                                    <span class="text-[10px] text-slate-500 block">Başvuru Harcı:</span>
+                                    <span class="font-bold text-slate-900">427,60 TL</span>
+                                </div>
+                                <div class="bg-white p-2 rounded-lg border border-emerald-100">
+                                    <span class="text-[10px] text-slate-500 block">%20 İcra İnkâr Taz.:</span>
+                                    <span class="font-bold text-slate-900" id="calcInkarTazminat">0,00 TL</span>
+                                </div>
+                                <div class="bg-white p-2 rounded-lg border border-emerald-100">
+                                    <span class="text-[10px] text-slate-500 block">Vekâlet Ücreti (AAÜT):</span>
+                                    <span class="font-bold text-slate-900" id="calcAaut">0,00 TL</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="border-slate-200">
+
+                    <!-- Bölüm 4: Açıklamalar ve Hızlı Hukuki Çipler -->
+                    <div>
+                        <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+                            <h2 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                                <span class="w-5 h-5 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-xs font-bold">4</span>
+                                Açıklamalar ve Hukuki Gerekçeler
+                            </h2>
+                            <span class="text-[11px] text-slate-500">Hızlı eklemek için aşağıdaki çiplere tıklayın:</span>
+                        </div>
+
+                        <!-- ⚡️ HIZLI HUKUKİ PARAGRAF ÇİPLERİ (KİŞİSELLEŞTİRİLEBİLİR & DÜZENLENEBİLİR) -->
+                        <div class="space-y-2 mb-3">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[11px] font-bold text-slate-500">Hızlı Paragraf Çipleri:</span>
+                                <button type="button" onclick="openChipManagerModal()" class="text-[11px] text-blue-600 hover:text-blue-800 font-bold flex items-center gap-1 transition">
+                                    ⚙️ Çipleri Yönet & Yeni Ekle
+                                </button>
+                            </div>
+
+                            <!-- Hukuk Çipleri Grubu -->
+                            <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                                <div class="text-[10px] font-bold uppercase tracking-wider text-blue-900 mb-1.5 flex items-center gap-1">
+                                    <span>🏛️ Hukuk Mahkemeleri Çipleri:</span>
+                                </div>
+                                <div class="flex flex-wrap items-center gap-1.5" id="hukukChipsContainer">
+                                    <!-- Dinamik Hukuk Çipleri -->
+                                </div>
+                            </div>
+
+                            <!-- Ceza Çipleri Grubu -->
+                            <div class="bg-amber-50/50 p-2.5 rounded-xl border border-amber-200/60">
+                                <div class="text-[10px] font-bold uppercase tracking-wider text-amber-900 mb-1.5 flex items-center gap-1">
+                                    <span>🛡️ Ceza & Soruşturma Çipleri:</span>
+                                </div>
+                                <div class="flex flex-wrap items-center gap-1.5" id="cezaChipsContainer">
+                                    <!-- Dinamik Ceza Çipleri -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <textarea id="aciklama" oninput="updateLivePreview()" rows="6" class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-xs sm:text-sm font-normal text-slate-900 focus:ring-2 focus:ring-blue-500 leading-relaxed"></textarea>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 mb-1">Hukuki Sebepler:</label>
+                            <input type="text" id="hukuki_sebepler" oninput="updateLivePreview()" value="HMK, TBK, TTK, TMK, İİK ve ilgili mevzuat." class="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs font-medium text-slate-900 focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 mb-1">Hukuki Deliller:</label>
+                            <input type="text" id="hukuki_deliller" oninput="updateLivePreview()" value="Sözleşmeler, banka kayıtları, yazışmalar, tanık, bilirkişi, yemin ve sair hukuki deliller." class="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs font-medium text-slate-900 focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+
+                    <hr class="border-slate-200">
+
+                    <!-- Bölüm 5: Netice-i Talep (Sonuç ve İstem) -->
+                    <div>
+                        <h2 class="text-sm font-bold text-slate-900 flex items-center gap-2 mb-2">
+                            <span class="w-5 h-5 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-xs font-bold">5</span>
+                            Sonuç ve İstem (Netice-i Talep)
+                        </h2>
+                        <textarea id="sonuc" oninput="updateLivePreview()" rows="3" class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-xs sm:text-sm font-semibold text-slate-900 focus:ring-2 focus:ring-blue-500 leading-relaxed"></textarea>
+                    </div>
+
+                    <!-- Butonlar -->
+                    <div class="pt-3 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-end gap-3">
+                        <button type="button" onclick="generateFromForm(false)" class="w-full sm:w-auto px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs shadow-sm transition flex items-center justify-center gap-2">
+                            💾 Masaüstüne Kaydet
+                        </button>
+                        <button type="button" onclick="generateFromForm(true)" class="w-full sm:w-auto px-7 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs shadow-md transition flex items-center justify-center gap-2">
+                            ✨ UDF Oluştur ve UYAP'ta Aç
+                        </button>
+                    </div>
+
                 </div>
             </div>
 
-            <hr class="border-slate-200">
-
-            <!-- Bölüm 2: Taraflar -->
-            <div>
-                <h2 class="text-base font-bold text-slate-900 flex items-center gap-2 mb-3">
-                    <span class="w-6 h-6 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-xs">2</span>
-                    Taraf ve Vekil Bilgileri
-                </h2>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200 mb-4">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1">Müvekkil Sıfatı:</label>
-                        <input type="text" id="m_sifat" class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm font-bold text-slate-800 bg-white">
-                    </div>
-                    <div class="md:col-span-2">
-                        <label class="block text-xs font-semibold text-slate-600 mb-1">Müvekkil İsim / T.C. / Vergi No:</label>
-                        <input type="text" id="m_ad" class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm font-medium text-slate-900 bg-white">
-                    </div>
-                    <div class="md:col-span-3">
-                        <label class="block text-xs font-semibold text-slate-600 mb-1">Müvekkil Adresi (İtalik yerleşir):</label>
-                        <input type="text" id="m_adres" class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm italic text-slate-700 bg-white">
-                    </div>
-                </div>
-
-                <div class="mb-4">
-                    <div class="flex items-center justify-between mb-1">
-                        <label class="block text-xs font-semibold text-slate-600">Vekili:</label>
-                        <button type="button" onclick="openLawyerModal()" class="text-[11px] text-blue-600 hover:underline font-semibold">⚙️ Avukat Bilgisini Güncelle</button>
-                    </div>
-                    <input type="text" id="vekil" class="w-full px-3.5 py-2 border border-blue-200 bg-blue-50/50 rounded-xl text-sm font-semibold text-blue-950">
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1">Karşı Taraf Sıfatı:</label>
-                        <input type="text" id="k_sifat" class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm font-bold text-slate-800 bg-white">
-                    </div>
-                    <div class="md:col-span-2">
-                        <label class="block text-xs font-semibold text-slate-600 mb-1">Karşı Taraf İsim / Unvan:</label>
-                        <input type="text" id="k_ad" class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm font-medium text-slate-900 bg-white">
-                    </div>
-                    <div class="md:col-span-3">
-                        <label class="block text-xs font-semibold text-slate-600 mb-1">Karşı Taraf Vekili (Varsa):</label>
-                        <input type="text" id="k_vekil" class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm font-medium text-slate-700 bg-white">
-                    </div>
-                </div>
-            </div>
-
-            <hr class="border-slate-200">
-
-            <!-- Bölüm 3: Konu, Harca Esas Değer, Deliller & Sebepler -->
-            <div>
-                <h2 class="text-base font-bold text-slate-900 flex items-center gap-2 mb-3">
-                    <span class="w-6 h-6 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-xs">3</span>
-                    Konu, Dava Değeri, Deliller ve Açıklamalar
-                </h2>
-                <div class="space-y-4">
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div class="md:col-span-2">
-                            <label class="block text-xs font-semibold text-slate-600 mb-1">Dilekçe Konusu:</label>
-                            <input type="text" id="konu" class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm font-medium text-slate-900 focus:ring-2 focus:ring-blue-500">
+            <!-- SAĞ PANEL: CANLI UYAP ÖNİZLEME (DRAWER / PANEL) -->
+            <div id="previewCol" class="lg:col-span-5 sticky top-20">
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-md p-5 space-y-4 max-h-[85vh] overflow-y-auto">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                        <div class="flex items-center gap-2">
+                            <span class="text-lg">👁️</span>
+                            <h3 class="font-bold text-xs uppercase tracking-wide text-slate-800">Canlı UYAP Önizleme</h3>
                         </div>
+                        <span class="text-[10px] bg-slate-100 px-2 py-0.5 rounded text-slate-500 font-semibold">1.0 Satır Aralığı</span>
+                    </div>
+
+                    <!-- UYAP Belge Kağıt Simülasyonu -->
+                    <div class="bg-white border border-slate-200 p-5 rounded-lg text-slate-900 font-serif text-[11px] leading-relaxed space-y-3 shadow-inner bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:16px_16px]">
+                        <div class="text-center font-bold whitespace-pre-line leading-snug" id="pv_mahkeme">MERSİN NÖBETÇİ ASLİYE HUKUK MAHKEMESİNE</div>
+                        
+                        <div class="text-right font-bold text-red-600 text-[10px]" id="pv_talep"></div>
+
+                        <!-- Taraflar Tablosu Simülasyonu -->
+                        <div class="space-y-1 font-sans text-[11px] border-b border-slate-200 pb-2">
+                            <div class="grid grid-cols-12 gap-1" id="pv_row_dosya">
+                                <div class="col-span-4 font-bold text-slate-700">DOSYA NO</div>
+                                <div class="col-span-8 font-medium">: <span id="pv_dosya">-</span></div>
+                            </div>
+                            <div class="grid grid-cols-12 gap-1" id="pv_row_m">
+                                <div class="col-span-4 font-bold text-slate-700" id="pv_m_sifat">DAVACI</div>
+                                <div class="col-span-8 font-bold">: <span id="pv_m_ad">[Davacı Adı]</span></div>
+                            </div>
+                            <div class="grid grid-cols-12 gap-1" id="pv_row_m_adres">
+                                <div class="col-span-4 font-bold text-slate-700"></div>
+                                <div class="col-span-8 italic text-slate-600 text-[10px]">: <span id="pv_m_adres">[Müvekkil Adresi]</span></div>
+                            </div>
+                            <div class="grid grid-cols-12 gap-1">
+                                <div class="col-span-4 font-bold text-slate-700">VEKİLİ</div>
+                                <div class="col-span-8 font-semibold text-blue-900">: <span id="pv_vekil">Av. Lütfi Serkan SAYOĞLU</span></div>
+                            </div>
+                            <div class="grid grid-cols-12 gap-1" id="pv_row_k">
+                                <div class="col-span-4 font-bold text-slate-700" id="pv_k_sifat">DAVALI</div>
+                                <div class="col-span-8 font-medium">: <span id="pv_k_ad">[Davalı Adı]</span></div>
+                            </div>
+                            <div class="grid grid-cols-12 gap-1" id="pv_row_hed">
+                                <div class="col-span-4 font-bold text-slate-700">DAVA DEĞERİ</div>
+                                <div class="col-span-8 font-medium">: <span id="pv_hed">-</span></div>
+                            </div>
+                            <div class="grid grid-cols-12 gap-1">
+                                <div class="col-span-4 font-bold text-slate-700">KONU</div>
+                                <div class="col-span-8 font-medium">: <span id="pv_konu">[Konu]</span></div>
+                            </div>
+                        </div>
+
+                        <!-- Açıklamalar -->
                         <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1">Dava Değeri / Harca Esas Değer (H.E.D.):</label>
-                            <input type="text" id="hed" placeholder="... TL (Fazlaya ilişkin haklarımız saklıdır)" class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm font-medium text-slate-900 focus:ring-2 focus:ring-blue-500">
+                            <div class="font-bold underline mb-1 font-sans text-[11px]">AÇIKLAMALAR:</div>
+                            <div class="whitespace-pre-line text-slate-800 indent-4 text-[11px]" id="pv_aciklama">1- [Açıklamalar]</div>
                         </div>
-                    </div>
 
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1">Açıklamalar (Madde Madde):</label>
-                        <textarea id="aciklama" rows="5" class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm font-normal text-slate-900 focus:ring-2 focus:ring-blue-500"></textarea>
-                    </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1">Hukuki Sebepler:</label>
-                            <input type="text" id="hukuki_sebepler" value="HMK, TBK, TTK, TMK, İİK ve ilgili mevzuat." class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm font-medium text-slate-900 focus:ring-2 focus:ring-blue-500">
+                        <!-- Sebepler & Deliller -->
+                        <div class="space-y-1 font-sans text-[10px]">
+                            <div><strong class="text-slate-700">HUKUKİ SEBEPLER:</strong> <span id="pv_sebepler">HMK, TBK ve ilgili mevzuat.</span></div>
+                            <div><strong class="text-slate-700">HUKUKİ DELİLLER:</strong> <span id="pv_deliller">Banka kayıtları, tanık, bilirkişi ve yasal deliller.</span></div>
                         </div>
+
+                        <!-- Sonuç ve İstem -->
                         <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1">Hukuki Deliller:</label>
-                            <input type="text" id="hukuki_deliller" value="Sözleşmeler, banka kayıtları, yazışmalar, tanık, bilirkişi, yemin ve sair hukuki deliller." class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm font-medium text-slate-900 focus:ring-2 focus:ring-blue-500">
+                            <div class="font-bold underline mb-1 font-sans text-[11px]">SONUÇ VE İSTEM:</div>
+                            <div class="whitespace-pre-line text-slate-800 indent-4 text-[11px]" id="pv_sonuc">[Sonuç ve Talep]</div>
+                        </div>
+
+                        <!-- İmza -->
+                        <div class="text-right font-sans text-[10px] space-y-0.5 pt-2">
+                            <div class="font-bold" id="pv_imza_unvan">Davacı Vekili</div>
+                            <div class="font-bold" id="pv_imza_ad">Av. Lütfi Serkan SAYOĞLU</div>
+                            <div class="italic text-slate-400 text-[9px]">(e-imzalıdır)</div>
                         </div>
                     </div>
                 </div>
-            </div>
-
-            <!-- Butonlar -->
-            <div class="pt-4 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-end gap-3">
-                <button type="button" onclick="generateFromForm(false)" class="w-full sm:w-auto px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl text-sm shadow-sm transition flex items-center justify-center gap-2">
-                    💾 Masaüstüne Kaydet
-                </button>
-                <button type="button" onclick="generateFromForm(true)" class="w-full sm:w-auto px-7 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-sm shadow-md transition flex items-center justify-center gap-2">
-                    ✨ UDF Oluştur ve UYAP'ta Aç
-                </button>
             </div>
 
         </div>
     </main>
 
-    <!-- Footer -->
+        <!-- ÇİP YÖNETİCİSİ & YENİ ÇİP EKLEME MODALI -->
+    <div id="chipManagerModal" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-xl w-full p-5 space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div class="flex items-center gap-2">
+                    <span class="text-xl">⚙️</span>
+                    <div>
+                        <h3 class="font-bold text-slate-900 text-sm">Hukuki Çip Yöneticisi</h3>
+                        <p class="text-[11px] text-slate-500">Mevcut çipleri düzenleyin veya büronuza özel yeni paragraflar ekleyin.</p>
+                    </div>
+                </div>
+                <button onclick="closeChipManagerModal()" class="text-slate-400 hover:text-slate-600 font-bold text-lg">✕</button>
+            </div>
+
+            <!-- Yeni Çip Ekleme / Düzenleme Formu -->
+            <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-2.5">
+                <div class="text-xs font-bold text-slate-800 flex items-center justify-between">
+                    <span id="chipFormTitle">➕ Yeni Çip Ekle</span>
+                    <button id="btnCancelEditChip" onclick="resetChipForm()" class="hidden text-[10px] text-slate-500 hover:text-slate-800 underline">Vazgeç</button>
+                </div>
+                <input type="hidden" id="editChipId" value="">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    <div class="sm:col-span-2">
+                        <label class="block text-[10px] font-bold text-slate-600 mb-0.5">Çip Buton Başlığı:</label>
+                        <input type="text" id="modalChipTitle" placeholder="Örn: 🚗 Araç Değer Kaybı Bendi" class="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-semibold focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-600 mb-0.5">Kategori:</label>
+                        <select id="modalChipCategory" class="w-full px-2 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-semibold focus:ring-2 focus:ring-blue-500">
+                            <option value="hukuk">🏛️ Hukuk</option>
+                            <option value="ceza">🛡️ Ceza</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-600 mb-0.5">Açıklamalara Eklenecek Hukuki Metin:</label>
+                    <textarea id="modalChipContent" rows="3" placeholder="Açıklamalara eklenecek hukuki gerekçe ve talep metnini buraya yazınız..." class="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs leading-relaxed focus:ring-2 focus:ring-blue-500"></textarea>
+                </div>
+                <div class="flex justify-end">
+                    <button type="button" onclick="saveCustomChip()" class="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold shadow-sm transition">
+                        💾 Çipi Kaydet
+                    </button>
+                </div>
+            </div>
+
+            <!-- Kayıtlı Çipler Listesi -->
+            <div>
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs font-bold text-slate-700">Mevcut Çipleriniz</span>
+                    <button onclick="restoreDefaultChips()" class="text-[10px] text-amber-600 hover:underline font-semibold">🔄 Varsayılanlara Sıfırla</button>
+                </div>
+                <div id="chipManagerList" class="max-h-52 overflow-y-auto space-y-1.5 pr-1">
+                    <!-- Dinamik liste -->
+                </div>
+            </div>
+
+            <div class="pt-2 border-t border-slate-100 flex justify-end">
+                <button onclick="closeChipManagerModal()" class="px-4 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold">Tamam</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MÜVEKKİL REHBERİ MODALI -->
+    <div id="clientDirectoryModal" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-lg w-full p-5 space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div class="flex items-center gap-2">
+                    <span class="text-xl">👥</span>
+                    <div>
+                        <h3 class="font-bold text-slate-900 text-sm">Müvekkil & Taraf Rehberi</h3>
+                        <p class="text-[11px] text-slate-500">Kayıtlı müvekkillerinizi tek tıkla forma aktarın.</p>
+                    </div>
+                </div>
+                <button onclick="closeClientDirectoryModal()" class="text-slate-400 hover:text-slate-600 font-bold text-lg">✕</button>
+            </div>
+
+            <!-- Arama Kutusu -->
+            <input type="text" id="clientSearchInput" oninput="renderClientDirectoryList()" placeholder="Müvekkil adı veya T.C. ile filtrele..." class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:bg-white focus:ring-2 focus:ring-blue-500">
+
+            <!-- Müvekkil Listesi Grid -->
+            <div id="clientListContainer" class="max-h-64 overflow-y-auto space-y-2 pr-1">
+                <!-- Dinamik doldurulur -->
+            </div>
+
+            <div class="pt-2 border-t border-slate-100 flex justify-end">
+                <button onclick="closeClientDirectoryModal()" class="px-4 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold">Kapat</button>
+            </div>
+        </div>
+    </div>
+<!-- Footer -->
     <footer class="bg-white border-t border-slate-200 py-3 text-center text-xs text-slate-500">
         UYAP Doküman Editörü UDF Oluşturucu • <span id="footerLawyer">Av. Lütfi Serkan SAYOĞLU</span>
     </footer>
@@ -2171,6 +2460,11 @@ HTML_PAGE = """<!DOCTYPE html>
             document.getElementById("aciklama").value = fd.aciklama || "";
             document.getElementById("hukuki_sebepler").value = fd.hukuki_sebepler || SEBEPLER_DEFAULT;
             document.getElementById("hukuki_deliller").value = fd.hukuki_deliller || DELILLER_DEFAULT;
+            document.getElementById("sonuc").value = fd.sonuc || "Yukarıda arz ve izah edilen nedenlerle; DAVAMIZIN KABULÜNE, yargılama giderleri ve vekâlet ücretinin karşı tarafa yükletilmesine karar verilmesini saygıyla vekâleten arz ve talep ederiz.";
+
+            calculateCourtFees();
+            renderChipsOnForm();
+            updateLivePreview();
 
             document.getElementById("galleryView").classList.add("hidden");
             document.getElementById("formView").classList.remove("hidden");
@@ -2202,6 +2496,7 @@ HTML_PAGE = """<!DOCTYPE html>
                 aciklama: document.getElementById("aciklama").value.trim(),
                 hukuki_sebepler: document.getElementById("hukuki_sebepler").value.trim(),
                 hukuki_deliller: document.getElementById("hukuki_deliller").value.trim(),
+                sonuc: document.getElementById("sonuc").value.trim(),
                 open_after: openAfter
             };
 
@@ -2250,6 +2545,410 @@ HTML_PAGE = """<!DOCTYPE html>
             renderTemplates();
             
         };
+    
+        // ==========================================
+        // 1. MÜVEKKİL & TARAF REHBERİ (LOCAL CRM)
+        // ==========================================
+        const CLIENTS_STORAGE_KEY = "dilekce_saved_clients";
+
+        function getSavedClients() {
+            try {
+                const data = localStorage.getItem(CLIENTS_STORAGE_KEY);
+                return data ? JSON.parse(data) : [
+                    { name: "Ahmet YILMAZ", tc: "12345678901", adres: "Atatürk Cad. No:10 D:5 Yenişehir / MERSİN", sifat: "DAVACI" },
+                    { name: "Mehmet KAYA", tc: "98765432109", adres: "İnönü Mah. Barboros Bulvarı No:45 Mezitli / MERSİN", sifat: "DAVACI" },
+                    { name: "Ayşe DEMİR", tc: "55544433322", adres: "Akdeniz Mah. Liman Cad. No:8 Akdeniz / MERSİN", sifat: "DAVALI" }
+                ];
+            } catch(e) {
+                return [];
+            }
+        }
+
+        function saveClientToStorage(client) {
+            const list = getSavedClients();
+            const existsIndex = list.findIndex(c => c.name.toLowerCase() === client.name.toLowerCase() || (client.tc && c.tc === client.tc));
+            if (existsIndex >= 0) {
+                list[existsIndex] = client;
+            } else {
+                list.unshift(client);
+            }
+            localStorage.setItem(CLIENTS_STORAGE_KEY, JSON.stringify(list));
+        }
+
+        function deleteClient(name, e) {
+            if (e) e.stopPropagation();
+            const list = getSavedClients().filter(c => c.name !== name);
+            localStorage.setItem(CLIENTS_STORAGE_KEY, JSON.stringify(list));
+            renderClientDirectoryList();
+            showToast(`🗑️ ${name} rehberden silindi`, "info");
+        }
+
+        function openClientDirectoryModal() {
+            renderClientDirectoryList();
+            document.getElementById("clientDirectoryModal").classList.remove("hidden");
+        }
+
+        function closeClientDirectoryModal() {
+            document.getElementById("clientDirectoryModal").classList.add("hidden");
+        }
+
+        function renderClientDirectoryList() {
+            const container = document.getElementById("clientListContainer");
+            const query = (document.getElementById("clientSearchInput")?.value || "").toLowerCase().trim();
+            const clients = getSavedClients().filter(c => !query || c.name.toLowerCase().includes(query) || (c.tc && c.tc.includes(query)));
+
+            container.innerHTML = "";
+            if (clients.length === 0) {
+                container.innerHTML = `
+                    <div class="py-8 text-center text-slate-400 text-xs font-medium">
+                        Kayıtlı müvekkil bulunamadı. Formdaki bilgileri "💾 Rehbere Ekle" ile kaydedebilirsiniz.
+                    </div>
+                `;
+                return;
+            }
+
+            clients.forEach(c => {
+                const item = document.createElement("div");
+                item.className = "p-3 rounded-xl border border-slate-200 hover:border-indigo-500 hover:bg-indigo-50/50 transition cursor-pointer flex items-center justify-between group";
+                item.onclick = () => selectClientAndFillForm(c);
+                item.innerHTML = `
+                    <div>
+                        <div class="font-bold text-xs text-slate-900 flex items-center gap-2">
+                            <span>👤 ${c.name}</span>
+                            ${c.tc ? `<span class="text-[10px] font-normal text-slate-500">T.C: ${c.tc}</span>` : ''}
+                        </div>
+                        <div class="text-[11px] text-slate-500 mt-0.5 truncate max-w-xs">${c.adres || 'Adres belirtilmemiş'}</div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-[10px] bg-indigo-100 text-indigo-800 font-bold px-2 py-0.5 rounded-lg">${c.sifat || 'MÜVEKKİL'}</span>
+                        <button onclick="deleteClient('${c.name}', event)" class="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-600 text-sm transition" title="Sil">🗑️</button>
+                    </div>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        function selectClientAndFillForm(c) {
+            if (c.sifat) document.getElementById("m_sifat").value = c.sifat;
+            document.getElementById("m_ad").value = c.tc ? `${c.name} - T.C. ${c.tc}` : c.name;
+            if (c.adres) document.getElementById("m_adres").value = c.adres;
+            closeClientDirectoryModal();
+            updateLivePreview();
+            showToast(`✅ ${c.name} bilgileri forma aktarıldı`, "success");
+        }
+
+        function saveCurrentClientToDirectory() {
+            const m_ad_raw = document.getElementById("m_ad").value.trim();
+            const m_adres = document.getElementById("m_adres").value.trim();
+            const m_sifat = document.getElementById("m_sifat").value.trim() || "DAVACI";
+
+            if (!m_ad_raw) {
+                showToast("Kaydetmek için en azından Müvekkil İsmini giriniz", "error");
+                return;
+            }
+
+            let name = m_ad_raw;
+            let tc = "";
+            if (m_ad_raw.includes("- T.C.")) {
+                const parts = m_ad_raw.split("- T.C.");
+                name = parts[0].trim();
+                tc = parts[1].trim();
+            }
+
+            saveClientToStorage({ name, tc, adres: m_adres, sifat: m_sifat });
+            showToast(`💾 ${name} Müvekkil Rehberine kaydedildi!`, "success");
+        }
+
+
+        // ==========================================
+        // 2. CANLI HARÇ & VEKÂLET ÜCRETİ HESAPLAYICI
+        // ==========================================
+        function calculateCourtFees() {
+            const hedInput = document.getElementById("hed").value;
+            const card = document.getElementById("feeCalculatorCard");
+            
+            // Extract numeric value from string (e.g. "100.000,00 TL" -> 100000)
+            const cleaned = hedInput.replace(/[^0-9,.-]/g, "").replace(/\./g, "").replace(",", ".");
+            const val = parseFloat(cleaned);
+
+            if (isNaN(val) || val <= 0) {
+                card.classList.add("hidden");
+                return;
+            }
+
+            card.classList.remove("hidden");
+            document.getElementById("calcBaseValueLabel").textContent = `Dava Değeri: ${val.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} TL`;
+
+            // 1. Peşin Nispi Harç (%68.31 / 4)
+            const pesinHarc = val * 0.06831 / 4;
+            document.getElementById("calcPesinHarc").textContent = `${pesinHarc.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL`;
+
+            // 2. İcra İnkar Tazminatı (%20)
+            const inkarTaz = val * 0.20;
+            document.getElementById("calcInkarTazminat").textContent = `${inkarTaz.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL`;
+
+            // 3. Tahmini Nispi AAÜT Kademeli Hesabı
+            let aaut = 0;
+            if (val <= 40000) aaut = val * 0.16;
+            else if (val <= 80000) aaut = 40000 * 0.16 + (val - 40000) * 0.15;
+            else if (val <= 180000) aaut = 40000 * 0.16 + 40000 * 0.15 + (val - 80000) * 0.14;
+            else if (val <= 500000) aaut = 40000 * 0.16 + 40000 * 0.15 + 100000 * 0.14 + (val - 180000) * 0.11;
+            else aaut = 40000 * 0.16 + 40000 * 0.15 + 100000 * 0.14 + 320000 * 0.11 + (val - 500000) * 0.08;
+            
+            // Asgari maktu sınır gözetimi
+            if (aaut < 17900) aaut = 17900;
+
+            document.getElementById("calcAaut").textContent = `${aaut.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL`;
+        }
+
+
+        
+        // ==========================================
+        // 3. KİŞİSELLEŞTİRİLEBİLİR HUKUKİ ÇİP SİSTEMİ
+        // ==========================================
+        const CHIPS_STORAGE_KEY = "dilekce_custom_chips";
+
+        const DEFAULT_CHIPS = [
+            { id: "tanik", category: "hukuk", title: "+ 👥 Tanık Dinletme", content: "TANIK DİNLETME TALEBİMİZ:\\nİddia ve vakıalarımızın sübutu amacıyla bildirdiğimiz tanıkların HMK m. 240 vd. uyarınca duruşmada dinlenilmesini ve tanıklarımıza davetiye çıkarılmasını talep ederiz." },
+            { id: "banka", category: "hukuk", title: "+ 🏦 Banka Müzekkeresi", content: "MÜZEKKERE TALEBİMİZ:\\nTaraflar arasındaki ticari ve parasal akışın tespiti için ilgili banka şubelerine müzekkere yazılarak geçmişe dönük tüm hesap hareketleri ve dekontların celbini talep ederiz." },
+            { id: "tedbir", category: "hukuk", title: "+ 🔒 İhtiyati Tedbir", content: "İHTİYATİ TEDBİR TALEBİMİZ:\\nDavalının dava konusu taşınmazı/araçları/malvarlığını üçüncü kişilere devretme ve kaçırma ihtimali kuvvetle muhtemel olduğundan HMK m. 389 vd. uyarınca teminatsız olarak İHTİYATİ TEDBİR konulmasını talep ederiz." },
+            { id: "bilirkisi_itiraz", category: "hukuk", title: "+ 📊 Bilirkişi Rapor İtirazı", content: "BİLİRKİŞİ RAPORUNA İTİRAZLARIMIZ:\\nDosyaya sunulan bilirkişi raporu eksik incelemeye ve hatalı hesaplama yöntemine dayanmaktadır. HMK m. 281 uyarınca itirazlarımızın kabulü ile ek/yeni bilirkişi raporu aldırılmasını talep ederiz." },
+            { id: "zamanasimi", category: "hukuk", title: "+ ⏳ Zamanaşımı Def'i", content: "ZAMANAŞIMI DEF'İ:\\nDavacının talepleri yasal zamanaşımı süresine uğramıştır. Süresi içinde zamanaşımı ilk itirazımızı ileri sürüyor ve davanın zamanaşımı nedeniyle esasa girilmeden REDDİNİ talep ediyoruz." },
+            { id: "yemin", category: "hukuk", title: "+ 📜 Yemin Teklifi", content: "YEMİN DELİLİ:\\nİddiamızın sübutu yönünden HMK m. 225 vd. uyarınca karşı tarafa yemin teklif etme hakkımızı saklı tutuyor ve bu doğrultuda yemin teklif ediyoruz." },
+            { id: "yargitay", category: "hukuk", title: "+ ⚖️ Yargıtay İçtihadı", content: "YARGITAY YERLEŞİK İÇTİHADI:\\nYargıtay Hukuk Genel Kurulu'nun ve ilgili dairelerin yerleşik içtihatlarında da açıkça vurgulandığı üzere, ispat yükü ve delillerin takdiri hususunda davanın kabulü yasal bir zorunluluktur." },
+            { id: "supheden_sanik", category: "ceza", title: "+ ⚖️ Şüpheden Sanık Yararlanır", content: "ŞÜPHEDEN SANIK YARARLANIR İLKESİ (IN DUBIO PRO REO):\\nEvrensel ceza hukuku prensibi olan 'Şüpheden sanık yararlanır' ilkesi gereğince, mahkûmiyet hükmü hiçbir şüpheye yer bırakmayacak kesinlikte delillere dayanmalıdır. Dosyada müvekkilin cezalandırılmasına yeter kesin ve inandırıcı delil bulunmadığından BERAATİNE karar verilmelidir." },
+            { id: "kast_yoklugu", category: "ceza", title: "+ 🎯 Suç Kastının Yokluğu", content: "SUÇ KASTININ BULUNMADIĞI VE UNSURLARIN OLUŞMADIĞI:\\nMüvekkilin üzerine atılı suçun maddi ve manevi unsurları kesinlikle oluşmamıştır. Müvekkilin herhangi bir suç işleme kastı veya iradesi bulunmamakta olup eylemin haksız fiil dahi oluşturmadığı açıktır." },
+            { id: "hukuka_aykiri_delil", category: "ceza", title: "+ 🚫 Hukuka Aykırı Delil İtirazı", content: "HUKUKA AYKIRI DELİLLERİN HÜKME ESAS ALINAMAYACAĞI (CMK m. 206/2-a ve m. 217/2):\\nAnayasa m. 38/6 ve CMK amir hükümleri uyarınca, hukuka aykırı yöntemlerle elde edilmiş deliller yargılamada kullanılamaz ve hükme esas alınamaz. Dosyadaki hukuka aykırı delillerin dosyadan çıkarılmasını talep ederiz." },
+            { id: "haksiz_tahrik", category: "ceza", title: "+ ⚡ Haksız Tahrik İndirimi", content: "HAKSIZ TAHRİK İNDİRİMİ (TCK m. 29):\\nKabul anlamına gelmemek kaydıyla, müvekkilin eylemi karşı tarafın haksız ve ağır tahrik oluşturan söz/fiilleri neticesinde gerçekleşmiştir. TCK m. 29 uyarınca azami oranda haksız tahrik indirimi uygulanmalıdır." },
+            { id: "tahliye_talebi", category: "ceza", title: "+ ⛓️ Tahliye Talebi", content: "TUTUKLAMA TEDBİRİNİN ÖLÇÜSÜZLÜĞÜ VE TAHLİYE TALEBİMİZ:\\nTutuklama en son başvurulacak istisnai bir koruma tedbiridir. Müvekkilin sabit ikametgâh sahibi olması, kaçma veya delilleri karartma şüphesinin bulunmaması ve tutuklulukta geçen süre gözetilerek İVEDİLİKLE TAHLİYESİNE karar verilmesini talep ederiz." },
+            { id: "adli_kontrol_kifayet", category: "ceza", title: "+ 📋 Adli Kontrolün Yeterliliği", content: "ADLİ KONTROL HÜKÜMLERİNİN YETERLİLİĞİ (CMK m. 109):\\nCMK m. 109 uyarınca adli kontrol tedbirleri amaca ulaşmak için fazlasıyla yeterlidir. Ölçülülük ilkesi gereğince tutuklama kararının kaldırılarak müvekkil hakkında adli kontrol uygulanmasını talep ederiz." },
+            { id: "hagb_erteleme", category: "ceza", title: "+ 📝 Lehe Hükümler (HAGB/Erteleme)", content: "LEHE OLAN HÜKÜMLERİN UYGULANMASI (HAGB / ERTELEME):\\nMahkemeniz aksi kanaatte ise; müvekkilin sabıkasız geçmişi, yargılama sürecindeki saygılı tutumu ve pişmanlığı gözetilerek TCK m. 62 (Takdiri İndirim), CMK m. 231 (HAGB) ve TCK m. 51 (Hapis Cezasını Erteleme) hükümlerinin uygulanmasını talep ederiz." }
+        ];
+
+        function getAllChips() {
+            try {
+                const stored = localStorage.getItem(CHIPS_STORAGE_KEY);
+                return stored ? JSON.parse(stored) : DEFAULT_CHIPS;
+            } catch(e) {
+                return DEFAULT_CHIPS;
+            }
+        }
+
+        function saveAllChips(chips) {
+            localStorage.setItem(CHIPS_STORAGE_KEY, JSON.stringify(chips));
+            renderChipsOnForm();
+            renderChipsManagerList();
+        }
+
+        function restoreDefaultChips() {
+            if (confirm("Tüm çipleri varsayılan ayarlara döndürmek istediğinize emin misiniz?")) {
+                localStorage.removeItem(CHIPS_STORAGE_KEY);
+                renderChipsOnForm();
+                renderChipsManagerList();
+                showToast("🔄 Çipler varsayılana sıfırlandı", "info");
+            }
+        }
+
+        function renderChipsOnForm() {
+            const chips = getAllChips();
+            const hukukContainer = document.getElementById("hukukChipsContainer");
+            const cezaContainer = document.getElementById("cezaChipsContainer");
+            if (!hukukContainer || !cezaContainer) return;
+
+            hukukContainer.innerHTML = "";
+            cezaContainer.innerHTML = "";
+
+            chips.forEach(c => {
+                const btn = document.createElement("button");
+                btn.type = "button";
+                btn.className = (c.category === "ceza")
+                    ? "px-2 py-1 bg-white hover:bg-amber-100 hover:text-amber-900 border border-amber-200 rounded-lg text-[11px] font-semibold text-amber-950 transition shadow-2xs"
+                    : "px-2 py-1 bg-white hover:bg-blue-50 hover:text-blue-700 border border-slate-200 rounded-lg text-[11px] font-semibold text-slate-700 transition shadow-2xs";
+                btn.textContent = c.title;
+                btn.onclick = () => insertCustomChipContent(c.content);
+
+                if (c.category === "ceza") {
+                    cezaContainer.appendChild(btn);
+                } else {
+                    hukukContainer.appendChild(btn);
+                }
+            });
+        }
+
+        function insertCustomChipContent(rawContent) {
+            const aciklamaEl = document.getElementById("aciklama");
+            let current = aciklamaEl.value.trim();
+            const textToAdd = (typeof rawContent === 'string') ? rawContent.trim() : '';
+            aciklamaEl.value = current ? (current + "\\n\\n" + textToAdd) : textToAdd;
+            updateLivePreview();
+            showToast("✨ Paragraf açıklamalar alanına eklendi!", "info");
+        }
+
+        function openChipManagerModal() {
+            resetChipForm();
+            renderChipsManagerList();
+            document.getElementById("chipManagerModal").classList.remove("hidden");
+        }
+
+        function closeChipManagerModal() {
+            document.getElementById("chipManagerModal").classList.add("hidden");
+        }
+
+        function renderChipsManagerList() {
+            const container = document.getElementById("chipManagerList");
+            if (!container) return;
+            const chips = getAllChips();
+            container.innerHTML = "";
+
+            chips.forEach(c => {
+                const row = document.createElement("div");
+                row.className = "p-2.5 rounded-lg border border-slate-200 hover:bg-slate-50 transition flex items-center justify-between gap-2 text-xs";
+                const previewSnippet = (c.content || "").split("\\n").join(" ");
+                row.innerHTML = `
+                    <div class="truncate flex-1">
+                        <div class="font-bold text-slate-900 flex items-center gap-1.5">
+                            <span>${c.title}</span>
+                            <span class="text-[9px] px-1.5 py-0.2 rounded font-semibold ${c.category === 'ceza' ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800'}">${c.category === 'ceza' ? 'CEZA' : 'HUKUK'}</span>
+                        </div>
+                        <div class="text-[10px] text-slate-500 truncate mt-0.5">${previewSnippet}</div>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <button onclick="editChip('${c.id}')" class="p-1 text-slate-400 hover:text-blue-600 transition" title="Düzenle">✏️</button>
+                        <button onclick="deleteChip('${c.id}')" class="p-1 text-slate-400 hover:text-red-600 transition" title="Sil">🗑️</button>
+                    </div>
+                `;
+                container.appendChild(row);
+            });
+        }
+
+        function editChip(id) {
+            const chips = getAllChips();
+            const c = chips.find(x => x.id === id);
+            if (!c) return;
+
+            document.getElementById("editChipId").value = c.id;
+            document.getElementById("modalChipTitle").value = c.title;
+            document.getElementById("modalChipCategory").value = c.category;
+            document.getElementById("modalChipContent").value = c.content || "";
+
+            document.getElementById("chipFormTitle").textContent = `✏️ Çipi Düzenle: ${c.title}`;
+            document.getElementById("btnCancelEditChip").classList.remove("hidden");
+        }
+
+        function resetChipForm() {
+            document.getElementById("editChipId").value = "";
+            document.getElementById("modalChipTitle").value = "";
+            document.getElementById("modalChipCategory").value = "hukuk";
+            document.getElementById("modalChipContent").value = "";
+            document.getElementById("chipFormTitle").textContent = "➕ Yeni Çip Ekle";
+            document.getElementById("btnCancelEditChip").classList.add("hidden");
+        }
+
+        function saveCustomChip() {
+            const id = document.getElementById("editChipId").value.trim() || `chip_${Date.now()}`;
+            let title = document.getElementById("modalChipTitle").value.trim();
+            const category = document.getElementById("modalChipCategory").value;
+            let content = document.getElementById("modalChipContent").value.trim();
+
+            if (!title || !content) {
+                showToast("Lütfen başlık ve metin alanlarını doldurunuz", "error");
+                return;
+            }
+
+            if (!title.startsWith("+")) {
+                title = "+ " + title;
+            }
+
+            const chips = getAllChips();
+            const existingIdx = chips.findIndex(x => x.id === id);
+
+            if (existingIdx >= 0) {
+                chips[existingIdx] = { id, category, title, content };
+                showToast(`✅ "${title}" çipi güncellendi!`, "success");
+            } else {
+                chips.push({ id, category, title, content });
+                showToast(`✨ Yeni çip başarıyla eklendi!`, "success");
+            }
+
+            saveAllChips(chips);
+            resetChipForm();
+        }
+
+        function deleteChip(id) {
+            const chips = getAllChips().filter(x => x.id !== id);
+            saveAllChips(chips);
+            showToast("🗑️ Çip silindi", "info");
+        }
+
+
+        // ==========================================
+        // 4. CANLI UYAP ÖNİZLEME MOTORU
+        // ==========================================
+        let isPreviewVisible = true;
+
+        function toggleLivePreview() {
+            isPreviewVisible = !isPreviewVisible;
+            const previewCol = document.getElementById("previewCol");
+            const formCol = document.getElementById("formFieldsCol");
+            const btn = document.getElementById("btnTogglePreview");
+
+            if (isPreviewVisible) {
+                previewCol.classList.remove("hidden");
+                formCol.className = "lg:col-span-7 space-y-5";
+                btn.classList.add("bg-blue-50", "text-blue-700");
+                btn.classList.remove("bg-slate-100", "text-slate-700");
+                updateLivePreview();
+            } else {
+                previewCol.classList.add("hidden");
+                formCol.className = "lg:col-span-12 space-y-5";
+                btn.classList.remove("bg-blue-50", "text-blue-700");
+                btn.classList.add("bg-slate-100", "text-slate-700");
+            }
+        }
+
+        function updateLivePreview() {
+            if (!isPreviewVisible) return;
+
+            const mahkeme = document.getElementById("mahkeme")?.value || "MERSİN NÖBETÇİ ASLİYE HUKUK MAHKEMESİNE";
+            const talep = document.getElementById("talep")?.value || "";
+            const dosya = document.getElementById("dosya")?.value || "";
+            const m_sifat = document.getElementById("m_sifat")?.value || "DAVACI";
+            const m_ad = document.getElementById("m_ad")?.value || "[Davacı Adı Soyadı]";
+            const m_adres = document.getElementById("m_adres")?.value || "";
+            const vekil = document.getElementById("vekil")?.value || getLawyerFullText();
+            const k_sifat = document.getElementById("k_sifat")?.value || "DAVALI";
+            const k_ad = document.getElementById("k_ad")?.value || "[Karşı Taraf Adı]";
+            const hed = document.getElementById("hed")?.value || "";
+            const konu = document.getElementById("konu")?.value || "[Dilekçe Konusu]";
+            const aciklama = document.getElementById("aciklama")?.value || "1- [Açıklamalar]";
+            const sebepler = document.getElementById("hukuki_sebepler")?.value || "HMK, TBK ve ilgili mevzuat.";
+            const deliller = document.getElementById("hukuki_deliller")?.value || "Banka kayıtları, tanık, bilirkişi ve yasal deliller.";
+            const sonuc = document.getElementById("sonuc")?.value || "Davamızın kabulüne karar verilmesini arz ve talep ederiz.";
+
+            document.getElementById("pv_mahkeme").textContent = mahkeme;
+            document.getElementById("pv_talep").textContent = talep;
+            document.getElementById("pv_dosya").textContent = dosya || "-";
+            document.getElementById("pv_m_sifat").textContent = m_sifat;
+            document.getElementById("pv_m_ad").textContent = m_ad;
+            document.getElementById("pv_m_adres").textContent = m_adres;
+            document.getElementById("pv_vekil").textContent = vekil;
+            document.getElementById("pv_k_sifat").textContent = k_sifat;
+            document.getElementById("pv_k_ad").textContent = k_ad;
+            document.getElementById("pv_hed").textContent = hed || "-";
+            document.getElementById("pv_konu").textContent = konu;
+            document.getElementById("pv_aciklama").textContent = aciklama;
+            document.getElementById("pv_sebepler").textContent = sebepler;
+            document.getElementById("pv_deliller").textContent = deliller;
+            document.getElementById("pv_sonuc").textContent = sonuc;
+            document.getElementById("pv_imza_unvan").textContent = `${m_sifat.toLowerCase().includes('davalı') ? 'Davalı' : 'Davacı'} Vekili`;
+            document.getElementById("pv_imza_ad").textContent = getLawyerSignatureName();
+
+            // Toggle rows visibility if empty
+            document.getElementById("pv_row_dosya").style.display = dosya ? "grid" : "none";
+            document.getElementById("pv_row_m_adres").style.display = m_adres ? "grid" : "none";
+            document.getElementById("pv_row_hed").style.display = hed ? "grid" : "none";
+        }
+
     </script>
 </body>
 </html>
@@ -2490,13 +3189,26 @@ class RequestHandler(http.server.SimpleHTTPRequestHandler):
                 ("\n", False, False, False)
             ]))
             
-            # Açıklama Maddeleri
+            # Açıklama Maddeleri (UYAP Yerel Otomatik 1,2,3... Sıralı Liste Özelliği)
+            list_attrs = {
+                "Numbered": "true",
+                "ListLevel": "1",
+                "ListId": "1",
+                "LeftIndent": "25.0",
+                "NumberType": "NUMBER_TYPE_NUMBER_DOT",
+                "SecListTypeLevel1": "NUMBER_TYPE_NUMBER_DOT"
+            }
+            
             if aciklama:
-                for line in aciklama.split("\n"):
-                    if line.strip():
-                        paragraphs.append((3, 0, "8.5", "35.43", None, [(f"{line.strip()}\n", False, False, False)]))
+                lines = [l.strip() for l in aciklama.split("\n") if l.strip()]
+                for line in lines:
+                    # Strip any manual hardcoded 1-, 1., 2), 3 - prefix so UYAP generates the dynamic active list number
+                    cleaned_line = re.sub(r"^\s*\d+\s*[\.\-\)]\s*", "", line)
+                    if not cleaned_line:
+                        cleaned_line = line
+                    paragraphs.append((3, 0, "8.5", None, None, list_attrs, [(f"{cleaned_line}\n", False, False, False)]))
             else:
-                paragraphs.append((3, 0, "8.5", "35.43", None, [("1- [Açıklamalarınızı buraya yazabilirsiniz.]\n", False, False, False)]))
+                paragraphs.append((3, 0, "8.5", None, None, list_attrs, [("[Açıklamalarınızı buraya yazabilirsiniz.]\n", False, False, False)]))
                 
             # Hukuki Sebepler (Varsa)
             if hukuki_sebepler:
