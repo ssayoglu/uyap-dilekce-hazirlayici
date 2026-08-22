@@ -121,16 +121,14 @@ HTML_PAGE = """<!DOCTYPE html>
                 </div>
             </div>
             <div class="flex items-center space-x-3">
-                <button onclick="openChangelogModal()" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-950/80 hover:bg-emerald-900 text-emerald-300 border border-emerald-700 transition shadow-sm" title="Son Sürüm Güncelleme Notları">
-                    <span>✨</span>
-                    <span>v1.3.0 Notları</span>
-                </button>
                 <button onclick="openLawyerModal()" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-blue-900/60 hover:bg-blue-800 text-blue-300 border border-blue-700 transition shadow-sm" title="Avukat ve Şehir bilgilerini değiştirmek için tıklayın">
                     <span id="activeLawyerHeader">Av. Lütfi Serkan SAYOĞLU</span>
                     <span class="text-[10px] bg-blue-700/50 px-1.5 py-0.5 rounded text-blue-200">⚙️ Ayarlar</span>
                 </button>
             </div>
         </div>
+    </header>
+
     </header>
 
     <!-- Avukat ve Şehir Profili Modal -->
@@ -172,11 +170,33 @@ HTML_PAGE = """<!DOCTYPE html>
         </div>
     </div>
 
-    <!-- Güncelleme Notları (Changelog) Modal -->
-    <div id="changelogModal" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-lg w-full p-6 space-y-4">
-            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-                <div class="flex flex-col gap-2 w-full md:w-auto">
+    <!-- Bildirim Bildirisi -->
+    <div id="toast" class="fixed bottom-6 right-6 z-50 hidden max-w-md p-4 rounded-xl shadow-xl text-sm font-semibold transition-all transform duration-300"></div>
+
+    <!-- 1. GÖRÜNÜM: ŞABLON GALERİSİ -->
+    <main id="galleryView" class="max-w-7xl mx-auto px-6 py-6 flex-1 w-full space-y-6">
+        
+        <!-- SIK KULLANILANLAR BÖLÜMÜ -->
+        <div class="bg-gradient-to-r from-blue-900/10 via-indigo-900/5 to-slate-100 p-5 rounded-2xl border border-blue-200/60 shadow-sm">
+            <div class="flex items-center justify-between mb-3.5">
+                <div class="flex items-center gap-2">
+                    <span class="text-lg">⭐</span>
+                    <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wide">Sık Kullanılan Şablonlar</h2>
+                </div>
+                <span class="text-xs text-slate-500 font-medium">Hızlıca UYAP'ta açabilir veya düzenleyebilirsiniz</span>
+            </div>
+            <div id="favoritesGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <!-- Dinamik Favoriler Doldurulur -->
+            </div>
+        </div>
+
+        <!-- Arama ve Filtreleme -->
+        <div class="flex flex-col md:flex-row items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+            <div class="relative w-full md:w-80">
+                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">🔍</span>
+                <input type="text" id="searchInput" oninput="filterTemplates()" placeholder="Tüm şablonlarda ara..." class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+            </div>
+            <div class="flex flex-col gap-2 w-full md:w-auto">
                 <!-- Ana Kategoriler -->
                 <div class="flex items-center gap-1.5 overflow-x-auto pb-1">
                     <button onclick="setMainCategory('all')" id="mcat_all" class="mcat-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-blue-600 text-white shadow-sm transition">Tümü</button>
@@ -184,12 +204,12 @@ HTML_PAGE = """<!DOCTYPE html>
                     <button onclick="setMainCategory('ozel_dava')" id="mcat_ozel_dava" class="mcat-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 transition">💰 Özel Dava Türleri</button>
                     <button onclick="setMainCategory('ceza')" id="mcat_ceza" class="mcat-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 transition">⚖️ Ceza & Savcılık</button>
                 </div>
-                <!-- Alt Kategoriler (Hukuk & Ceza İçin) -->
+                <!-- Alt Kategoriler -->
                 <div id="subCategoryBar" class="flex items-center gap-1.5 overflow-x-auto pt-1 border-t border-slate-100">
-                    <button onclick="setCategory('all')" id="cat_all" class="cat-btn px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-slate-800 text-white transition">Tüm Mahkemeler</button>
+                    <button onclick="setCategory('all')" id="cat_all" class="cat-btn px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-slate-800 text-white transition">Tümü</button>
                     <button onclick="setCategory('asliye_hukuk')" id="cat_asliye_hukuk" class="cat-btn px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 transition">Asliye Hukuk</button>
                     <button onclick="setCategory('sulh_hukuk')" id="cat_sulh_hukuk" class="cat-btn px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 transition">Sulh Hukuk</button>
-                    <button onclick="setCategory('ozel_dava')" id="cat_ozel_dava" class="cat-btn px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 transition">Özel Davalar (Alacak/Tazminat/İş/Aile)</button>
+                    <button onclick="setCategory('ozel_dava')" id="cat_ozel_dava" class="cat-btn px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 transition">Özel Davalar</button>
                     <button onclick="setCategory('icra_hukuk')" id="cat_icra_hukuk" class="cat-btn px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 transition">İcra Hukuk</button>
                     <button onclick="setCategory('asliye_ceza')" id="cat_asliye_ceza" class="cat-btn px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 transition">Asliye Ceza</button>
                     <button onclick="setCategory('agir_ceza')" id="cat_agir_ceza" class="cat-btn px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 transition">Ağır Ceza</button>
@@ -466,7 +486,7 @@ HTML_PAGE = """<!DOCTYPE html>
             updateLawyerDisplay();
             renderFavorites();
             renderTemplates();
-            checkNewVersionNotes();
+            
             closeLawyerModal();
             showToast(`✅ Bilgiler güncellendi: ${name} (${city} / BAM: ${bamCity})`, "success");
         }
@@ -1310,7 +1330,7 @@ HTML_PAGE = """<!DOCTYPE html>
             saveFavorites(favs);
             renderFavorites();
             renderTemplates();
-            checkNewVersionNotes();
+            
         }
 
         function renderFavorites() {
@@ -1466,12 +1486,12 @@ HTML_PAGE = """<!DOCTYPE html>
                 activeBtn.classList.add("bg-blue-600", "text-white", "shadow-sm");
             }
             renderTemplates();
-            checkNewVersionNotes();
+            
         }
 
         function filterTemplates() {
             renderTemplates();
-            checkNewVersionNotes();
+            
         }
 
         async function openDirect(tplId) {
@@ -1603,7 +1623,7 @@ HTML_PAGE = """<!DOCTYPE html>
             updateLawyerDisplay();
             renderFavorites();
             renderTemplates();
-            checkNewVersionNotes();
+            
         };
     </script>
 </body>
