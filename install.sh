@@ -95,6 +95,8 @@ echo -e "${YELLOW}📁 Uygulama kısayolları oluşturuluyor...${NC}"
 rm -rf "$APPLICATIONS_DIR/$APP_NAME" "$DESKTOP_DIR/$APP_NAME"
 cp -R "$TARGET_DIR/$APP_NAME" "$APPLICATIONS_DIR/"
 cp -R "$TARGET_DIR/$APP_NAME" "$DESKTOP_DIR/"
+touch "/Applications/$APP_NAME" "$DESKTOP_DIR/$APP_NAME" 2>/dev/null || true
+killall Finder Dock 2>/dev/null || true
 
 echo -e "${GREEN}====================================================${NC}"
 echo -e "${GREEN}✅  Kurulum başarıyla tamamlandı!                   ${NC}"
