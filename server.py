@@ -1925,30 +1925,27 @@ HTML_PAGE = """<!DOCTYPE html>
             { type: "İCRA CEZA", icon: "📋", title: "İcra Ceza", desc: "Taahhüdü İhlal / Tazyik Hapsi" }
         ];
 
-        // Taraf Sıfatları (Hukuk & Ceza İçin Kapsamlı Standart Eşleşmeler)
+        // Temel Taraf Sıfatları (İstinaf / İtiraz / Şikayet durumunda sihirbaz otomatik önek ekler!)
         const HUKUK_PARTY_ROLES = [
             { m_sifat: "DAVACI", k_sifat: "DAVALI", icon: "⚖️", title: "Davacı", desc: "Karşı Taraf: DAVALI" },
             { m_sifat: "DAVALI", k_sifat: "DAVACI", icon: "🛡️", title: "Davalı", desc: "Karşı Taraf: DAVACI" },
-            { m_sifat: "TALEP EDEN", k_sifat: "KARŞI TARAF", icon: "📝", title: "Talep Eden", desc: "Değişik İş / Vesayet / Genel Talep" },
-            { m_sifat: "VASİ", k_sifat: "KISITLI", icon: "🤝", title: "Vasi", desc: "Vesayet Dosyaları / Karşı Taraf: KISITLI" },
-            { m_sifat: "KISITLI", k_sifat: "TALEP EDEN", icon: "👤", title: "Kısıtlı / Kısıtlı Adayı", desc: "Vesayet Altına Alınma İtirazı" },
-            { m_sifat: "İHTİYATİ TEDBİR TALEP EDEN", k_sifat: "ALEYHİNE TEDBİR TALEP EDİLEN", icon: "🔒", title: "Tedbir Talep Eden", desc: "Karşı Taraf: Aleyhine Tedbir Talep Edilen" },
-            { m_sifat: "ALEYHİNE TEDBİR TALEP EDİLEN", k_sifat: "İHTİYATİ TEDBİR TALEP EDEN", icon: "🔓", title: "Aleyhine Tedbir Talep Edilen", desc: "Tedbire İtiraz / Karşı Taraf" },
+            { m_sifat: "TALEP EDEN", k_sifat: "KARŞI TARAF", icon: "📝", title: "Talep Eden", desc: "Değişik İş / Genel Talep" },
+            { m_sifat: "VASİ", k_sifat: "KISITLI", icon: "🤝", title: "Vasi", desc: "Vesayet Dosyaları" },
+            { m_sifat: "KISITLI", k_sifat: "TALEP EDEN", icon: "👤", title: "Kısıtlı / Kısıtlı Adayı", desc: "Vesayet / Kısıtlama İtirazı" },
+            { m_sifat: "İHTİYATİ TEDBİR TALEP EDEN", k_sifat: "ALEYHİNE TEDBİR TALEP EDİLEN", icon: "🔒", title: "Tedbir Talep Eden", desc: "İhtiyati Tedbir Talebi" },
+            { m_sifat: "ALEYHİNE TEDBİR TALEP EDİLEN", k_sifat: "İHTİYATİ TEDBİR TALEP EDEN", icon: "🔓", title: "Aleyhine Tedbir Talep Edilen", desc: "Tedbire İtiraz" },
             { m_sifat: "ŞİKAYET EDEN", k_sifat: "ŞİKAYET OLUNAN", icon: "⚠️", title: "Şikayet Eden", desc: "İcra Memur Muamelesi Şikayeti" },
             { m_sifat: "ŞİKAYET OLUNAN", k_sifat: "ŞİKAYET EDEN", icon: "🛡️", title: "Şikayet Olunan", desc: "İcra Şikayetine Cevap" },
-            { m_sifat: "İSTİNAF EDEN", k_sifat: "İSTİNAFA CEVAP VEREN", icon: "📑", title: "İstinaf Eden", desc: "BAM Hukuk Dairesi İstinafı" },
-            { m_sifat: "İSTİNAFA CEVAP VEREN", k_sifat: "İSTİNAF EDEN", icon: "💬", title: "İstinafa Cevap Veren", desc: "İstinaf Cevap Layihası" },
-            { m_sifat: "İHBAR OLUNAN", k_sifat: "DAVACI / DAVALI", icon: "📢", title: "İhbar Olunan", desc: "Davanın İhbarı / Yan Müdahale" }
+            { m_sifat: "İHBAR OLUNAN", k_sifat: "DAVACI / DAVALI", icon: "📢", title: "İhbar Olunan", desc: "Davanın İhbarı / Yan Müdahale" },
+            { m_sifat: "MİRASÇI", k_sifat: "DAVALI / DİĞER MİRASÇILAR", icon: "📜", title: "Mirasçı", desc: "Mirasçılık ve Tereke Dosyaları" },
+            { m_sifat: "ÜÇÜNCÜ KİŞİ", k_sifat: "ALACAKLI / BORÇLU", icon: "🏢", title: "Üçüncü Kişi", desc: "İstihkak / 89 Haciz İtirazı" }
         ];
 
         const CEZA_PARTY_ROLES = [
-            { m_sifat: "SANIK", k_sifat: "MÜŞTEKİ / KATILAN", icon: "⚖️", title: "Sanık", desc: "Kovuşturma / Ceza Mahkemesi" },
+            { m_sifat: "SANIK", k_sifat: "KATILAN / MÜŞTEKİ", icon: "⚖️", title: "Sanık", desc: "Kovuşturma / Ceza Mahkemesi" },
             { m_sifat: "ŞÜPHELİ", k_sifat: "MÜŞTEKİ", icon: "🛡️", title: "Şüpheli", desc: "Soruşturma / Sulh Ceza Sorgu" },
             { m_sifat: "KATILAN", k_sifat: "SANIK", icon: "🏛️", title: "Katılan (Müdahil)", desc: "Kamu Davasına Katılan" },
-            { m_sifat: "MÜŞTEKİ", k_sifat: "SANIK / ŞÜPHELİ", icon: "📋", title: "Müşteki (Şikayetçi)", desc: "Suçtan Zarar Gören / Şikayet Eden" },
-            { m_sifat: "İTİRAZ EDEN", k_sifat: "MÜŞTEKİ", icon: "⛓️", title: "İtiraz Eden", desc: "Tahliye / Adli Kontrol İtirazı" },
-            { m_sifat: "İSTİNAF EDEN SANIK", k_sifat: "KATILAN", icon: "📑", title: "İstinaf Eden (Sanık)", desc: "BAM Ceza Dairesi İstinafı" },
-            { m_sifat: "İSTİNAF EDEN KATILAN", k_sifat: "SANIK", icon: "📑", title: "İstinaf Eden (Katılan)", desc: "Beraat Kararına Karşı İstinaf" },
+            { m_sifat: "MÜŞTEKİ", k_sifat: "ŞÜPHELİ / SANIK", icon: "📋", title: "Müşteki (Şikayetçi)", desc: "Suçtan Zarar Gören / Şikayet Eden" },
             { m_sifat: "MALEN SORUMLU", k_sifat: "KATILAN", icon: "💼", title: "Malen Sorumlu", desc: "Tazminat / Müsadere Sorumlusu" }
         ];
 
@@ -2087,12 +2084,41 @@ HTML_PAGE = """<!DOCTYPE html>
                 }
             }
 
-            // 2. Apply Custom Party Roles (Sıfatlar)
-            if (m_sifat) copyData.m_sifat = m_sifat;
-            if (k_sifat) copyData.k_sifat = k_sifat;
+            // 2. Apply Smart Contextual Prefixes (İstinaf, İtiraz, Şikayet Uyarlaması)
+            let finalMSifat = m_sifat;
+            let finalKSifat = k_sifat;
+
+            if (t.id === "istinaf_hukuk" || t.id === "ceza_istinaf") {
+                // İstinaf Başvuru Dilekçesi: "İSTİNAF EDEN DAVALI" veya "İSTİNAF EDEN SANIK"
+                if (!finalMSifat.startsWith("İSTİNAF EDEN")) {
+                    finalMSifat = `İSTİNAF EDEN ${finalMSifat}`;
+                }
+                if (!finalKSifat.startsWith("İSTİNAFA CEVAP VEREN") && !finalKSifat.startsWith("KARŞI TARAF")) {
+                    finalKSifat = `İSTİNAFA CEVAP VEREN ${finalKSifat}`;
+                }
+            } else if (t.id === "istinafa_cevap") {
+                // İstinafa Cevap Dilekçesi: "İSTİNAFA CEVAP VEREN DAVACI" / "İSTİNAF EDEN DAVALI"
+                if (!finalMSifat.startsWith("İSTİNAFA CEVAP VEREN")) {
+                    finalMSifat = `İSTİNAFA CEVAP VEREN ${finalMSifat}`;
+                }
+                if (!finalKSifat.startsWith("İSTİNAF EDEN")) {
+                    finalKSifat = `İSTİNAF EDEN ${finalKSifat}`;
+                }
+            } else if (t.id === "istinaftan_feragat") {
+                if (!finalMSifat.startsWith("İSTİNAFTAN FERAGAT EDEN")) {
+                    finalMSifat = `İSTİNAFTAN FERAGAT EDEN ${finalMSifat}`;
+                }
+            } else if (t.id === "tutuklama" || t.id === "adli_kontrol" || t.id === "kyok") {
+                if (!finalMSifat.startsWith("İTİRAZ EDEN")) {
+                    finalMSifat = `İTİRAZ EDEN ${finalMSifat}`;
+                }
+            }
+
+            copyData.m_sifat = finalMSifat;
+            copyData.k_sifat = finalKSifat;
 
             closeCourtPickerModal();
-            executeDirectGenerate(copyData, `${t.title} (${courtType} - ${m_sifat})`);
+            executeDirectGenerate(copyData, `${t.title} (${courtType} - ${finalMSifat})`);
         }
 
         async function executeDirectGenerate(dataObj, title) {
