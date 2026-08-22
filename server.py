@@ -1604,7 +1604,7 @@ HTML_PAGE = """<!DOCTYPE html>
 
             const filtered = TEMPLATES.filter(t => {
                 const matchCat = (currentCategory === "all" || t.category === currentCategory);
-                const matchQuery = (!query || t.title.toLowerCase().includes(query) || t.desc.toLowerCase().includes(query));
+                const matchQuery = (!query || t.title.toLowerCase().includes(query));
                 return matchCat && matchQuery;
             });
 
