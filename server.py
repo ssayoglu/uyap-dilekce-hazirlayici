@@ -1104,6 +1104,30 @@ HTML_PAGE = """<!DOCTYPE html>
                 }
             },
             {
+                id: "dijital_materyal_iade",
+                category: "ceza",
+                icon: "💻",
+                title: "Dijital Materyallerin İadesi Dilekçesi",
+                desc: "CMK m. 134 uyarınca el konulan cep telefonu, bilgisayar ve dijital materyallerin imaj alma işlemi sonrası ivedi iadesi talebi.",
+                data: {
+                    mahkeme: "MERSİN CUMHURİYET BAŞSAVCILIĞINA\n(veya MERSİN [..]. ASLİYE CEZA MAHKEMESİNE)",
+                    talep: "CMK m. 134 UYARINCA DİJİTAL MATERYALLERİN İVEDİ İADESİ TALEBİDİR",
+                    dosya: "Soruşturma No: 2026/... (veya 2026/... Esas)",
+                    m_sifat: "ŞÜPHELİ / SANIK",
+                    m_ad: "[Müvekkil Adı Soyadı - T.C. 12345678901]",
+                    m_adres: "[Müvekkil Adresi]",
+                    k_sifat: "MÜŞTEKİ",
+                    k_ad: "[Varsa Müşteki Adı Soyadı]",
+                    k_vekil: "",
+                    hed: "",
+                    konu: "Müvekkilden muhafaza altına alınan/el konulan dijital materyallerin (cep telefonu, bilgisayar, taşınabilir bellek vb.) imaj alma/adli bilişim incelemesi tamamlandığından CMK m. 134 ve CMK m. 131 uyarınca İVEDİ OLARAK İADESİ talebimizdir.",
+                    aciklama: "1- Başsavcılığınızın/Mahkemenizin yukarıda numarası yazılı dosyasında gerçekleştirilen arama ve elkoyma işlemi neticesinde müvekkile ait [Marka/Model Cep Telefonu, Dizüstü Bilgisayar, Harici Disk vb.] dijital materyallere el konulmuştur.\n2- CMK m. 134/4 hükmü gereğince dijital materyallerin kopyası/imajı alındıktan sonra gecikmeksizin ilgilisine iade edilmesi zorunludur.\n3- Söz konusu cihazlarda müvekkilin ticari, mesleki ve özel yaşamına ilişkin zorunlu veriler bulunmakta olup cihazların alıkonulması müvekkili telafisi güç mağduriyete sevk etmektedir.\n4- Adli bilişim incelemesi ve yedekleme işlemleri tamamlanmış olduğundan cihazların el altında tutulmasında hukuki yarar kalmamıştır.",
+                    hukuki_sebepler: "Anayasa m. 20, 22, 35, CMK m. 131, 134 ve ilgili mevzuat.",
+                    hukuki_deliller: "Arama ve elkoyma tutanağı, teslim-tesellüm tutanağı ve dosya kapsamı.",
+                    sonuc: "Yukarıda arz ve izah olunan nedenlerle; müvekkilden el konulan dijital materyallerin CMK m. 134/4 ve CMK m. 131 uyarınca MÜVEKKİLE / VEKİLİNE İVEDİLİKLE İADESİNE karar verilmesini vekâleten saygıyla arz ve talep ederiz."
+                }
+            },
+            {
                 id: "sure_tutum",
                 category: "ceza",
                 icon: "⏱️",
