@@ -34,7 +34,7 @@ curl -fsSL https://raw.githubusercontent.com/ssayoglu/uyap-dilekce-hazirlayici/m
 
 > **Kurulum tamamlandığında:**
 > - `/Applications/Dilekçe Hazırlayıcı.app` yüklenir.
-> - Masaüstünüze `Dilekçe Hazırlayıcı.app` ve `📁 Dilekçe Şablonları` klasörü yerleştirilir.
+> - Masaüstünüze `Dilekçe Hazırlayıcı.app` yerleştirilir. Tüm şablonlar ve UDF oluşturma işlemleri doğrudan uygulama içerisinden yönetilir.
 
 ---
 

@@ -93,10 +93,6 @@ rm -rf "$APPLICATIONS_DIR/$APP_NAME" "$DESKTOP_DIR/$APP_NAME"
 cp -R "$TARGET_DIR/$APP_NAME" "$APPLICATIONS_DIR/"
 cp -R "$TARGET_DIR/$APP_NAME" "$DESKTOP_DIR/"
 
-# 7. Hazır Şablonlar klasörünü oluştur
-echo -e "${YELLOW}📄 Masaüstüne hazır UDF şablonları oluşturuluyor...${NC}"
-python3 "$TARGET_DIR/rebuild_all_udfs.py" > /dev/null 2>&1 || true
-
 echo -e "${GREEN}====================================================${NC}"
 echo -e "${GREEN}✅  Kurulum başarıyla tamamlandı!                   ${NC}"
 echo -e "${GREEN}====================================================${NC}"
