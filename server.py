@@ -1079,24 +1079,31 @@ HTML_PAGE = """<!DOCTYPE html>
                 id: "yetki_belgesi_sunum",
                 category: "hukuk_talep",
                 icon: "📑",
-                title: "Avukatlık Yetki Belgesi Sunum Dilekçesi",
-                desc: "1136 sayılı Avukatlık Kanunu m. 56 uyarınca yetki belgesinin ve harcın dosyaya ibrazı.",
+                title: "Avukatlık Yetki Belgesi",
+                desc: "1136 sayılı Avukatlık Kanunu m. 56 uyarınca vekaletname yerine geçen resmi Yetki Belgesi.",
                 data: {
-                    mahkeme: "MERSİN [..]. ASLİYE HUKUK MAHKEMESİNE",
-                    talep: "YETKİ BELGESİ VE BARO PULU EKTEDİR",
-                    dosya: "2026/... Esas",
-                    m_sifat: "YETKİLENDİRİLEN VEKİL",
-                    m_ad: "Av. Lütfi Serkan SAYOĞLU",
-                    m_adres: "[Büro Adresi]",
-                    k_sifat: "MÜVEKKİL",
-                    k_ad: "[Asıl Vekalet Veren Müvekkil Adı Soyadı]",
-                    k_vekil: "[Yetki Veren Asıl Vekil Adı Soyadı]",
-                    hed: "",
-                    konu: "1136 sayılı Avukatlık Kanunu m. 56 uyarınca düzenlenen Avukatlık Yetki Belgesi'nin sunulması ve UYAP kaydının yapılması talebidir.",
-                    aciklama: "1- Mahkemenizin yukarıda esas numarası yazılı dosyasında, dosya vekili Av. [Asıl Vekil Adı] tarafından tarafımıza 1136 sayılı Avukatlık Kanunu m. 56 uyarınca yetki belgesi tanzim edilmiştir.\\n2- Ekli yetki belgesi, baro pulu ve vekalet harcı makbuzu doğrultusunda dosyanın tarafımızca da takip edilebilmesi için UYAP vekil kaydımızın yapılmasını talep ederiz.",
-                    hukuki_sebepler: "1136 sayılı Avukatlık Kanunu m. 56, HMK ve ilgili mevzuat.",
-                    hukuki_deliller: "Avukatlık Yetki Belgesi, Baro Pulu, Vekaletname Sureti.",
-                    sonuc: "Ekli yetki belgesinin kabulü ile UYAP sisteminde yetkili vekil olarak kaydımızın yapılmasına karar verilmesini saygıyla vekâleten arz ve talep ederim."
+                    is_yetki_belgesi: true,
+                    mahkeme: "YETKİ BELGESİ",
+                    talep: "",
+                    dosya: "",
+                    m_sifat: "YETKİ BELGESİ VEREN AVUKAT/AVUKATLIK ORTAKLIĞI",
+                    m_ad: "Av. [Yetki Veren Avukat Adı Soyadı]",
+                    m_adres: "[Yetki Veren Avukat Bürosu Adresi]",
+                    m_baro: "Mersin Barosu - [Sicil No]",
+                    m_vergi: "[Vergi Dairesi ve Sicil No]",
+                    k_sifat: "YETKİLİ KILINAN AVUKAT",
+                    k_ad: "Av. Lütfi Serkan SAYOĞLU",
+                    k_adres: "[Yetkili Kılınan Avukat Adresi]",
+                    k_baro: "Mersin Barosu - [Sicil No]",
+                    k_vergi: "[Vergi Dairesi ve Sicil No]",
+                    asil_ad: "[Vekil Eden Asil / Müvekkil Adı Soyadı - T.C.]",
+                    asil_adres: "[Vekil Eden Adresi]",
+                    dayanak_noter: "[Noterlik Adı, Tarih ve Yevmiye No]",
+                    konu: "",
+                    aciklama: "Bu yetki belgesi, 1136 sayılı Avukatlık Kanunu’nu değiştiren 4667 sayılı Kanun’un 36. maddesi ile 56. maddesine eklenen hüküm uyarınca, vekaletname yerine geçmek üzere, tarafımdan düzenlenmiştir.",
+                    hukuki_sebepler: "",
+                    hukuki_deliller: "",
+                    sonuc: ""
                 }
             },
             {
@@ -1826,6 +1833,119 @@ class RequestHandler(http.server.SimpleHTTPRequestHandler):
             hukuki_deliller = data.get("hukuki_deliller", "")
             sonuc = data.get("sonuc", "Yukarıda arz ve izah olunan nedenlerle; taleplerimizin kabulü ile yargılama giderleri ve vekâlet ücretinin karşı tarafa yükletilmesine karar verilmesini vekâleten saygıyla arz ve talep ederiz.")
             open_after = data.get("open_after", True)
+            
+            is_yetki_belgesi = data.get("is_yetki_belgesi", False) or (mahkeme.strip() == "YETKİ BELGESİ")
+            
+            if is_yetki_belgesi:
+                tab_setting = "220:0:0,235:0:0"
+                paragraphs = []
+                
+                # Başlık (Ortalı, Kalın)
+                paragraphs.append((1, 0, "20.0", None, None, [("YETKİ BELGESİ\n", True, False, False)]))
+                
+                # 1. YETKİ BELGESİ VEREN AVUKAT/AVUKATLIK ORTAKLIĞI
+                paragraphs.append((0, "0.5", "5.0", None, tab_setting, [
+                    ("YETKİ BELGESİ VEREN AVUKAT/\nAVUKATLIK ORTAKLIĞI", True, False, True),
+                    ("\t", False, False, True),
+                    (":\t", False, False, False),
+                    (f"{m_ad}\n" if m_ad else "\n", False, False, False)
+                ]))
+                paragraphs.append((0, "0.5", "5.0", None, tab_setting, [
+                    ("Baro ve Sicil No", False, False, False),
+                    ("\t:\t", False, False, False),
+                    (f"{data.get('m_baro', 'Mersin Barosu - [Sicil No]')}\n", False, False, False)
+                ]))
+                paragraphs.append((0, "0.5", "5.0", None, tab_setting, [
+                    ("Vergi Dairesi ve Sicil No", False, False, False),
+                    ("\t:\t", False, False, False),
+                    (f"{data.get('m_vergi', '[Vergi Dairesi ve Sicil No]')}\n", False, False, False)
+                ]))
+                paragraphs.append((0, "0.5", "14.17", None, tab_setting, [
+                    ("Adres", False, False, False),
+                    ("\t:\t", False, False, False),
+                    (f"{m_adres if m_adres else '[Adres]'}\n", False, False, False)
+                ]))
+                
+                # 2. YETKİLİ KILINAN AVUKAT
+                paragraphs.append((0, "0.5", "5.0", None, tab_setting, [
+                    ("YETKİLİ KILINAN AVUKAT", True, False, True),
+                    ("\t", False, False, True),
+                    (":\t", False, False, False),
+                    (f"{k_ad}\n" if k_ad else "\n", False, False, False)
+                ]))
+                paragraphs.append((0, "0.5", "5.0", None, tab_setting, [
+                    ("Baro ve Sicil No", False, False, False),
+                    ("\t:\t", False, False, False),
+                    (f"{data.get('k_baro', 'Mersin Barosu - [Sicil No]')}\n", False, False, False)
+                ]))
+                paragraphs.append((0, "0.5", "5.0", None, tab_setting, [
+                    ("Vergi Dairesi ve Sicil No", False, False, False),
+                    ("\t:\t", False, False, False),
+                    (f"{data.get('k_vergi', '[Vergi Dairesi ve Sicil No]')}\n", False, False, False)
+                ]))
+                paragraphs.append((0, "0.5", "14.17", None, tab_setting, [
+                    ("Adres", False, False, False),
+                    ("\t:\t", False, False, False),
+                    (f"{data.get('k_adres', '[Adres]')}\n", False, False, False)
+                ]))
+                
+                # 3. VEKİL EDEN
+                paragraphs.append((0, "0.5", "5.0", None, tab_setting, [
+                    ("VEKİL EDEN", True, False, True),
+                    ("\t", False, False, True),
+                    (":\t", False, False, False),
+                    ("\n", False, False, False)
+                ]))
+                paragraphs.append((0, "0.5", "5.0", None, tab_setting, [
+                    ("Ad ve Soyadı", False, False, False),
+                    ("\t:\t", False, False, False),
+                    (f"{data.get('asil_ad', '[Asil Ad ve Soyadı]')}\n", False, False, False)
+                ]))
+                paragraphs.append((0, "0.5", "5.0", None, tab_setting, [
+                    ("Adres", False, False, False),
+                    ("\t:\t", False, False, False),
+                    (f"{data.get('asil_adres', '[Adres]')}\n", False, False, False)
+                ]))
+                paragraphs.append((0, "0.5", "14.17", None, tab_setting, [
+                    ("Dayanak Vekaletname/Vekaletnameler\nNoter Tarih ve Yevmiye No", False, False, False),
+                    ("\t:\t", False, False, False),
+                    (f"{data.get('dayanak_noter', '[Noterlik, Tarih ve Yevmiye No]')}\n", False, False, False)
+                ]))
+                
+                # 4. YETKİ BELGESİNİN KAPSAMI
+                paragraphs.append((0, "0.5", "14.17", None, tab_setting, [
+                    ("YETKİ BELGESİNİN KAPSAMI", True, False, True),
+                    ("\t", False, False, True),
+                    (":\t", False, False, False),
+                    ("\n", False, False, False)
+                ]))
+                
+                kapsam_text = aciklama if aciklama else "Bu yetki belgesi, 1136 sayılı Avukatlık Kanunu’nu değiştiren 4667 sayılı Kanun’un 36. maddesi ile 56. maddesine eklenen hüküm uyarınca, vekaletname yerine geçmek üzere, tarafımdan düzenlenmiştir."
+                paragraphs.append((3, 0, "40.0", None, None, [(f"{kapsam_text}\n", False, False, False)]))
+                
+                # Tarih ve İmza Bloğu (Görseldeki gibi sağa yaslı noktalı tarih ve sola yaslı alt imza)
+                paragraphs.append((2, 0, "20.0", None, None, [("...... / ...... / ......\n", False, False, False)]))
+                paragraphs.append((0, 0, "0.0", None, None, [("Avukat/Avukat Ortaklığı\n", False, False, False)]))
+                
+                desktop_dir = os.path.expanduser("~/Desktop")
+                out_path = os.path.join(desktop_dir, "Yetki Belgesi.udf")
+                
+                try:
+                    build_udf(paragraphs, out_path)
+                    if open_after:
+                        subprocess.Popen(["open", "-a", "Uyap Doküman Editörü", out_path])
+                        msg = "Yetki Belgesi UDF oluşturuldu ve UYAP'ta açıldı: Yetki Belgesi.udf"
+                    else:
+                        msg = "Yetki Belgesi Masaüstüne kaydedildi: Yetki Belgesi.udf"
+                    response = {"success": True, "message": msg, "path": out_path}
+                except Exception as e:
+                    response = {"success": False, "message": f"Hata: {str(e)}"}
+                    
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self.end_headers()
+                self.wfile.write(json.dumps(response).encode("utf-8"))
+                return
             
             tab_setting = "140:0:0,155:0:0"
             paragraphs = []
