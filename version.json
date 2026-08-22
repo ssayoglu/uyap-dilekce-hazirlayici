@@ -1,17 +1,12 @@
 {
-  "version": "1.2.0",
+  "version": "1.3.0",
   "updated_at": "2026-08-22",
   "author": "Av. Lütfi Serkan SAYOĞLU",
   "changelog": [
-    "✨ Dinamik İl / Şehir ve Bağlı Bölge Adliye Mahkemesi (BAM/İstinaf) yapılandırması eklendi.",
-    "📑 Resmî formata uygun Avukatlık Yetki Belgesi şablonu ve UDF oluşturucusu eklendi.",
-    "💻 CMK m. 134 uyarınca Dijital Materyallerin İadesi Dilekçesi eklendi.",
-    "📋 Bilirkişi Raporuna Karşı Beyan, İtiraz ve Bilirkişinin Reddi şablonları eklendi.",
-    "⚖️ Adli Yardım Talebinin Reddini İtiraz ve HMK İstinaf usul şablonları eklendi.",
-    "👥 Dahili Davalı Ekleme, Tefrik, Tashih, Tavzih, Vekillikten Çekilme ve Adres Bildirim şablonları eklendi.",
-    "🛑 Davadan Feragat ve İstinaftan Feragat şablonları eklendi.",
-    "📏 Tüm dilekçelerde KONU ve başlık satır aralıkları standart 1.0 olarak eşitlendi.",
-    "🔍 Arama motoru doğrudan dilekçe başlıklarına odaklanacak şekilde hızlandırıldı.",
-    "🍏 macOS menü çubuğu (Status Bar) ve çökmesiz pencere yönetimi entegre edildi."
+    "🏛️ Yeni Kategori Mimarisi: Asliye Hukuk, Sulh Hukuk, Asliye Ceza, Ağır Ceza, İcra Hukuk, İcra Ceza ve Savcılık ayrıştırıldı.",
+    "💰 Özel Dava Türleri Kategorisi: Alacak & Maddi Tazminat, İş Mahkemesi, Boşanma/Aile, Tüketici ve Tapu İptal davaları ayrı kategoriye alındı.",
+    "🔍 Akıllı Genel Arama: Örneğin \"Savunma\" yazıldığında Asliye Ceza, Ağır Ceza, İcra Ceza ve Savcılık Savunma dilekçeleri anında listelenir.",
+    "⚖️ İstinaf Dairesi Uyarlamaları: Hukuk dosyalarında \"İlgili Hukuk Dairesine\", Ceza dosyalarında \"İlgili Ceza Dairesine\" gönderim başlıkları standartlaştırıldı.",
+    "🏙️ Dinamik Şehir & BAM: Mersin yerel mahkemeleri ve Adana Bölge Adliye Mahkemesi istinaf çevresi tam entegre çalışmaktadır."
   ]
 }
