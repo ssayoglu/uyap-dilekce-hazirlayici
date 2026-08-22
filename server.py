@@ -154,6 +154,16 @@ HTML_PAGE = """<!DOCTYPE html>
                 </h3>
                 <button onclick="closeLawyerModal()" class="text-slate-400 hover:text-slate-600 font-bold text-lg">✕</button>
             </div>
+
+            <!-- İlk Kurulum Hoş Geldiniz Bildirimi -->
+            <div id="lawyerModalFirstTimeHint" class="hidden bg-blue-50 border border-blue-200 rounded-xl p-3.5 space-y-1">
+                <div class="text-xs font-bold text-blue-900 flex items-center gap-1.5">
+                    <span>👋</span> Hoş Geldiniz! Lütfen Bilgilerinizi Tanımlayın
+                </div>
+                <p class="text-[11px] text-blue-800 leading-relaxed">
+                    Dilekçelerinizin, vekâletnamelerinizin ve istinaf başlıklarınızın otomatik olarak adınıza düzenlenmesi için lütfen <strong>Avukat Adınızı</strong>, <strong>İletişim/UETS bilginizi</strong> ve <strong>Bulunduğunuz İli</strong> kaydediniz.
+                </p>
+            </div>
             <p class="text-xs text-slate-500 leading-relaxed">
                 Buraya gireceğiniz bilgiler tüm dilekçelerde <strong>VEKİLİ</strong>, imza bloğu, <strong>Yerel Mahkemeler</strong> ve <strong>Bölge Adliye Mahkemesi (İstinaf)</strong> başlıklarında dinamik olarak kullanılır.
             </p>
@@ -790,16 +800,35 @@ HTML_PAGE = """<!DOCTYPE html>
             }
         }
 
-        function openLawyerModal() {
+                function checkFirstTimeLawyerSetup() {
+            try {
+                const profile = localStorage.getItem("dilekce_lawyer_profile");
+                if (!profile) {
+                    setTimeout(() => {
+                        openLawyerModal(true);
+                    }, 500);
+                }
+            } catch(e) {}
+        }
+
+        function openLawyerModal(isFirstTime = false) {
             const lp = getLawyerProfile();
             document.getElementById("modalLawyerName").value = lp.name;
             document.getElementById("modalLawyerExtra").value = lp.extra || "";
             document.getElementById("modalLawyerCity").value = lp.city || "MERSİN";
             document.getElementById("modalLawyerBamCity").value = lp.bamCity || "ADANA";
-            document.getElementById("lawyerModal").classList.remove("hidden");
-        }
 
-        function closeLawyerModal() {
+            const hintEl = document.getElementById("lawyerModalFirstTimeHint");
+            if (hintEl) {
+                if (isFirstTime) {
+                    hintEl.classList.remove("hidden");
+                } else {
+                    hintEl.classList.add("hidden");
+                }
+            }
+
+            document.getElementById("lawyerModal").classList.remove("hidden");
+        }function closeLawyerModal() {
             document.getElementById("lawyerModal").classList.add("hidden");
         }
 
@@ -2543,7 +2572,7 @@ HTML_PAGE = """<!DOCTYPE html>
             updateLawyerDisplay();
             renderFavorites();
             renderTemplates();
-            
+            checkFirstTimeLawyerSetup();
         };
     
         // ==========================================
