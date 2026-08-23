@@ -1,12 +1,14 @@
 {
-  "version": "1.3.0",
-  "updated_at": "2026-08-22",
+  "version": "1.4.0",
+  "updated_at": "2026-08-23",
   "author": "Av. Lütfi Serkan SAYOĞLU",
   "changelog": [
-    "🏛️ Yeni Kategori Mimarisi: Asliye Hukuk, Sulh Hukuk, Asliye Ceza, Ağır Ceza, İcra Hukuk, İcra Ceza ve Savcılık ayrıştırıldı.",
-    "💰 Özel Dava Türleri Kategorisi: Alacak & Maddi Tazminat, İş Mahkemesi, Boşanma/Aile, Tüketici ve Tapu İptal davaları ayrı kategoriye alındı.",
-    "🔍 Akıllı Genel Arama: Örneğin \"Savunma\" yazıldığında Asliye Ceza, Ağır Ceza, İcra Ceza ve Savcılık Savunma dilekçeleri anında listelenir.",
-    "⚖️ İstinaf Dairesi Uyarlamaları: Hukuk dosyalarında \"İlgili Hukuk Dairesine\", Ceza dosyalarında \"İlgili Ceza Dairesine\" gönderim başlıkları standartlaştırıldı.",
-    "🏙️ Dinamik Şehir & BAM: Mersin yerel mahkemeleri ve Adana Bölge Adliye Mahkemesi istinaf çevresi tam entegre çalışmaktadır."
+    "⚡ macOS Menü Çubuğu (Menubar ⚖️) Hızlı Mazeret Modülü: Tek tıkla 3 saniyede UYAP Mazeret UDF'i oluşturma.",
+    "🔢 Dinamik UYAP Sıralı Liste & İki Yana Yaslama: Açıklamalar maddeleri artık UYAP'ın yerel 1. 2. 3... numaralandırma aracıyla üretilmektedir.",
+    "💰 Canlı Harç, Masraf & Kademeli AAÜT Vekâlet Ücreti Hesaplayıcı: Dava Değeri girildiğinde anında Peşin Harç (1/4), Başvuru Harcı, %20 İcra İnkâr Tazminatı ve AAÜT hesabı.",
+    "👥 Yerel Müvekkil Rehberi (CRM): Sık çalışılan müvekkillerin T.C., unvan ve adreslerini hafızada tutma ve tek tıkla forma aktarma.",
+    "⚙️ Kişiselleştirilebilir Hukuki Çip Yöneticisi: Hukuk ve Ceza için ayrılmış hazır gerekçe bentleri ve büroya özel çip ekleme.",
+    "👁️ Canlı UYAP Önizleme: Form doldurulurken UYAP'taki milimetrik görünümü eşzamanlı yansıtan önizleme paneli.",
+    "👋 İlk Kurulum Hoş Geldiniz Sihirbazı: Yeni kurulumda avukat adı, UETS ve şehir ayarlarını otomatik yapılandırma."
   ]
 }

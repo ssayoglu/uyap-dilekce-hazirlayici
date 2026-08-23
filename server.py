@@ -15,7 +15,7 @@ from datetime import datetime
 
 PORT = 5678
 
-CURRENT_VERSION = "1.3.0"
+CURRENT_VERSION = "1.4.0"
 VERSION_URL = "https://raw.githubusercontent.com/ssayoglu/uyap-dilekce-hazirlayici/main/version.json"
 REPO_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -912,7 +912,7 @@ HTML_PAGE = """<!DOCTYPE html>
         const SEBEPLER_DEFAULT = "HMK, TBK, TTK, TMK, İİK ve ilgili mevzuat.";
 
         // Güncelleme Notları Yönetimi
-        const APP_VERSION = "1.3.0";
+        const APP_VERSION = "1.4.0";
 
         function openChangelogModal() {
             document.getElementById("changelogModal").classList.remove("hidden");
