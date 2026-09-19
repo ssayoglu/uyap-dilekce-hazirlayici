@@ -13,6 +13,7 @@ import os
 import sys
 import subprocess
 import re
+import time
 from datetime import datetime
 
 PORT = 5678
@@ -88,7 +89,16 @@ def call_gemini_lawyer(user_story, template_id="", current_court="", api_key="",
     key = api_key.strip() if (api_key and api_key.strip()) else get_default_gemini_key()
     ctx = ssl._create_unverified_context()
     
-    models = ["gemini-3.6-flash", "gemini-3.5-flash", "gemini-flash-latest"]
+    models = [
+        "gemini-3.5-flash-lite",
+        "gemini-3.1-flash-lite",
+        "gemini-flash-lite-latest",
+        "gemini-3.8-flash",
+        "gemini-3.7-flash",
+        "gemini-3.6-flash",
+        "gemini-3.5-flash",
+        "gemini-flash-latest"
+    ]
     
     effective_title = template_title if template_title else (template_id if template_id and template_id != "auto" else "Genel Adli Dilekçe")
 
@@ -164,15 +174,19 @@ KULLANICININ OLAY ANLATIMI VE TALEPLERİ:
             data=json.dumps(req_body).encode("utf-8"),
             headers={"Content-Type": "application/json"}
         )
-        try:
-            with urllib.request.urlopen(req, timeout=35, context=ctx) as resp:
-                resp_data = json.loads(resp.read().decode("utf-8"))
-                text_content = resp_data["candidates"][0]["content"]["parts"][0]["text"]
-                parsed_json = json.loads(text_content)
-                return True, parsed_json, model
-        except Exception as e:
-            last_err = str(e)
-            continue
+        for attempt in range(2):
+            try:
+                with urllib.request.urlopen(req, timeout=25, context=ctx) as resp:
+                    resp_data = json.loads(resp.read().decode("utf-8"))
+                    text_content = resp_data["candidates"][0]["content"]["parts"][0]["text"]
+                    parsed_json = json.loads(text_content)
+                    return True, parsed_json, model
+            except Exception as e:
+                last_err = str(e)
+                if "503" in str(e) or "429" in str(e):
+                    time.sleep(0.5)
+                    continue
+                break
             
     return False, last_err, None
 
