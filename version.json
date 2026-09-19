@@ -1,14 +1,15 @@
 {
-  "version": "1.4.0",
-  "updated_at": "2026-08-23",
+  "version": "1.5.0",
+  "updated_at": "2026-09-19",
   "author": "Av. Lütfi Serkan SAYOĞLU",
   "changelog": [
+    "✨ Yapay Zekâ Destekli Dilekçe Hazırlayıcı (Gemini 3.6 Flash): Olayı serbest doğal dille anlatın, mevzuat ve Yargıtay/AYM içtihatlarını inceleyerek formu otomatik doldursun.",
+    "⚠️ Otomatik Hukuki Risk & Kırmızı Uyarı Bildirimi: Zamanaşımı, hak düşürücü süreler, delil ve usul riskleri dilekçede ve UYAP'ta kırmızı renkle vurgulanır.",
+    "🎯 Tüm Hukuk Dalları ve Dilekçe Türleri Desteği: Ceza, Hukuk, İcra, İş, Aile, Ticaret, İdare ve İstinaf dahil tüm şablonlarla tam entegre çalışır.",
+    "🏛️ Evrensel Tutukluluk ve Tahliye Şablonu: Emsal ceza itirazları taranarak 8 temel hukuki bent ile standardize edildi.",
     "⚡ macOS Menü Çubuğu (Menubar ⚖️) Hızlı Mazeret Modülü: Tek tıkla 3 saniyede UYAP Mazeret UDF'i oluşturma.",
     "🔢 Dinamik UYAP Sıralı Liste & İki Yana Yaslama: Açıklamalar maddeleri artık UYAP'ın yerel 1. 2. 3... numaralandırma aracıyla üretilmektedir.",
     "💰 Canlı Harç, Masraf & Kademeli AAÜT Vekâlet Ücreti Hesaplayıcı: Dava Değeri girildiğinde anında Peşin Harç (1/4), Başvuru Harcı, %20 İcra İnkâr Tazminatı ve AAÜT hesabı.",
-    "👥 Yerel Müvekkil Rehberi (CRM): Sık çalışılan müvekkillerin T.C., unvan ve adreslerini hafızada tutma ve tek tıkla forma aktarma.",
-    "⚙️ Kişiselleştirilebilir Hukuki Çip Yöneticisi: Hukuk ve Ceza için ayrılmış hazır gerekçe bentleri ve büroya özel çip ekleme.",
-    "👁️ Canlı UYAP Önizleme: Form doldurulurken UYAP'taki milimetrik görünümü eşzamanlı yansıtan önizleme paneli.",
-    "👋 İlk Kurulum Hoş Geldiniz Sihirbazı: Yeni kurulumda avukat adı, UETS ve şehir ayarlarını otomatik yapılandırma."
+    "👥 Yerel Müvekkil Rehberi (CRM): Sık çalışılan müvekkillerin T.C., unvan ve adreslerini hafızada tutma ve tek tıkla forma aktarma."
   ]
 }

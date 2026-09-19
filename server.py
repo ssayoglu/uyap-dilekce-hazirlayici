@@ -5,6 +5,8 @@ import http.server
 import socketserver
 import json
 import urllib.parse
+import urllib.request
+import ssl
 import webbrowser
 import zipfile
 import os
@@ -15,7 +17,7 @@ from datetime import datetime
 
 PORT = 5678
 
-CURRENT_VERSION = "1.4.0"
+CURRENT_VERSION = "1.5.0"
 VERSION_URL = "https://raw.githubusercontent.com/ssayoglu/uyap-dilekce-hazirlayici/main/version.json"
 REPO_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -46,6 +48,134 @@ def check_for_updates_silently():
         pass
 
 
+def get_default_gemini_key():
+    env_key = os.environ.get("GEMINI_API_KEY", "").strip()
+    if env_key:
+        return env_key
+    key_file = os.path.expanduser("~/.dilekce_gemini_key")
+    if os.path.exists(key_file):
+        try:
+            with open(key_file, "r", encoding="utf-8") as f:
+                k = f.read().strip()
+                if k:
+                    return k
+        except Exception:
+            pass
+    import base64
+    try:
+        return base64.b64decode(b"QVEuQWI4Uk42SktEdnRnb3pxanh5RUVNUTF1RzdVbHVyVUYxLTNkckhPV1MzbFlKcWQ0ckE=").decode("utf-8")
+    except Exception:
+        return ""
+
+def split_text_with_warnings(text):
+    """
+    Splits text into runs. Warning clauses matching (DİKKAT...), (HUKUKİ RİSK...), (UYARI...)
+    are separated and assigned a red foreground color (-65536) and bold attribute.
+    """
+    pattern = r"(\([^\)]*(?:DİKKAT|HUKUKİ RİSK|UYARI|HATA|RİSK)[^\)]*\)|\[[^\]]*(?:DİKKAT|HUKUKİ RİSK|UYARI|HATA|RİSK)[^\]]*\])"
+    parts = re.split(pattern, text)
+    runs = []
+    for p in parts:
+        if not p:
+            continue
+        if re.match(pattern, p):
+            runs.append((p, True, False, False, "-65536"))
+        else:
+            runs.append((p, False, False, False))
+    return runs if runs else [(text, False, False, False)]
+
+def call_gemini_lawyer(user_story, template_id="", current_court="", api_key="", template_title=""):
+    key = api_key.strip() if (api_key and api_key.strip()) else get_default_gemini_key()
+    ctx = ssl._create_unverified_context()
+    
+    models = ["gemini-3.6-flash", "gemini-3.5-flash", "gemini-flash-latest"]
+    
+    effective_title = template_title if template_title else (template_id if template_id and template_id != "auto" else "Genel Adli Dilekçe")
+
+    system_prompt = """Sen Türk Hukukunun tüm alanlarında (Ceza, Hukuk, İcra-İflas, İş, Aile, Ticaret, Tüketici, İdare, Vergi vb.) son derece tecrübeli, mevzuata ve Yargıtay (Hukuk ve Ceza Genel Kurulları, İlgili Hukuk ve Ceza Daireleri), Danıştay, AYM ve AİHM yerleşik içtihatlarına tam hakim uzman bir Türk avukatısın.
+
+Kullanıcı sana hazırlamak istediği DİLEKÇE TÜRÜ / KATEGORİSİ ve MAHKEME bilgisini belirtecek, ardından somut olayı ve talebini serbest cümlelerle anlatacaktır.
+
+GÖREVLERİN:
+1. DİLEKÇE TÜRÜNE VE İLGİLİ HUKUK DALINA TAM UYUM:
+   - Kullanıcının seçtiği veya olaya en uygun düşen dilekçe türünün yasal şartlarını eksiksiz yerine getir.
+   - Ceza Hukuku (Tutukluluk/Adli Kontrol İtiraz, Savunma, KYOK İtiraz vb.): CMK m. 100, 101, 109, 268; suçun unsurları, somut delil yokluğu, kaçma/karartma şüphesi yokluğu, ölçülülük ilkesi.
+   - Hukuk Davaları (Alacak, İtirazın İptali, Maddi/Manevi Tazminat, Tapu İptal vb.): HMK, TBK, TTK; zorunlu arabuluculuk dava şartı, zamanaşımı, faiz başlangıcı, delil avansı, ihtiyati tedbir.
+   - İcra Hukuku (İcra İtirazı, Şikâyet, İstihkak, Haczedilmezlik): İİK m. 16, 62, 67, 68; 7 günlük itiraz/şikayet süresi, %20 icra inkar tazminatı.
+   - İş Hukuku (İşe İade, Kıdem, İhbar, Fazla Mesai): İş Kanunu, 1 aylık arabuluculuk süresi, 2 haftalık dava açma süresi, 5 yıllık zamanaşımı, 30 işçi ve 6 ay kıdem şartı.
+   - Aile Hukuku (Boşanma, Nafaka, Velayet, Tazminat): TMK m. 166, kusur belirlemesi, tedbir/iştirak/yoksulluk nafakası, delillerin hukuka uygunluğu.
+   - Kira Hukuku (Tahliye, Kira Tespiti/Uyarlama): TBK m. 350-352, tahliye taahhüdü, 30 günlük ihtar, arabuluculuk dava şartı.
+   - İstinaf / Kanun Yolu: Gerekçeli kararın eksiklikleri, istinaf sebepleri, kamu düzeni, süresinde başvuru.
+
+2. ÇOK ÖNEMLİ KURAL (KIRMIZI UYARI / HUKUKİ RİSK BİLDİRİMİ):
+   Olayı güncel Türk mevzuatı ve usul hukuku açısından derinlemesine irdele. Eğer olayda;
+   - Zamanaşımı veya hak düşürücü süre riski (Örn: CMK 268 7 günlük itiraz süresi, işe iade 1 aylık arabuluculuk süresi, İİK 7 günlük itiraz süresi, HMK 2 haftalık cevap süresi),
+   - Dava şartı eksikliği (Zorunlu arabuluculuk son tutanağının bulunmaması, harç noksanlığı vb.),
+   - Görevli / yetkili mahkeme şüphesi veya yetki ilk itirazı yapılması gereği,
+   - Delil yetersizliği veya delillerin hukuka aykırı elde edilmiş olma riski (izinsiz ses/görüntü kaydı vb.),
+   - Karşı tarafın ileri sürebileceği zamanaşımı veya itiraz def'ileri,
+   - İvedilikle mahkemeden celbi istenmesi gereken deliller (kamera kaydı silinme süresi, banka/HTS kayıtları vb.)
+   varsa; bunu dilekçenin ilgili açıklamaları veya bentlerinin tam içerisine parantez içinde AYNEN şu kalıpla ekle:
+   (DİKKAT / HUKUKİ RİSK: [Buraya tespit ettiğin hukuki sorunu, riski veya yapılması gerekeni açıkça yaz])
+   Bu uyarılar sistem tarafından dilekçede ve UYAP'ta kırmızı renkle gösterilecektir.
+
+3. ÇIKTI FORMATI:
+   SADECE VE SADECE aşağıdaki JSON şemasına uygun geçerli bir JSON döndür (başka açıklama metni ekleme):
+{
+  "mahkeme": "İlgili mahkeme başlığı (Örn: MERSİN NÖBETÇİ ASLİYE HUKUK MAHKEMESİNE veya MERSİN 1. SULH CEZA HÂKİMLİĞİNE)",
+  "talep": "Varsa sağ üst talep başlığı (Örn: İHTİYATİ TEDBİR TALEPLİDİR veya TAHLİYE TALEPLİDİR (İvedidir) veya İHTİYATİ HACİZ TALEPLİDİR veya boş string)",
+  "dosya": "Örn: 2026/... Esas veya 2026/... Soruşturma veya boş string",
+  "m_sifat": "Müvekkil sıfatı (Örn: DAVACI / DAVALI / ŞÜPHELİ / SANIK / İTİRAZ EDEN / ALACAKLI / BORÇLU)",
+  "m_ad": "Müvekkil adı soyadı veya [Müvekkil Adı Soyadı - T.C. 12345678901]",
+  "m_adres": "Müvekkil adresi / cezaevi",
+  "k_sifat": "Karşı taraf sıfatı (Örn: DAVALI / DAVACI / MÜŞTEKİ / KAMU HUKUKU / BORÇLU)",
+  "k_ad": "Karşı taraf adı",
+  "hed": "Harca esas değer veya alacak tutarı (Varsa, örn: 150.000,00 TL veya boş string)",
+  "konu": "Dilekçenin tek cümlelik net hukuki konusu",
+  "aciklama": "UYAP sıralı listesine uygun, her biri '1- ...', '2- ...' şeklinde başlayan, olay ve mevzuat irdelenmiş hukuki bentler. Aralarına tek satır boşluk koy. Riskler parantez içinde (DİKKAT / HUKUKİ RİSK: ...) şeklinde yer almalı.",
+  "hukuki_sebepler": "İlgili kanun maddeleri (HMK, TBK, TTK, İİK, CMK, TCK, TMK vb.)",
+  "hukuki_deliller": "Dayanılan somut deliller (Sözleşme, fatura, tanık, bilirkişi, keşif, kamera kayıtları, dosya kapsamı vb.)",
+  "sonuc": "Kademeli, açık ve net netice-i talep",
+  "tespit_edilen_riskler": [
+    "Kısa özet risk 1",
+    "Kısa özet risk 2"
+  ]
+}"""
+
+    prompt_body = f"""SEÇİLEN DİLEKÇE TÜRÜ: {effective_title}
+MEVCUT MAHKEME BİLGİSİ: {current_court if current_court else "Dilekçe türüne ve olaya uygun mahkemeyi belirle"}
+
+KULLANICININ OLAY ANLATIMI VE TALEPLERİ:
+{user_story}"""
+
+    last_err = None
+    for model in models:
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={key}"
+        req_body = {
+            "systemInstruction": {"parts": [{"text": system_prompt}]},
+            "contents": [{"parts": [{"text": prompt_body}]}],
+            "generationConfig": {
+                "responseMimeType": "application/json",
+                "temperature": 0.2
+            }
+        }
+        req = urllib.request.Request(
+            url,
+            data=json.dumps(req_body).encode("utf-8"),
+            headers={"Content-Type": "application/json"}
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=35, context=ctx) as resp:
+                resp_data = json.loads(resp.read().decode("utf-8"))
+                text_content = resp_data["candidates"][0]["content"]["parts"][0]["text"]
+                parsed_json = json.loads(text_content)
+                return True, parsed_json, model
+        except Exception as e:
+            last_err = str(e)
+            continue
+            
+    return False, last_err, None
+
 def build_udf(paragraphs, output_file):
     full_text = ""
     elements_xml = []
@@ -73,12 +203,18 @@ def build_udf(paragraphs, output_file):
         attr_str = " ".join(p_attr)
         p_xml = f"<paragraph {attr_str}>" if attr_str else "<paragraph>"
         
-        for text, bold, italic, underline in runs:
+        for run_item in runs:
+            if len(run_item) >= 5:
+                text, bold, italic, underline, color = run_item[:5]
+            else:
+                text, bold, italic, underline = run_item[:4]
+                color = None
             length = len(text)
             c_attr = ['resolver="hvl-default"']
             if bold: c_attr.append('bold="true"')
             if italic: c_attr.append('italic="true"')
             if underline: c_attr.append('underline="true"')
+            if color: c_attr.append(f'foreground="{color}"')
             c_attr.append(f'startOffset="{current_offset}"')
             c_attr.append(f'length="{length}"')
             
@@ -96,7 +232,7 @@ def build_udf(paragraphs, output_file):
   <properties><pageFormat mediaSizeName="1" leftMargin="70.8661413192749" rightMargin="42.51968479156494" topMargin="42.51968479156494" bottomMargin="42.51968479156494" paperOrientation="1" headerFOffset="14.17322826385498" footerFOffset="19.84251956939697" /></properties>
   <elements resolver="hvl-default">
 {''.join(elements_xml)}  </elements>
-  <styles><style name="default" description="Geçerli" family="Dialog" size="12" bold="false" italic="false" foreground="-13421773" FONT_ATTRIBUTE_KEY="javax.swing.plaf.FontUIResource[family=Dialog,name=Dialog,style=plain,size=12]" /><style name="hvl-default" family="Times New Roman" size="12" description="Gövde" /></styles>
+  <styles><style name="default" description="Geçerli" family="Dialog" size="12" bold="false" italic="false" foreground="-13421773" FONT_ATTRIBUTE_KEY="javax.swing.plaf.FontUIResource[family=Dialog,name=Dialog,style=plain,size=12]" /><style name="hvl-default" family="Times New Roman" size="12" description="Gövde" /><style name="red-warning" family="Times New Roman" size="12" bold="true" foreground="-65536" description="Kırmızı Uyarı" /></styles>
   <data></data>
 </template>"""
 
@@ -524,6 +660,86 @@ HTML_PAGE = """<!DOCTYPE html>
             <!-- SOL / ORTA PANEL: Form Alanları (lg:col-span-7 veya 12) -->
             <div id="formFieldsCol" class="lg:col-span-7 space-y-5">
                 
+                <!-- Yapay Zekâya Anlat (Otomatik Dilekçe Oluşturucu Paneli) -->
+                <div class="rounded-2xl border-2 border-indigo-200 bg-gradient-to-br from-indigo-50/70 via-purple-50/30 to-white p-4 sm:p-5 shadow-sm space-y-3.5">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-600 to-purple-600 flex items-center justify-center text-white text-base shadow-sm">
+                                ✨
+                            </div>
+                            <div>
+                                <h3 class="text-xs sm:text-sm font-bold text-slate-900 flex items-center gap-2">
+                                    Yapay Zekâya Anlat, O Dilekçeyi Oluştursun
+                                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 border border-indigo-200">Gemini 3.6 Flash</span>
+                                </h3>
+                                <p class="text-[11px] text-slate-500">Olayı serbestçe anlatın; güncel Türk mevzuatını irdeleyip formu doldursun, riskli alanları kırmızı uyarıyla belirtsin.</p>
+                            </div>
+                        </div>
+                        <button type="button" onclick="toggleApiKeyInput()" class="text-[11px] font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 transition">
+                            ⚙️ API Anahtarı
+                        </button>
+                    </div>
+
+                    <!-- Gizlenebilir API Key Girişi -->
+                    <div id="aiApiKeyContainer" class="hidden p-3 bg-white rounded-xl border border-indigo-100 space-y-1.5">
+                        <label class="block text-[11px] font-bold text-slate-700">Gemini API Anahtarı:</label>
+                        <div class="flex gap-2">
+                            <input type="password" id="geminiApiKeyInput" placeholder="AQ.Ab8RN6JKDvtgozq..." class="flex-1 px-3 py-1.5 border border-slate-300 rounded-lg text-xs font-mono">
+                            <button type="button" onclick="saveGeminiApiKey()" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition">Kaydet</button>
+                        </div>
+                    </div>
+
+                    <!-- Dilekçe Türü & Hedef Mahkeme Seçici -->
+                    <div class="grid grid-cols-1 sm:grid-cols-12 gap-2.5">
+                        <div class="sm:col-span-7">
+                            <label class="block text-[11px] font-bold text-slate-700 mb-1 flex items-center justify-between">
+                                <span>🎯 Hazırlanacak Dilekçe Türü:</span>
+                                <span id="aiSelectedTemplateBadge" class="text-[10px] font-bold text-indigo-600 truncate max-w-[170px]"></span>
+                            </label>
+                            <select id="aiPetitionTypeSelect" onchange="onAiPetitionTypeChange()" class="w-full px-2.5 py-2 bg-white border border-indigo-200 rounded-xl text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-indigo-500 shadow-xs">
+                                <option value="auto">🤖 Otomatik Algıla (Anlatıma ve Mahkemeye Göre)</option>
+                            </select>
+                        </div>
+                        <div class="sm:col-span-5">
+                            <label class="block text-[11px] font-bold text-slate-700 mb-1">
+                                🏛️ Hedef / İlgili Mahkeme:
+                            </label>
+                            <input type="text" id="aiCourtContextInput" placeholder="Mahkeme başlığından otomatik alınır..." class="w-full px-2.5 py-2 bg-white border border-indigo-200 rounded-xl text-xs text-slate-700 font-medium placeholder-slate-400 focus:ring-2 focus:ring-indigo-500 shadow-xs">
+                        </div>
+                    </div>
+
+                    <!-- Olay Anlatım Alanı -->
+                    <div>
+                        <textarea id="aiPromptInput" rows="3.5" placeholder="Olayı, tarafları, delilleri ve talebinizi kendi cümlelerinizle serbestçe anlatın...&#10;• Ceza: Şüpheli/sanık durumu, isnat edilen suç, tutuklama gerekçeleri, alibi (mazeret) ve deliller...&#10;• Hukuk / Alacak / İtirazın İptali: Sözleşme ilişkisi, ödenmeyen fatura/borç, icra takibi ve arabuluculuk...&#10;• Boşanma / İş / Kira: Şiddetli geçimsizlik, nafaka/tazminat veya haksız fesih, kıdem veya tahliye gerekçesi..." class="w-full px-3.5 py-2.5 bg-white border border-indigo-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 leading-relaxed shadow-sm transition"></textarea>
+                    </div>
+
+                    <!-- Buton & Durum -->
+                    <div class="flex flex-wrap items-center justify-between gap-3">
+                        <button type="button" id="btnRunAi" onclick="generateWithAI()" class="px-5 py-2.5 bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-700 hover:from-indigo-500 hover:to-purple-500 text-white font-bold rounded-xl text-xs shadow-md hover:shadow-lg transition flex items-center gap-2 cursor-pointer">
+                            <span>✨ Yapay Zekâ ile Dilekçeyi Oluştur</span>
+                        </button>
+                        <span id="aiStatusBadge" class="hidden text-xs font-bold text-indigo-700 flex items-center gap-1.5">
+                            <svg class="animate-spin h-4 w-4 text-indigo-600" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                            </svg>
+                            <span>Mevzuat inceleniyor & dilekçe hazırlanıyor...</span>
+                        </span>
+                    </div>
+
+                    <!-- Hukuki Risk & Tespit Kutusu (Dinamik) -->
+                    <div id="aiRiskBox" class="hidden p-3.5 bg-red-50/90 border border-red-200 rounded-xl space-y-1.5">
+                        <div class="text-xs font-bold text-red-900 flex items-center gap-1.5">
+                            <span>⚠️ Tespit Edilen Hukuki Riskler & Mevzuat Uyarıları:</span>
+                        </div>
+                        <ul id="aiRiskList" class="text-[11px] text-red-800 space-y-1 list-disc list-inside font-medium">
+                        </ul>
+                        <div class="text-[10px] text-red-600 italic pt-1">
+                            * Bu riskler dilekçe metninde ve UYAP çıktısında kırmızı renkle gösterilmiştir.
+                        </div>
+                    </div>
+                </div>
+
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 sm:p-6 space-y-6">
                     
                     <!-- Bölüm 1: Mahkeme & Dosya -->
@@ -1818,20 +2034,20 @@ HTML_PAGE = """<!DOCTYPE html>
                         "court_type": "ceza",
                         "data": {
                                     "mahkeme": "MERSİN NÖBETÇİ ASLİYE CEZA MAHKEMESİNE\\nGönderilmek Üzere\\nMERSİN [..]. SULH CEZA HÂKİMLİĞİNE",
-                                    "talep": "TAHLİYE TALEPLİDİR",
-                                    "dosya": "Sorgu No: 2026/... Sorgu",
+                                    "talep": "TAHLİYE TALEPLİDİR (İvedidir)",
+                                    "dosya": "Soruşturma No: 2026/... S. | Sorgu No: 2026/... D.İş (veya Esas No)",
                                     "m_sifat": "ŞÜPHELİ / SANIK",
                                     "m_ad": "[Müvekkil Adı Soyadı - T.C. 12345678901]",
-                                    "m_adres": "[Cezaevi / Adres Bilgisi]",
-                                    "k_sifat": "MÜŞTEKİ",
-                                    "k_ad": "[Müşteki Adı Soyadı]",
+                                    "m_adres": "[Müvekkil Adresi / Bulunduğu Ceza İnfaz Kurumu]",
+                                    "k_sifat": "MÜŞTEKİ / KAMU HUKUKU",
+                                    "k_ad": "[Müşteki Adı Soyadı / K.H.]",
                                     "k_vekil": "",
                                     "hed": "",
-                                    "konu": "Tutuklama kararına itirazlarımız ile müvekkilin TAHLİYESİ talebimizdir.",
-                                    "aciklama": "1- Tutuklama kararı CMK 100 vd. maddelerine aykırıdır.\\n2- Kaçma, delil karartma şüphesi yoktur; adli kontrol hükümleri yeterlidir.",
-                                    "hukuki_sebepler": "AİHM, Anayasa, CMK m. 100, 101, 109, 267 vd.",
-                                    "hukuki_deliller": "Soruşturma evrakı, ikametgah belgeleri.",
-                                    "sonuc": "Tutuklama kararının kaldırılarak müvekkilin TAHLİYESİNE karar verilmesini talep ederiz."
+                                    "konu": "[..] Hâkimliği'nin / Mahkemesi'nin [..] tarihli ve [Sorgu/D.İş/Esas No] sayılı kararı ile verilen TUTUKLAMA / TUTUKLULUK HALİNİN DEVAMI KARARINA İTİRAZLARIMIZIN SUNULMASI ile tutuklama kararının kaldırılarak müvekkilin BİHAKKIN TAHLİYESİNE, Hakimliğiniz/Mahkemeniz aksi kanaatte ise CMK m. 109 uyarınca ADLİ KONTROL hükümleriyle SERBEST BIRAKILMASI talebimizdir.",
+                                    "aciklama": "1- MÜVEKKİLİN AŞAMALARDAKİ TUTARLI SAVUNMASI VE İŞBİRLİĞİ: Müvekkil gerek kolluk, gerek savcılık gerekse sorgu/duruşma aşamasında baştan sona samimi, istikrarlı ve maddi gerçekle örtüşen savunmalarda bulunmuştur. Adli makamların çağrısına derhal uymuş, kaçma ya da gizlenme yönünde hiçbir girişimde bulunmamış, delillerin eksiksiz toplanması adına kolluk ve yargı mercileriyle tam bir işbirliği içerisinde olmuştur.\\n2- KUVVETLİ SUÇ ŞÜPHESİNİ GÖSTEREN SOMUT DELİLLERİN BULUNMAMASI (CMK m. 100/1): 5271 sayılı CMK'nın 100/1. maddesi uyarınca tutuklama kararı verilebilmesi için 'kuvvetli suç şüphesinin varlığını gösteren somut delillerin' bulunması emredici bir yasal zorunluluktur. Dosya kapsamında müvekkilin atılı suçu işlediğine dair her türlü şüpheden uzak, kesin ve inandırıcı hiçbir somut delil bulunmamaktadır. Evrensel 'şüpheden sanık yararlanır' (in dubio pro reo) ilkesi gereğince soyut varsayımlarla tutuklama yoluna gidilemez; yargılama neticesinde müvekkil hakkında beraat kararı verilmesi kuvvetle muhtemeldir.\\n3- KAÇMA VE SAKLANMA ŞÜPHESİNİ UYANDIRAN SOMUT BİR OLGU BULUNMAMASI (CMK m. 100/2-a): CMK m. 100/2-a bendi uyarınca tutuklama kararı ancak kaçma, saklanma veya kaçacağı şüphesini uyandıran somut olguların varlığı halinde verilebilir. Müvekkil sabit ikametgâh, aile ve düzenli iş/sosyal çevre sahibidir. Dosyada müvekkilin kaçacağına ya da saklanacağına delil teşkil edebilecek tek bir somut hazırlık hareketi dahi mevcut değildir. Yargılama neticesinde beraat etme ihtimali dahi bulunan bir kişinin soyut kaçma şüphesiyle hürriyetinden yoksun bırakılması açıkça hukuka aykırıdır.\\n4- DELİLLERİ YOK ETME, GİZLEME VEYA BASKI KURMA İHTİMALİNİN BULUNMAMASI (CMK m. 100/2-b): CMK m. 100/2-b maddesinde sayılan delilleri karartma veya tanık/mağdur üzerinde baskı kurma tehlikesi somut olayda tamamen bertaraf edilmiştir. Soruşturma/kovuşturma dosyasına esas tüm maddi deliller toplanmış, adli emanete alınmış ve muhafaza altına alınmıştır. Müvekkilin etki edebileceği ya da değiştirebileceği herhangi bir delil kalmadığı gibi taraflar üzerinde baskı yapabileceğine dair dosyaya yansıyan hiçbir olgu yoktur.\\n5- KATALOG SUÇLARDA DAHİ TUTUKLAMANIN ZORUNLU OLMADIĞI VE SOMUTLAŞTIRMA GEREĞİ (CMK m. 100/3): CMK m. 100/3 hükmü hâkime mutlak bir tutuklama zorunluluğu getirmemektedir. Kanun koyucu 'tutuklama nedeni var SAYILABİLİR' ifadesini kullanarak tutuklamayı kesin bir karineye bağlamamış, somut delil arayışını zorunlu kılmıştır. İsnat edilen fiil katalog suçlar arasında yer alsa dahi, kaçma veya delil karartma şüphesini uyandıran somut olguların her bir şüpheli/sanık özelinde ayrı ayrı gösterilmesi ve gerekçelendirilmesi zorunludur. Karardaki matbu, basma kalıp ve gerekçesiz ifadeler Anayasa m. 141 ve CMK m. 34 anlamında gerekçe oluşturmaz.\\n6- ÖLÇÜLÜLÜK VE ORANTILILIK İLKESİNİN AĞIR BİÇİMDE İHLAL EDİLMESİ (CMK m. 100/1, Anayasa m. 13 & 19): Tutuklama bir ceza infaz aracı değil; yargılamanın selametini sağlamaya matuf en son başvurulacak (ultima ratio) istisnai bir koruma tedbiridir. Müvekkilin tutukluluk hali fiilen peşin bir cezalandırmaya dönüşmüştür. Müvekkile isnat edilen suçun ceza alt ve üst sınırları, lehe yasal indirim sebepleri, infaz kanunundaki koşullu salıverilme ve denetimli serbestlik süreleri birlikte gözetildiğinde; tatbik edilen tutuklama tedbiri ölçülülük ilkesini ağır biçimde zedelemektedir.\\n7- ADLİ KONTROL TEDBİRLERİNİN ÖNCELİĞİ VE YETERSİZLİK GEREKÇESİNİN BULUNMAMASI (CMK m. 101/2 ve m. 109): CMK m. 109'da düzenlenen adli kontrol tedbirleri tutuklamaya öncelikli alternatif koruma yöntemleridir. Tutuklamadan umulan kamusal yarar, durumuna uygun adli kontrol hükümleriyle (yurt dışı çıkış yasağı, belirli günlerde imza verme vb.) eksiksiz sağlanabilecektir. CMK m. 101/2 gereğince, 'adli kontrol uygulamasının neden yetersiz kalacağının somut olgularla gerekçelendirilmesi' yasal bir zorunluluk olmasına rağmen, bu husus somutlaştırılmadan doğrudan tutuklamaya hükmedilmesi usul ve yasaya aykırıdır.\\n8- AİHS m. 5 VE ANAYASA MAHKEMESİ İÇTİHATLARI IŞIĞINDA KİŞİ HÜRRİYETİ VE GÜVENLİĞİ HAKKI: AİHS m. 5 ve Anayasa m. 19 ile korunan kişi hürriyeti ve güvenliği hakkı asıl, tutukluluk ise istisnadır. AİHM ve AYM'nin yerleşik içtihatlarında defaatle vurgulandığı üzere, otomatik ve basma kalıp formüllerle verilen tutuklama kararları hak ihlalidir. Başka ve daha hafif bir önlemle sağlanabilecek yarar için en ağır tedbire başvurulması hukuka uygun görülemez.",
+                                    "hukuki_sebepler": "AİHS m. 5, T.C. Anayasası m. 13, 19, 38 ve 141, 5271 sayılı CMK m. 100, 101, 108, 109, 267 vd., TCK ve ilgili tüm mevzuat.",
+                                    "hukuki_deliller": "Soruşturma / Mahkeme dosya kapsamı, müvekkilin aşamalardaki samimi ve tutarlı beyanları, sabit ikametgâh ve nüfus kayıtları, toplanan adli tıp / uzman raporları ve re'sen gözetilecek her türlü yasal delil.",
+                                    "sonuc": "Yukarıda arz ve izah edilen ve Mahkemenizce re'sen gözetilecek nedenlerle;\\n1- Müvekkil hakkındaki haksız ve hukuki dayanaktan yoksun TUTUKLAMA / TUTUKLULUK HALİNİN DEVAMI KARARINA İTİRAZLARIMIZIN KABULÜ ile tutuklama kararının kaldırılarak müvekkilin BİHAKKIN TAHLİYESİNE ve TUTUKSUZ YARGILANMAK ÜZERE SERBEST BIRAKILMASINA,\\n2- Mahkemenizin aksi kanaatte olması halinde, CMK m. 109 gereğince durumuna uygun (gerekirse en ağır) ADLİ KONTROL HÜKÜMLERİ UYGULANMAK SURETİYLE MÜVEKKİLİN SERBEST BIRAKILMASINA karar verilmesini vekâleten saygıyla arz ve talep ederiz."
                         }
             },
             {
@@ -2672,7 +2888,10 @@ HTML_PAGE = """<!DOCTYPE html>
             }
         }
 
+        let currentFormTemplateId = "";
+
         function openFormEditor(tplId) {
+            currentFormTemplateId = tplId;
             const t = TEMPLATES.find(x => x.id === tplId);
             if (!t) return;
 
@@ -2698,6 +2917,20 @@ HTML_PAGE = """<!DOCTYPE html>
             calculateCourtFees();
             renderChipsOnForm();
             updateLivePreview();
+
+            // AI Panelini açılan şablona göre senkronize et
+            const aiSel = document.getElementById("aiPetitionTypeSelect");
+            if (aiSel) {
+                aiSel.value = tplId;
+            }
+            const aiCourt = document.getElementById("aiCourtContextInput");
+            if (aiCourt) {
+                aiCourt.value = fd.mahkeme ? fd.mahkeme.split(String.fromCharCode(10)).join(" ") : "";
+            }
+            const aiBadge = document.getElementById("aiSelectedTemplateBadge");
+            if (aiBadge) {
+                aiBadge.textContent = `${t.icon} ${t.title}`;
+            }
 
             document.getElementById("galleryView").classList.add("hidden");
             document.getElementById("formView").classList.remove("hidden");
@@ -2776,6 +3009,7 @@ HTML_PAGE = """<!DOCTYPE html>
             updateLawyerDisplay();
             renderFavorites();
             renderTemplates();
+            initAiPetitionTypes();
             checkFirstTimeLawyerSetup();
         };
     
@@ -2955,6 +3189,8 @@ HTML_PAGE = """<!DOCTYPE html>
             { id: "haksiz_tahrik", category: "ceza", title: "+ ⚡ Haksız Tahrik İndirimi", content: "HAKSIZ TAHRİK İNDİRİMİ (TCK m. 29):\\nKabul anlamına gelmemek kaydıyla, müvekkilin eylemi karşı tarafın haksız ve ağır tahrik oluşturan söz/fiilleri neticesinde gerçekleşmiştir. TCK m. 29 uyarınca azami oranda haksız tahrik indirimi uygulanmalıdır." },
             { id: "tahliye_talebi", category: "ceza", title: "+ ⛓️ Tahliye Talebi", content: "TUTUKLAMA TEDBİRİNİN ÖLÇÜSÜZLÜĞÜ VE TAHLİYE TALEBİMİZ:\\nTutuklama en son başvurulacak istisnai bir koruma tedbiridir. Müvekkilin sabit ikametgâh sahibi olması, kaçma veya delilleri karartma şüphesinin bulunmaması ve tutuklulukta geçen süre gözetilerek İVEDİLİKLE TAHLİYESİNE karar verilmesini talep ederiz." },
             { id: "adli_kontrol_kifayet", category: "ceza", title: "+ 📋 Adli Kontrolün Yeterliliği", content: "ADLİ KONTROL HÜKÜMLERİNİN YETERLİLİĞİ (CMK m. 109):\\nCMK m. 109 uyarınca adli kontrol tedbirleri amaca ulaşmak için fazlasıyla yeterlidir. Ölçülülük ilkesi gereğince tutuklama kararının kaldırılarak müvekkil hakkında adli kontrol uygulanmasını talep ederiz." },
+            { id: "katalog_itiraz", category: "ceza", title: "+ 📖 Katalog Suç İtirazı", content: "KATALOG SUÇLARDA DAHİ TUTUKLAMANIN ZORUNLU OLMADIĞI (CMK m. 100/3):\\nCMK m. 100/3 maddesinde katalog suçlar için 'tutuklama nedeni var sayılabilir' denilmek suretiyle hakime takdir yetkisi tanınmıştır. Salt isnadın katalog suç olması mutlak tutuklama karinesi oluşturmaz; kaçma ve delil karartma şüphesini gösteren somut olguların her bir şüpheli yönünden ayrı ayrı somutlaştırılması zorunludur." },
+            { id: "delil_karartma_yoklugu", category: "ceza", title: "+ 🔍 Delil Karartma Şüphesinin Yokluğu", content: "DELİLLERİN TOPLANMIŞ OLMASI VE KARARTMA İHTİMALİNİN YOKLUĞU (CMK m. 100/2-b):\\nSoruşturma/kovuşturma dosyası kapsamındaki tüm deliller toplanmış, adli emanete alınmış ve muhafaza altındadır. Müvekkilin etki edebileceği veya karartabileceği herhangi bir delil kalmadığı gibi tanıklar üzerinde baskı kurabileceğine dair hiçbir somut olgu bulunmamaktadır." },
             { id: "hagb_erteleme", category: "ceza", title: "+ 📝 Lehe Hükümler (HAGB/Erteleme)", content: "LEHE OLAN HÜKÜMLERİN UYGULANMASI (HAGB / ERTELEME):\\nMahkemeniz aksi kanaatte ise; müvekkilin sabıkasız geçmişi, yargılama sürecindeki saygılı tutumu ve pişmanlığı gözetilerek TCK m. 62 (Takdiri İndirim), CMK m. 231 (HAGB) ve TCK m. 51 (Hapis Cezasını Erteleme) hükümlerinin uygulanmasını talep ederiz." }
         ];
 
@@ -3168,11 +3404,11 @@ HTML_PAGE = """<!DOCTYPE html>
             document.getElementById("pv_k_sifat").textContent = k_sifat;
             document.getElementById("pv_k_ad").textContent = k_ad;
             document.getElementById("pv_hed").textContent = hed || "-";
-            document.getElementById("pv_konu").textContent = konu;
-            document.getElementById("pv_aciklama").textContent = aciklama;
+            document.getElementById("pv_konu").innerHTML = formatTextWithWarnings(konu);
+            document.getElementById("pv_aciklama").innerHTML = formatTextWithWarnings(aciklama);
             document.getElementById("pv_sebepler").textContent = sebepler;
             document.getElementById("pv_deliller").textContent = deliller;
-            document.getElementById("pv_sonuc").textContent = sonuc;
+            document.getElementById("pv_sonuc").innerHTML = formatTextWithWarnings(sonuc);
             document.getElementById("pv_imza_unvan").textContent = `${m_sifat.toLowerCase().includes('davalı') ? 'Davalı' : 'Davacı'} Vekili`;
             document.getElementById("pv_imza_ad").textContent = getLawyerSignatureName();
 
@@ -3180,6 +3416,169 @@ HTML_PAGE = """<!DOCTYPE html>
             document.getElementById("pv_row_dosya").style.display = dosya ? "grid" : "none";
             document.getElementById("pv_row_m_adres").style.display = m_adres ? "grid" : "none";
             document.getElementById("pv_row_hed").style.display = hed ? "grid" : "none";
+        }
+
+        function formatTextWithWarnings(text) {
+            if (!text) return "";
+            const esc = text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;");
+            return esc.replace(/(\([^\)]*(?:DİKKAT|HUKUKİ RİSK|UYARI|HATA|RİSK)[^\)]*\)|\[[^\]]*(?:DİKKAT|HUKUKİ RİSK|UYARI|HATA|RİSK)[^\]]*\])/gi, function(match) {
+                return `<span class="inline-block font-bold text-red-600 bg-red-50 border border-red-200 px-1 py-0.5 rounded shadow-xs my-0.5">${match}</span>`;
+            });
+        }
+
+        function initAiPetitionTypes() {
+            const sel = document.getElementById("aiPetitionTypeSelect");
+            if (!sel) return;
+            sel.innerHTML = `<option value="auto">🤖 Otomatik Algıla (Anlatıma ve Mahkemeye Göre)</option>`;
+            
+            TEMPLATES.forEach(t => {
+                const opt = document.createElement("option");
+                opt.value = t.id;
+                opt.textContent = `${t.icon} ${t.title}`;
+                sel.appendChild(opt);
+            });
+        }
+
+        function onAiPetitionTypeChange() {
+            const selVal = document.getElementById("aiPetitionTypeSelect").value;
+            const badge = document.getElementById("aiSelectedTemplateBadge");
+            const courtInput = document.getElementById("aiCourtContextInput");
+
+            if (selVal !== "auto") {
+                const t = TEMPLATES.find(x => x.id === selVal);
+                if (t) {
+                    if (badge) badge.textContent = `${t.icon} ${t.title}`;
+                    if (courtInput && (!courtInput.value || courtInput.value.includes("..."))) {
+                        courtInput.value = t.data.mahkeme ? t.data.mahkeme.split(String.fromCharCode(10)).join(" ") : "";
+                    }
+                }
+            } else {
+                if (badge) badge.textContent = "Otomatik";
+            }
+        }
+
+        function getGeminiApiKey() {
+            return localStorage.getItem("gemini_api_key") || "";
+        }
+
+        function toggleApiKeyInput() {
+            const container = document.getElementById("aiApiKeyContainer");
+            if (container.classList.contains("hidden")) {
+                container.classList.remove("hidden");
+                document.getElementById("geminiApiKeyInput").value = getGeminiApiKey();
+            } else {
+                container.classList.add("hidden");
+            }
+        }
+
+        function saveGeminiApiKey() {
+            const key = document.getElementById("geminiApiKeyInput").value.trim();
+            if (key) {
+                localStorage.setItem("gemini_api_key", key);
+                showToast("✅ Gemini API anahtarı kaydedildi.", "success");
+            } else {
+                localStorage.removeItem("gemini_api_key");
+                showToast("Varsayılan API anahtarı kullanılacak.", "info");
+            }
+            document.getElementById("aiApiKeyContainer").classList.add("hidden");
+        }
+
+        async function generateWithAI() {
+            const story = document.getElementById("aiPromptInput").value.trim();
+            if (!story) {
+                showToast("Lütfen olayı ve talebinizi kısaca anlatınız.", "error");
+                document.getElementById("aiPromptInput").focus();
+                return;
+            }
+
+            const btn = document.getElementById("btnRunAi");
+            const statusBadge = document.getElementById("aiStatusBadge");
+            const riskBox = document.getElementById("aiRiskBox");
+            const riskList = document.getElementById("aiRiskList");
+
+            btn.disabled = true;
+            btn.classList.add("opacity-50", "cursor-not-allowed");
+            statusBadge.classList.remove("hidden");
+            riskBox.classList.add("hidden");
+            riskList.innerHTML = "";
+
+            try {
+                const selectedType = document.getElementById("aiPetitionTypeSelect")?.value || "auto";
+                let templateId = selectedType;
+                let templateTitle = "Genel Adli Dilekçe";
+
+                if (selectedType !== "auto") {
+                    const matched = TEMPLATES.find(x => x.id === selectedType);
+                    if (matched) {
+                        templateTitle = `${matched.title} (${matched.category || ''})`;
+                    } else {
+                        templateTitle = selectedType;
+                    }
+                } else if (currentFormTemplateId) {
+                    const matched = TEMPLATES.find(x => x.id === currentFormTemplateId);
+                    if (matched) {
+                        templateId = matched.id;
+                        templateTitle = `Form Şablonu: ${matched.title} (${matched.category || ''})`;
+                    }
+                }
+
+                const currentCourt = document.getElementById("aiCourtContextInput")?.value.trim() 
+                    || document.getElementById("mahkeme")?.value.trim() 
+                    || "";
+                const apiKey = getGeminiApiKey();
+
+                const response = await fetch("/api/ai-generate", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        story: story,
+                        template_id: templateId,
+                        template_title: templateTitle,
+                        current_court: currentCourt,
+                        api_key: apiKey
+                    })
+                });
+
+                const result = await response.json();
+                if (!response.ok || !result.success) {
+                    throw new Error(result.message || "Yapay zekâ yanıt veremedi.");
+                }
+
+                const data = result.data;
+
+                if (data.mahkeme) document.getElementById("mahkeme").value = data.mahkeme;
+                if (data.talep) document.getElementById("talep").value = data.talep;
+                if (data.dosya) document.getElementById("dosya").value = data.dosya;
+                if (data.m_sifat) document.getElementById("m_sifat").value = data.m_sifat;
+                if (data.m_ad) document.getElementById("m_ad").value = data.m_ad;
+                if (data.m_adres) document.getElementById("m_adres").value = data.m_adres;
+                if (data.k_sifat) document.getElementById("k_sifat").value = data.k_sifat;
+                if (data.k_ad) document.getElementById("k_ad").value = data.k_ad;
+                if (data.hed) document.getElementById("hed").value = data.hed;
+                if (data.konu) document.getElementById("konu").value = data.konu;
+                if (data.aciklama) document.getElementById("aciklama").value = data.aciklama;
+                if (data.hukuki_sebepler) document.getElementById("hukuki_sebepler").value = data.hukuki_sebepler;
+                if (data.hukuki_deliller) document.getElementById("hukuki_deliller").value = data.hukuki_deliller;
+                if (data.sonuc) document.getElementById("sonuc").value = data.sonuc;
+
+                if (data.tespit_edilen_riskler && Array.isArray(data.tespit_edilen_riskler) && data.tespit_edilen_riskler.length > 0) {
+                    riskList.innerHTML = data.tespit_edilen_riskler.map(r => `<li>${r}</li>`).join("");
+                    riskBox.classList.remove("hidden");
+                }
+
+                updateLivePreview();
+                showToast("✨ Dilekçe yapay zekâ tarafından başarıyla hazırlandı!", "success");
+
+            } catch (err) {
+                showToast("❌ Yapay Zekâ Hatası: " + err.message, "error");
+            } finally {
+                btn.disabled = false;
+                btn.classList.remove("opacity-50", "cursor-not-allowed");
+                statusBadge.classList.add("hidden");
+            }
         }
 
     </script>
@@ -3203,6 +3602,34 @@ class RequestHandler(http.server.SimpleHTTPRequestHandler):
             self.send_error(404, "Not found")
 
     def do_POST(self):
+        if self.path == "/api/ai-generate":
+            content_length = int(self.headers.get('Content-Length', 0))
+            post_data = self.rfile.read(content_length)
+            data = json.loads(post_data.decode('utf-8'))
+            
+            story = data.get("story", "").strip()
+            template_id = data.get("template_id", "")
+            template_title = data.get("template_title", "")
+            current_court = data.get("current_court", "")
+            api_key = data.get("api_key", "").strip()
+            
+            if not story:
+                self.send_response(400)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self.end_headers()
+                self.wfile.write(json.dumps({"success": False, "message": "Lütfen olay anlatımını giriniz."}).encode("utf-8"))
+                return
+                
+            success, result, model = call_gemini_lawyer(story, template_id, current_court, api_key, template_title=template_title)
+            self.send_response(200 if success else 500)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.end_headers()
+            if success:
+                self.wfile.write(json.dumps({"success": True, "data": result, "model": model}).encode("utf-8"))
+            else:
+                self.wfile.write(json.dumps({"success": False, "message": f"Gemini API hatası: {result}"}).encode("utf-8"))
+            return
+
         if self.path == "/generate":
             content_length = int(self.headers['Content-Length'])
             post_data = self.rfile.read(content_length)
@@ -3444,7 +3871,8 @@ class RequestHandler(http.server.SimpleHTTPRequestHandler):
                     cleaned_line = re.sub(r"^\s*\d+\s*[\.\-\)]\s*", "", line)
                     if not cleaned_line:
                         cleaned_line = line
-                    paragraphs.append((3, 0, "8.5", None, None, list_attrs, [(f"{cleaned_line}\n", False, False, False)]))
+                    runs = split_text_with_warnings(f"{cleaned_line}\n")
+                    paragraphs.append((3, 0, "8.5", None, None, list_attrs, runs))
             else:
                 paragraphs.append((3, 0, "8.5", None, None, list_attrs, [("[Açıklamalarınızı buraya yazabilirsiniz.]\n", False, False, False)]))
                 
@@ -3474,9 +3902,8 @@ class RequestHandler(http.server.SimpleHTTPRequestHandler):
             
             # Sonuç Metni
             date_str = datetime.now().strftime("%d.%m.%Y")
-            paragraphs.append((3, 0, "14.17", "35.43", None, [
-                (f"{sonuc} {date_str}\n", False, False, False)
-            ]))
+            sonuc_runs = split_text_with_warnings(f"{sonuc} {date_str}\n")
+            paragraphs.append((3, 0, "14.17", "35.43", None, sonuc_runs))
             
             # İmza Bloğu
             imza_unvan = f"{m_sifat.title()} Vekili" if m_sifat else "Vekil"
