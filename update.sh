@@ -114,7 +114,8 @@ echo -e "${GREEN}====================================================${NC}"
 echo -e "${GREEN}✅  Güncelleme başarıyla tamamlandı! (Sürüm: v$VER)${NC}"
 echo -e "${GREEN}====================================================${NC}"
 if [ "$IN_APP" -eq 0 ]; then
-    echo -e "🚀 Uygulamayı Masaüstünüzdeki veya Uygulamalar'daki"
-    echo -e "   ${BLUE}'Dilekçe Hazırlayıcı.app'${NC} simgesine tıklayarak açabilirsiniz."
+    echo -e "🚀 Uygulama başlatılıyor..."
+    open -a "$APPLICATIONS_DIR/$APP_NAME" 2>/dev/null || open -a "$DESKTOP_DIR/$APP_NAME" 2>/dev/null || true
 fi
 echo ""
+
