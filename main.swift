@@ -8,45 +8,16 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKNavigati
     var statusItem: NSStatusItem?
     var popover: NSPopover?
     var popoverWebView: WKWebView?
+    var targetDir: String = ""
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         setupMainMenu()
 
-        let fileManager = FileManager.default
         let homeDir = NSHomeDirectory()
-        let targetDir = "\(homeDir)/.dilekce-hazirlayici"
+        self.targetDir = "\(homeDir)/.dilekce-hazirlayici"
 
-        checkForUpdatesInBackground(targetDir: targetDir)
-
-        let pythonPaths = [
-            "/opt/homebrew/bin/python3",
-            "/usr/local/bin/python3",
-            "/usr/bin/python3"
-        ]
-        let pythonBinary = pythonPaths.first(where: { fileManager.fileExists(atPath: $0) }) ?? "/usr/bin/python3"
-
-        let possibleServerPaths = [
-            "\(targetDir)/server.py",
-            Bundle.main.path(forResource: "server", ofType: "py"),
-            "\(Bundle.main.bundlePath)/Contents/Resources/server.py",
-            "\(Bundle.main.bundlePath)/../server.py",
-            "\(FileManager.default.currentDirectoryPath)/server.py",
-            "/Users/serkan/Documents/DilekceOlusturucu/server.py"
-        ].compactMap { $0 }
-
-        let serverScript = possibleServerPaths.first(where: { fileManager.fileExists(atPath: $0) }) ?? "\(targetDir)/server.py"
-
-        let killTask = Process()
-        killTask.launchPath = "/usr/bin/pkill"
-        killTask.arguments = ["-f", "server.py"]
-        try? killTask.run()
-        killTask.waitUntilExit()
-
-        let task = Process()
-        task.launchPath = pythonBinary
-        task.arguments = [serverScript, "--no-browser"]
-        try? task.run()
-        self.pythonProcess = task
+        checkForUpdatesInBackground(targetDir: self.targetDir)
+        startPythonServer(targetDir: self.targetDir)
 
         // 2. Status Bar & Popover Setup
         setupStatusItem()
@@ -81,6 +52,41 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKNavigati
         showAppWindow()
     }
 
+    func startPythonServer(targetDir: String) {
+        let fileManager = FileManager.default
+        let pythonPaths = [
+            "/opt/homebrew/bin/python3",
+            "/usr/local/bin/python3",
+            "/usr/bin/python3"
+        ]
+        let pythonBinary = pythonPaths.first(where: { fileManager.fileExists(atPath: $0) }) ?? "/usr/bin/python3"
+
+        let possibleServerPaths = [
+            "\(targetDir)/server.py",
+            Bundle.main.path(forResource: "server", ofType: "py"),
+            "\(Bundle.main.bundlePath)/Contents/Resources/server.py",
+            "\(Bundle.main.bundlePath)/../server.py",
+            "\(FileManager.default.currentDirectoryPath)/server.py",
+            "/Users/serkan/Documents/DilekceOlusturucu/server.py"
+        ].compactMap { $0 }
+
+        let serverScript = possibleServerPaths.first(where: { fileManager.fileExists(atPath: $0) }) ?? "\(targetDir)/server.py"
+
+        let killTask = Process()
+        killTask.launchPath = "/usr/bin/pkill"
+        killTask.arguments = ["-f", "server.py"]
+        try? killTask.run()
+        killTask.waitUntilExit()
+
+        Thread.sleep(forTimeInterval: 0.2)
+
+        let task = Process()
+        task.launchPath = pythonBinary
+        task.arguments = [serverScript, "--no-browser"]
+        try? task.run()
+        self.pythonProcess = task
+    }
+
     func loadWebPage() {
         if let url = URL(string: "http://127.0.0.1:5678/?t=\(Date().timeIntervalSince1970)") {
             var req = URLRequest(url: url)
@@ -89,25 +95,59 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKNavigati
         }
     }
 
+    func getCurrentVersion(targetDir: String) -> String {
+        let possibleVersionPaths = [
+            "\(targetDir)/version.json",
+            Bundle.main.path(forResource: "version", ofType: "json"),
+            "\(Bundle.main.bundlePath)/Contents/Resources/version.json"
+        ].compactMap { $0 }
+        
+        for path in possibleVersionPaths {
+            if let data = try? Data(contentsOf: URL(fileURLWithPath: path)),
+               let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+               let ver = json["version"] as? String {
+                return ver
+            }
+        }
+        return "1.5.0"
+    }
+
+    func isVersion(_ v1: String, greaterThan v2: String) -> Bool {
+        let parts1 = v1.split(separator: ".").compactMap { Int($0) }
+        let parts2 = v2.split(separator: ".").compactMap { Int($0) }
+        for i in 0..<max(parts1.count, parts2.count) {
+            let p1 = i < parts1.count ? parts1[i] : 0
+            let p2 = i < parts2.count ? parts2[i] : 0
+            if p1 > p2 { return true }
+            if p1 < p2 { return false }
+        }
+        return false
+    }
+
     func checkForUpdatesInBackground(targetDir: String) {
         DispatchQueue.global(qos: .background).async {
-            let fm = FileManager.default
-            if fm.fileExists(atPath: "\(targetDir)/.git") {
-                let gitTask = Process()
-                gitTask.launchPath = "/usr/bin/git"
-                gitTask.currentDirectoryPath = targetDir
-                gitTask.arguments = ["pull", "--quiet"]
-                try? gitTask.run()
-                gitTask.waitUntilExit()
+            guard let url = URL(string: "https://raw.githubusercontent.com/ssayoglu/uyap-dilekce-hazirlayici/main/version.json?t=\(Date().timeIntervalSince1970)") else { return }
+            var request = URLRequest(url: url)
+            request.cachePolicy = .reloadIgnoringLocalAndRemoteCacheData
+            request.timeoutInterval = 4.0
 
-                if gitTask.terminationStatus == 0 {
-                    let appResourcesServer = "\(Bundle.main.bundlePath)/Contents/Resources/server.py"
-                    if fm.fileExists(atPath: appResourcesServer) && fm.fileExists(atPath: "\(targetDir)/server.py") {
-                        try? fm.removeItem(atPath: appResourcesServer)
-                        try? fm.copyItem(atPath: "\(targetDir)/server.py", toPath: appResourcesServer)
+            let task = URLSession.shared.dataTask(with: request) { [weak self] data, _, err in
+                guard let self = self, let data = data, err == nil,
+                      let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                      let remoteVersion = json["version"] as? String else { return }
+
+                let localVersion = self.getCurrentVersion(targetDir: targetDir)
+                if self.isVersion(remoteVersion, greaterThan: localVersion) {
+                    if let rawServerUrl = URL(string: "https://raw.githubusercontent.com/ssayoglu/uyap-dilekce-hazirlayici/main/server.py"),
+                       let serverData = try? Data(contentsOf: rawServerUrl) {
+                        let fm = FileManager.default
+                        try? fm.createDirectory(atPath: targetDir, withIntermediateDirectories: true)
+                        try? serverData.write(to: URL(fileURLWithPath: "\(targetDir)/server.py"))
+                        try? data.write(to: URL(fileURLWithPath: "\(targetDir)/version.json"))
                     }
                 }
             }
+            task.resume()
         }
     }
 
@@ -162,21 +202,63 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKNavigati
     @objc func manualUpdateCheck() {
         let homeDir = NSHomeDirectory()
         let targetDir = "\(homeDir)/.dilekce-hazirlayici"
-        
-        let gitTask = Process()
-        gitTask.launchPath = "/usr/bin/git"
-        gitTask.currentDirectoryPath = targetDir
-        gitTask.arguments = ["pull"]
-        try? gitTask.run()
-        gitTask.waitUntilExit()
+        let localVersion = getCurrentVersion(targetDir: targetDir)
 
-        reloadPage()
-        
-        let alert = NSAlert()
-        alert.messageText = "Güncelleme Kontrolü"
-        alert.informativeText = "Uygulama GitHub üzerinden en son sürüme güncellendi ve yenilendi."
-        alert.alertStyle = .informational
-        alert.runModal()
+        guard let url = URL(string: "https://raw.githubusercontent.com/ssayoglu/uyap-dilekce-hazirlayici/main/version.json?t=\(Date().timeIntervalSince1970)") else { return }
+
+        var request = URLRequest(url: url)
+        request.cachePolicy = .reloadIgnoringLocalAndRemoteCacheData
+        request.timeoutInterval = 6.0
+
+        let task = URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
+            guard let self = self else { return }
+            
+            DispatchQueue.main.async {
+                guard let data = data, error == nil,
+                      let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                      let remoteVersion = json["version"] as? String else {
+                    let alert = NSAlert()
+                    alert.messageText = "Güncelleme Kontrolü"
+                    alert.informativeText = "Güncelleme sunucusuna bağlanılamadı. Lütfen internet bağlantınızı kontrol ediniz."
+                    alert.alertStyle = .warning
+                    alert.runModal()
+                    return
+                }
+
+                let changelogItems = json["changelog"] as? [String] ?? []
+                let changelogText = changelogItems.isEmpty ? "" : "\n\n📋 Yeni Sürüm Notları:\n• " + changelogItems.joined(separator: "\n• ")
+
+                if self.isVersion(remoteVersion, greaterThan: localVersion) {
+                    self.performFullUpdate(targetDir: targetDir, remoteVersion: remoteVersion, changelogText: changelogText)
+                } else {
+                    let alert = NSAlert()
+                    alert.messageText = "Sürüm Güncel"
+                    alert.informativeText = "Uygulamanız güncel (v\(localVersion)).\nEn son sürümü kullanıyorsunuz.\(changelogText)"
+                    alert.alertStyle = .informational
+                    alert.runModal()
+                }
+            }
+        }
+        task.resume()
+    }
+
+    func performFullUpdate(targetDir: String, remoteVersion: String, changelogText: String) {
+        let updateTask = Process()
+        updateTask.launchPath = "/bin/bash"
+        updateTask.arguments = ["-c", "curl -fsSL https://raw.githubusercontent.com/ssayoglu/uyap-dilekce-hazirlayici/main/update.sh | bash -s -- --in-app"]
+        try? updateTask.run()
+        updateTask.waitUntilExit()
+
+        self.startPythonServer(targetDir: targetDir)
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+            self.loadWebPage()
+            let alert = NSAlert()
+            alert.messageText = "Güncelleme Başarılı"
+            alert.informativeText = "Uygulama başarıyla v\(remoteVersion) sürümüne güncellendi!\(changelogText)"
+            alert.alertStyle = .informational
+            alert.runModal()
+        }
     }
 
     func setupStatusItem() {

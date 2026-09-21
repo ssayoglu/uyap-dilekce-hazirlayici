@@ -1142,7 +1142,7 @@ HTML_PAGE = """<!DOCTYPE html>
         const SEBEPLER_DEFAULT = "HMK, TBK, TTK, TMK, İİK ve ilgili mevzuat.";
 
         // Güncelleme Notları Yönetimi
-        const APP_VERSION = "1.4.0";
+        const APP_VERSION = "1.5.0";
 
         function openChangelogModal() {
             document.getElementById("changelogModal").classList.remove("hidden");

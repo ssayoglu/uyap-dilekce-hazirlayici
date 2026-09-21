@@ -55,9 +55,15 @@ curl -fsSL https://raw.githubusercontent.com/ssayoglu/uyap-dilekce-hazirlayici/m
 
 ---
 
-## 🔄 Güncelleme (Tek Komut)
+## 🔄 Güncelleme
 
-Uygulama her açılışında güncellemeleri otomatik kontrol eder. İsterseniz dilediğiniz zaman Terminal'den elle de güncelleyebilirsiniz:
+Uygulamanızı iki kolay yoldan güncelleyebilirsiniz:
+
+### 1. Uygulama İçinden (Tek Tıkla)
+Uygulama açıkken üst menü çubuğundan **Dilekçe Hazırlayıcı** > **Güncellemeleri Denetle** (Kısayol: `⌘ + U`) seçeneğine tıklamanız yeterlidir. Yeni bir sürüm varsa uygulama arka planda güncellemeyi alıp yenilenecektir.
+
+### 2. Terminal Üzerinden (Tek Komutla)
+Terminal uygulamasında aşağıdaki komutu çalıştırarak en son sürüme anında yükseltebilirsiniz:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/ssayoglu/uyap-dilekce-hazirlayici/main/update.sh | bash

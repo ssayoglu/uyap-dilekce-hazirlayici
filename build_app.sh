@@ -6,7 +6,8 @@ APP_NAME="Dilekçe Hazırlayıcı.app"
 DEST_APP="$DIR/$APP_NAME"
 
 echo "🔨 Derleniyor: Swift Native macOS Wrapper..."
-swiftc "$DIR/main.swift" -o "$DIR/DilekceApp" -framework Cocoa -framework WebKit
+mkdir -p "$DIR/scratch/clang-cache" 2>/dev/null || true
+swiftc -module-cache-path "$DIR/scratch/clang-cache" "$DIR/main.swift" -o "$DIR/DilekceApp" -framework Cocoa -framework WebKit || swiftc "$DIR/main.swift" -o "$DIR/DilekceApp" -framework Cocoa -framework WebKit
 
 echo "📦 Paket oluşturuluyor: $APP_NAME..."
 rm -rf "$DEST_APP"
@@ -41,7 +42,7 @@ cat << 'PLIST' > "$DEST_APP/Contents/Info.plist"
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
-    <string>1.3.0</string>
+    <string>1.5.0</string>
     <key>LSMinimumSystemVersion</key>
     <string>11.0</string>
     <key>NSHighResolutionCapable</key>
